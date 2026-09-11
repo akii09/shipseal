@@ -57,7 +57,9 @@ repo facts  ->  optional AI copy (words only)  ->  your brand + templates  ->  T
 
 Every number on a card comes from git, the GitHub API, npm, or your CI, and is listed with its source in `manifest.json`.
 
-## Planned usage
+## Usage
+
+Requires Node 22 or newer.
 
 ```bash
 npx shipseal@latest init       # detect your brand once
@@ -71,13 +73,13 @@ release never changes under you.
 ```yaml
 # .github/workflows/shipseal.yml
 on: { release: { types: [published] } }
-permissions: { contents: write }
+permissions: { contents: write }   # required for uploading release assets
 jobs:
   visuals:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-        with: { fetch-depth: 0 }
+        with: { fetch-depth: 0 }   # required for release history and tags
       - uses: akii09/shipseal@v0.0.8
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
 ```
