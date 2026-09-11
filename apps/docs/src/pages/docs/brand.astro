@@ -5,7 +5,7 @@ const detect = [
   ["tagline", "package.json#description, first README paragraph"],
   ["url", "package.json#homepage or repository, git remote origin"],
   ["logo", "logo.svg or logo.png in the root, assets/, assets/brand/, public/, .github/, docs/, static/, branding/, then icon and favicon"],
-  ["colors", "Tailwind v4 @theme, Tailwind v3 config, CSS variables on :root, html, .light, .dark and [data-theme], then the dominant colour of the logo"],
+  ["colors", "Tailwind v4 @theme, Tailwind v3 config, CSS variables on :root, html, .light, .dark and [data-theme], then the dominant color of the logo"],
   ["fonts", "font files in public/fonts or assets/fonts, otherwise bundled Geist"],
 ];
 ---
@@ -53,15 +53,15 @@ const detect = [
   </table>
   <p>
     Project files are parsed statically. Shipseal never executes your config to read it, so a
-    <code>tailwind.config.ts</code> that computes colours at runtime falls back to defaults rather than
+    <code>tailwind.config.ts</code> that computes colors at runtime falls back to defaults rather than
     being run.
   </p>
 
-  <h2>Colours it could not find</h2>
+  <h2>Colors it could not find</h2>
   <div class="callout">
-    <strong>A default is not your brand.</strong> Every colour that falls back to a built-in value is named
+    <strong>A default is not your brand.</strong> Every color that falls back to a built-in value is named
     in the <code>init</code> output. If you see that note, open <code>brand.json</code> and set those
-    colours yourself.
+    colors yourself.
   </div>
   <p>
     Contrast is checked as well. If a detected foreground fails against the background, Shipseal adjusts it

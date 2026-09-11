@@ -73,6 +73,25 @@ export async function collectChangelog(
       breaking,
     },
   };
+  // An author can title their own release from inside the notes, where the words already live:
+  //   <!-- shipseal: headline "Milestone cards are here" -->
+  // Deterministic copy can only reuse a changelog sentence, and those are written for
+  // maintainers. This is the cheap way to write for an audience without turning on the LLM.
+  for (const slot of ["headline", "subheadline"] as const) {
+    const marker = new RegExp(`<!--\\s*shipseal:\\s*${slot}\\s+"([^"]+)"\\s*-->`).exec(section.body);
+    const text = marker?.[1]?.trim();
+    if (text !== undefined && text.length > 0) {
+      out.release = {
+        ...out.release,
+        [slot]: fact(text, {
+          source: "user-config",
+          ref: `${changelogPath} ${section.heading} shipseal:${slot} marker`,
+          fetchedAt,
+        }),
+      };
+    }
+  }
+
   // A snippet from the release notes is about this release. The README's first fence is
   // usually the install command, which says nothing about what changed. Sits above the README
   // in the merge order and below an explicit `release.snippet`.

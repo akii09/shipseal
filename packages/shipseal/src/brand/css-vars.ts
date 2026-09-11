@@ -5,7 +5,7 @@ import { parseCssColor } from "./color.js";
 import type { ExtractedColors } from "./tailwind.js";
 
 // The trailing semicolon is optional: the last declaration before `}` usually has none,
-// which silently dropped one colour from almost every real stylesheet.
+// which silently dropped one color from almost every real stylesheet.
 const PROP =
   /--(primary|brand|accent|background|foreground|muted-foreground|muted)\s*:\s*([^;}]+)[;}]?/g;
 
@@ -50,12 +50,12 @@ function allVariables(css: string): Record<string, string> {
 }
 
 /**
- * Resolve a declaration to a hex colour.
+ * Resolve a declaration to a hex color.
  *
- * Handles two things a plain colour parser does not. First, `var(--brand-500)` indirection,
+ * Handles two things a plain color parser does not. First, `var(--brand-500)` indirection,
  * up to three hops within the same file. Second, bare channel lists: shadcn writes
  * `--background: 0 0% 100%` and applies it as `hsl(var(--background))`, so the value is only
- * a colour once wrapped. Percent signs on the last two channels mean HSL, three plain
+ * a color once wrapped. Percent signs on the last two channels mean HSL, three plain
  * numbers mean RGB.
  */
 function resolveColor(raw: string, vars: Record<string, string>, depth = 0): string | undefined {

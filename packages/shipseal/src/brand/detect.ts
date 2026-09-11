@@ -235,7 +235,7 @@ async function detectColors(
     const fromPng = logoPath.endsWith(".png") ? await dominantLogoColor(join(cwd, logoPath)) : undefined;
     if (fromPng !== undefined) {
       merged.primary = fromPng;
-      sources.push({ field: "colors.primary", source: `dominant colour in ${logoPath}` });
+      sources.push({ field: "colors.primary", source: `dominant color in ${logoPath}` });
     }
     const svg = logoPath.endsWith(".svg") ? await readMaybe(join(cwd, logoPath)) : undefined;
     if (svg !== undefined) {
@@ -247,9 +247,9 @@ async function detectColors(
     }
   }
 
-  // Say which colours are built-in defaults rather than anything found in this project.
+  // Say which colors are built-in defaults rather than anything found in this project.
   // Every other detected field prints its source, so staying silent here would let a user
-  // read Shipseal's own red as their brand colour.
+  // read Shipseal's own red as their brand color.
   const fellBack = (["background", "foreground", "muted", "primary", "accent"] as const).filter(
     (field) => merged[field] === undefined,
   );
@@ -417,8 +417,8 @@ function normalizeGitUrl(url: string): string {
 }
 
 /**
- * Dominant non-neutral colour of a PNG logo, or undefined when the file cannot be read or
- * carries no colour. Detection reports the colour as not found rather than falling back to a
+ * Dominant non-neutral color of a PNG logo, or undefined when the file cannot be read or
+ * carries no color. Detection reports the color as not found rather than falling back to a
  * built-in default that would be presented to the user as "your brand".
  */
 async function dominantLogoColor(path: string): Promise<string | undefined> {

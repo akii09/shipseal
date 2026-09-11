@@ -24,6 +24,8 @@ export interface CollectOptions {
   packagePath?: string;
   changelogPath?: string;
   snippet?: string | null;
+  headline?: string | undefined;
+  subheadline?: string | undefined;
   benchFile?: string;
   githubToken?: string;
   fetchImpl?: typeof fetch;
@@ -74,6 +76,24 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
         )
       : {};
 
+  // A headline passed on the command line or set in config outranks the changelog marker,
+  // which outranks anything deterministic copy would compose. Recorded as a fact either way,
+  // so the manifest says the words were chosen rather than derived.
+  const overrides: PartialFacts = {};
+  for (const slot of ["headline", "subheadline"] as const) {
+    const text = options[slot]?.trim();
+    if (text !== undefined && text.length > 0) {
+      overrides.release = {
+        ...overrides.release,
+        [slot]: fact(text, {
+          source: "user-config",
+          ref: `--${slot} or release.${slot}`,
+          fetchedAt: new Date().toISOString(),
+        }),
+      };
+    }
+  }
+
   // mergeFacts fills holes, so the first source to supply a fact wins. Declared beats derived
   // throughout: package.json is the author saying so, the git remote is whatever this clone
   // happens to point at, which may be a fork, a mirror or an SSH alias.
@@ -85,7 +105,7 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
   // is the user saying so, a fence in the release notes is about this release, and the README's
   // first fence is usually just the install command. `snippet` used to sit last, which meant a
   // configured snippet was silently ignored whenever the README had any code block at all.
-  const parts: PartialFacts[] = [pkg, workspacePkg, remote, git, snippet, changelog, readme];
+  const parts: PartialFacts[] = [overrides, pkg, workspacePkg, remote, git, snippet, changelog, readme];
 
   if (options.event.kind === "bench") {
     parts.push(await collectBenchFile(options.cwd, options.benchFile ?? ".shipseal/bench.json"));

@@ -187,10 +187,10 @@ describe("highlights from changelog entries", () => {
   it("takes one sentence per highlight", () => {
     const copy = deterministicCopy(
       withRelease({
-        fixes: ["Read theme colours from real stylesheets. Detection previously found nothing in several shapes."],
+        fixes: ["Read theme colors from real stylesheets. Detection previously found nothing in several shapes."],
       }),
     );
-    expect(copy.highlights[0]).toBe("Read theme colours from real stylesheets");
+    expect(copy.highlights[0]).toBe("Read theme colors from real stylesheets");
   });
 
   it("puts breaking changes first and labels them", () => {

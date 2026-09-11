@@ -3,7 +3,7 @@ import { extractCssRootColors } from "../src/brand/css-vars.js";
 
 describe("extractCssRootColors", () => {
   // Every case here came from a real stylesheet shape that returned nothing, or dropped a
-  // colour, before 2026-09-11. Reported by a user whose project yielded only muted and accent.
+  // color, before 2026-09-11. Reported by a user whose project yielded only muted and accent.
   const cases: Array<[string, string, { background: string; foreground: string; primary: string }]> = [
     [
       "hex with no trailing semicolon on the last declaration",

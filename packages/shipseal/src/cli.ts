@@ -44,7 +44,7 @@ export async function runCli(argv = process.argv): Promise<number> {
         }
         // Notes carry the "this is a built-in default, not your brand" disclosures.
         // The interactive prompt already shows them, and --yes skips that prompt, so
-        // without this the user never learns which colours were not detected.
+        // without this the user never learns which colors were not detected.
         for (const note of result.detection.notes) {
           process.stdout.write(`  note: ${note}\n`);
         }
@@ -81,6 +81,8 @@ export async function runCli(argv = process.argv): Promise<number> {
     .option("--strict", "Fit warnings exit with code 2")
     .option("--dry-run", "Collect facts and print them; render nothing")
     .option("--package <path>", "package.json path for monorepos")
+    .option("--headline <text>", "Headline for the cards, overriding the changelog")
+    .option("--subheadline <text>", "Subheadline for the cards")
     .option("--upload", "Upload PNG files to the GitHub release")
     .action(async (flags: Record<string, unknown>) => {
       const releaseFlags: ReleaseFlags = {
@@ -92,6 +94,14 @@ export async function runCli(argv = process.argv): Promise<number> {
       const tag = optionalString(flags.tag);
       if (tag !== undefined) {
         releaseFlags.tag = tag;
+      }
+      const headline = optionalString(flags.headline);
+      if (headline !== undefined) {
+        releaseFlags.headline = headline;
+      }
+      const subheadline = optionalString(flags.subheadline);
+      if (subheadline !== undefined) {
+        releaseFlags.subheadline = subheadline;
       }
       const from = optionalString(flags.from);
       if (from !== undefined) {

@@ -25,6 +25,8 @@ export interface ReleaseFlags extends SharedFlags {
   tag?: string;
   from?: string;
   templates?: string;
+  headline?: string;
+  subheadline?: string;
 }
 
 /** Lowest kind worth announcing, most significant first. */
@@ -81,6 +83,14 @@ export async function runRelease(flags: ReleaseFlags): Promise<ReleaseResult> {
   }
   if (env.fetchImpl !== undefined) {
     collectOpts.fetchImpl = env.fetchImpl;
+  }
+  const headline = flags.headline ?? config.release?.headline ?? undefined;
+  if (headline !== undefined) {
+    collectOpts.headline = headline;
+  }
+  const subheadline = flags.subheadline ?? config.release?.subheadline ?? undefined;
+  if (subheadline !== undefined) {
+    collectOpts.subheadline = subheadline;
   }
   const facts = await collectFacts(collectOpts);
 

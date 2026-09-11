@@ -7,7 +7,7 @@ import { decodePng, dominantNonNeutralColor } from "../src/brand/png.js";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "fixtures", "brands");
 
-/** Build a PNG with a grey border and a coloured centre, the shape of a typical logo. */
+/** Build a PNG with a grey border and a colored centre, the shape of a typical logo. */
 function makePng(color: [number, number, number], options: { alpha?: number; grey?: boolean } = {}): Buffer {
   const png = new PNG({ width: 32, height: 32 });
   for (let y = 0; y < 32; y++) {
@@ -34,7 +34,7 @@ function decodeOrFail(buffer: Buffer) {
 }
 
 describe("decodePng", () => {
-  it("decodes a truecolour-alpha PNG", () => {
+  it("decodes a truecolor-alpha PNG", () => {
     const png = decodePng(makePng([255, 77, 77]));
     expect(png?.width).toBe(32);
     expect(png?.height).toBe(32);
@@ -51,12 +51,12 @@ describe("decodePng", () => {
 });
 
 describe("dominantNonNeutralColor", () => {
-  it("finds the brand colour and ignores the grey surround", () => {
+  it("finds the brand color and ignores the grey surround", () => {
     expect(dominantNonNeutralColor(decodeOrFail(makePng([255, 77, 77])))).toBe("#ff4d4d");
   });
 
   it("ignores nearly transparent pixels", () => {
-    // The coloured centre is transparent, so only grey remains and there is no brand colour.
+    // The colored centre is transparent, so only grey remains and there is no brand color.
     expect(dominantNonNeutralColor(decodeOrFail(makePng([255, 77, 77], { alpha: 10 })))).toBeUndefined();
   });
 
@@ -76,8 +76,8 @@ describe("dominantNonNeutralColor", () => {
   });
 });
 
-describe("colour detection honesty", () => {
-  // A logo with no usable colour must not silently pass Shipseal's own red off as the
+describe("color detection honesty", () => {
+  // A logo with no usable color must not silently pass Shipseal's own red off as the
   // user's brand. Every other detected field prints its source, so the fallback has to
   // announce itself.
   it("reports built-in defaults as defaults", async () => {
@@ -97,7 +97,7 @@ describe("colour detection honesty", () => {
     expect(detection.sources.some((s) => s.field === "colors.primary")).toBe(false);
   });
 
-  it("prefers a real logo colour over the default and records its source", async () => {
+  it("prefers a real logo color over the default and records its source", async () => {
     const { mkdtemp, writeFile, mkdir } = await import("node:fs/promises");
     const { tmpdir } = await import("node:os");
     const { detectBrand } = await import("../src/brand/detect.js");

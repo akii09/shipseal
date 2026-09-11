@@ -68,6 +68,12 @@ export function mergeFacts(parts: PartialFacts[]): Facts {
     if (release.kind !== undefined) {
       facts.release.kind = release.kind;
     }
+    if (release.headline !== undefined) {
+      facts.release.headline = release.headline;
+    }
+    if (release.subheadline !== undefined) {
+      facts.release.subheadline = release.subheadline;
+    }
     if (release.previousVersion !== undefined) {
       facts.release.previousVersion = release.previousVersion;
     }

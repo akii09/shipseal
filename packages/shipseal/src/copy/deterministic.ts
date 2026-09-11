@@ -31,9 +31,11 @@ export function deterministicCopy(
     .find((line) => line.length <= HEADLINE_MAX_CHARS);
   const title = displayName ?? name;
   const headline =
-    headlineSource ?? (version === undefined ? title : `${title} ${version}`);
+    facts.release?.headline?.value ??
+    headlineSource ??
+    (version === undefined ? title : `${title} ${version}`);
 
-  const tagline = facts.project.tagline?.value;
+  const tagline = facts.release?.subheadline?.value ?? facts.project.tagline?.value;
   const subheadline =
     tagline !== undefined && tagline.length > 0
       ? cleanLine(tagline)

@@ -16,6 +16,8 @@ export type PartialRelease = {
   version?: Fact<string>;
   tag?: Fact<string>;
   kind?: Fact<"major" | "minor" | "patch">;
+  headline?: Fact<string>;
+  subheadline?: Fact<string>;
   previousVersion?: Fact<string>;
   date?: Fact<string>;
   features?: Fact<string>[];

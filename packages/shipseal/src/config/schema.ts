@@ -16,6 +16,8 @@ export const configSchema = z.object({
       changelogPath: z.string().optional(),
       snippet: z.string().nullable().optional(),
       announce: z.enum(["major", "minor", "patch"]).optional(),
+      headline: z.string().nullable().optional(),
+      subheadline: z.string().nullable().optional(),
     })
     .optional(),
   milestones: z

@@ -1,16 +1,16 @@
-// Minimal PNG reader for brand colour detection.
-// Spec: docs/PROJECT_PLAN.md §10.3 (logo colour detection)
+// Minimal PNG reader for brand color detection.
+// Spec: docs/PROJECT_PLAN.md §10.3 (logo color detection)
 //
 // Logos are the only PNGs this reads, so it covers what logo exporters emit: 8 and 16 bit
-// depths, colour types 0, 2, 3, 4 and 6, no interlacing. Anything else returns undefined and
-// the caller reports the colour as not found rather than guessing. Decoding is done here
+// depths, color types 0, 2, 3, 4 and 6, no interlacing. Anything else returns undefined and
+// the caller reports the color as not found rather than guessing. Decoding is done here
 // instead of with a library because `pngjs` would be a runtime dependency for one small job.
 
 import { inflateSync } from "node:zlib";
 
 const SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-/** Channels per pixel for each PNG colour type. Index is the colour type. */
+/** Channels per pixel for each PNG color type. Index is the color type. */
 const CHANNELS: Record<number, number> = { 0: 1, 2: 3, 3: 1, 4: 2, 6: 4 };
 
 export interface DecodedPng {
@@ -174,7 +174,7 @@ function toRgba(
   const bpp = channels * bytesPerSample;
 
   for (let i = 0; i < width * height; i++) {
-    // For 16 bit samples the high byte is a close enough approximation for colour picking.
+    // For 16 bit samples the high byte is a close enough approximation for color picking.
     const at = (channel: number): number => data[i * bpp + channel * bytesPerSample] ?? 0;
     const out = i * 4;
     switch (colorType) {
@@ -221,10 +221,10 @@ function toRgba(
 }
 
 /**
- * Most common non-neutral colour in a logo, as a hex string.
+ * Most common non-neutral color in a logo, as a hex string.
  *
  * Nearly transparent pixels are ignored so a transparent background does not win, and greys
- * are ignored because a logo's black wordmark is not its brand colour. Colours are bucketed
+ * are ignored because a logo's black wordmark is not its brand color. Colors are bucketed
  * into 16 levels per channel so anti-aliased edges group with the solid fill they belong to,
  * then the winning bucket reports the average of the real pixels inside it rather than the
  * bucket centre, which would drift the hue.

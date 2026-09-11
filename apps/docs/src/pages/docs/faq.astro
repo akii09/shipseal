@@ -64,6 +64,28 @@ import Docs from "../../layouts/Docs.astro";
     Open an issue describing what you need and it will inform the design.
   </p>
 
+  <h2>How is this different from the other ways of making release images?</h2>
+  <p>
+    <strong>Browser screenshot tools</strong> drive Puppeteer or Playwright over a page you built.
+    That means a browser in CI, a page to maintain, and images that change when the page does.
+    Shipseal renders directly and needs neither.
+  </p>
+  <p>
+    <strong>Image models</strong> write text badly and invent numbers. A card claiming a star count
+    nobody can trace is worse than no card. Shipseal only lets a model write words, and only when
+    you turn it on: every number comes from git, the GitHub API, npm or your own CI, and lands in
+    <code>manifest.json</code> with the command that produced it.
+  </p>
+  <p>
+    <strong>Generic OG image generators</strong> take whatever you hand them. Shipseal reads the
+    release itself, so the version, the changelog entries, the commit count and the contributors
+    are already there, and the brand kit means they look like your project rather than a template.
+  </p>
+  <p>
+    <strong>Doing it in Figma</strong> produces better one-off images. It does not produce them on
+    every release without you.
+  </p>
+
   <h2>What does it cost?</h2>
   <p>MIT licensed and free. No account, no hosted service, no metering.</p>
 </Docs>

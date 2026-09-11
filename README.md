@@ -24,7 +24,7 @@ this repository. Nothing was edited by hand.
   <img src="./assets/examples/release-hero.png" alt="Release hero card: project name, version badge, headline taken from the changelog, and an install command" width="700">
 </p>
 
-The headline comes from the changelog entry, the version from the git tag, and the colours from
+The headline comes from the changelog entry, the version from the git tag, and the colors from
 the brand kit `shipseal init` detected. Every one of those is listed with its source in
 `manifest.json`.
 

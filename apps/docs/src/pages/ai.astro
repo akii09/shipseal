@@ -13,9 +13,9 @@ Package: shipseal on npm, Node 22+, MIT. Renders with Takumi, no browser and no 
 
 # Steps
 1. Run \`npx shipseal@latest init --yes\` at the repository root. It detects the brand
-   (name, tagline, colours, logo, fonts) and writes .shipseal/brand.json and
+   (name, tagline, colors, logo, fonts) and writes .shipseal/brand.json and
    .shipseal/config.json. Commit both.
-2. Open .shipseal/brand.json and check the colours. Any colour it could not detect is
+2. Open .shipseal/brand.json and check the colors. Any color it could not detect is
    reported as a built-in default in the init output, so fix those by hand.
 3. Add .github/workflows/shipseal.yml:
 
@@ -42,7 +42,7 @@ Package: shipseal on npm, Node 22+, MIT. Renders with Takumi, no browser and no 
 
 # Constraints
 - fetch-depth: 0 is required. Without full history and tags the release facts are incomplete.
-- Do not invent values in brand.json. If a colour is not found in the project, leave the
+- Do not invent values in brand.json. If a color is not found in the project, leave the
   default in place and tell me which ones need my attention.
 - Do not add an image generation dependency, and do not add a headless browser. Shipseal is
   deterministic on purpose.
@@ -52,7 +52,7 @@ Package: shipseal on npm, Node 22+, MIT. Renders with Takumi, no browser and no 
 - .shipseal/brand.json and .shipseal/config.json exist and are committed.
 - The workflow file exists with fetch-depth: 0 and contents: write.
 - \`npx shipseal@latest release --dry-run\` prints facts with no error.
-- You have told me every colour that fell back to a built-in default.`;
+- You have told me every color that fell back to a built-in default.`;
 
 const debugPrompt = `# Task
 A Shipseal card came out wrong. Diagnose it from evidence, not from guesses.
@@ -71,7 +71,7 @@ Read these before changing anything:
 - A "fit-warning" means text was shrunk or truncated. Shorten the copy rather than widening
   the template.
 - A missing element is listed under \`missing\` with the fact that caused it.
-- Wrong colours mean detection failed. The init output names every colour that fell back to
+- Wrong colors mean detection failed. The init output names every color that fell back to
   a built-in default.`;
 
 const facts = [
@@ -153,7 +153,7 @@ const facts = [
 
 This repo uses Shipseal (https://shipseal.dev) to generate release images.
 
-- Brand config lives in .shipseal/brand.json. Edit it rather than hard-coding colours.
+- Brand config lives in .shipseal/brand.json. Edit it rather than hard-coding colors.
 - Never put a number on a card by hand. Numbers come from sources with provenance and
   land in manifest.json.
 - After changing a template or the brand, run \`npx shipseal@latest release --dry-run\`

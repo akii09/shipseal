@@ -475,7 +475,7 @@ describe("changelog nested bullets", () => {
         "",
         "### Patch Changes",
         "",
-        "- Read theme colours properly. Several shapes returned nothing:",
+        "- Read theme colors properly. Several shapes returned nothing:",
         "",
         "  - The last declaration before a brace was dropped",
         "  - Bare HSL channels were not understood",
@@ -489,7 +489,7 @@ describe("changelog nested bullets", () => {
     const fixes = (facts.release?.fixes ?? []).map((f) => f.value);
     expect(fixes).toHaveLength(2);
     expect(fixes[1]).toBe("A second real entry");
-    expect(fixes[0]).toContain("Read theme colours properly");
+    expect(fixes[0]).toContain("Read theme colors properly");
   });
 });
 
@@ -636,5 +636,53 @@ describe("declared beats derived", () => {
       skipNetwork: true,
     });
     expect(facts.project.repo?.value).toBe("derived/demo");
+  });
+});
+
+/** G3: changelog sentences are written for maintainers. Let an author title their own release. */
+const project = (extra: string) =>
+  `## [2.0.0] - 2026-09-10\n${extra}\n### Added\n- Scannable codes\n`;
+
+async function repo(changelog: string): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), "shipseal-headline-"));
+  await writeFile(
+    join(dir, "package.json"),
+    JSON.stringify({ name: "demo", description: "A demo package used in headline tests", version: "2.0.0" }),
+  );
+  await writeFile(join(dir, "CHANGELOG.md"), changelog);
+  return dir;
+}
+
+describe("headline overrides", () => {
+  it("reads a marker in the release notes, with user-config provenance", async () => {
+    const dir = await repo(project('\n<!-- shipseal: headline "Milestone cards are here" -->\n'));
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "v2.0.0" },
+      skipNetwork: true,
+    });
+    expect(facts.release?.headline?.value).toBe("Milestone cards are here");
+    expect(facts.release?.headline?.provenance.source).toBe("user-config");
+  });
+
+  it("lets an explicit override outrank the marker", async () => {
+    const dir = await repo(project('\n<!-- shipseal: headline "From the changelog" -->\n'));
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "v2.0.0" },
+      skipNetwork: true,
+      headline: "From the command line",
+    });
+    expect(facts.release?.headline?.value).toBe("From the command line");
+  });
+
+  it("leaves the headline to deterministic copy when neither is set", async () => {
+    const dir = await repo(project(""));
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "v2.0.0" },
+      skipNetwork: true,
+    });
+    expect(facts.release?.headline).toBeUndefined();
   });
 });
