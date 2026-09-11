@@ -67,12 +67,16 @@ jobs:
             echo "No version branch, nothing to verify."
             exit 0
           fi
+          # Reset to the pushed branch. A local branch of this name already exists from the
+          # changesets step, so a plain `git checkout` keeps the stale commit and the status
+          # lands on main instead of the pull request head, leaving the PR blocked forever.
           git fetch origin changeset-release/main
-          git checkout changeset-release/main
+          git checkout -B changeset-release/main origin/changeset-release/main
           pnpm install --frozen-lockfile
           STATE=success
-          pnpm lint && pnpm typecheck && pnpm test && pnpm build || STATE=failure
-          SHA="$(git rev-parse HEAD)"
+          pnpm lint && pnpm check:action-ref && pnpm typecheck && pnpm test && pnpm build || STATE=failure
+          SHA="$(git rev-parse origin/changeset-release/main)"
+          echo "Reporting check for $SHA"
           gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
             -f state="$STATE" -f context=check \
             -f description="Gates run by the version workflow" \
