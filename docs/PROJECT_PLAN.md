@@ -963,7 +963,7 @@ jobs:
   visuals:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # required: full history and tags for release facts
       - uses: akii09/shipseal@v1
@@ -1178,6 +1178,9 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | LLM copy uses **OpenAI-compatible `fetch`**, not the Vercel AI SDK | Keeps the optional path a lazy HTTP call behind `copy.llm` and `--no-copy` (R7, R8). Env: `SHIPSEAL_LLM_API_KEY`, optional `SHIPSEAL_LLM_BASE_URL`. Model from `config.copy.model` | Installing `ai` (extra dependency for a single JSON chat call) |
 | 2026-09-11 | Syntax highlighting: **shiki** `4.4.3` (MIT), tokens only | Plan §7 and spike S5. `codeToTokens` feeds colored spans; `whiteSpace: "pre"` stays required | A hand-rolled tokenizer; bundling shiki into dist (it stays in node_modules via tsdown `neverBundle`) |
 | 2026-09-11 | Golden diffs: **pixelmatch** + **pngjs** as devDependencies | Plan §7. Tolerance stays 0.1% differing pixels | Raising the tolerance; comparing PNG bytes (too brittle across encoder settings) |
+| 2026-09-11 | npm downloads: `GET https://api.npmjs.org/downloads/point/last-week/{package}`; scoped names via `encodeURIComponent` | Current registry docs. 404 returns nothing. Tests mock fetch | Live network in tests; bulk query endpoint |
+| 2026-09-11 | GitHub Action uses `actions/checkout@v7` and `actions/setup-node@v7`, Node 22 from `.nvmrc` | Current majors as of 2026-09. Plan §19.3 example still showed `@v4` | Staying on v4 after the v7 majors shipped |
+| 2026-09-11 | Action input `version: workspace` runs the checked-out `packages/shipseal` CLI after a local build | The package is unpublished (`0.0.0`); `npx shipseal@latest` cannot dogfood this repo yet. Users keep `npx shipseal@<version>` | Publishing a dummy 0.0.0 to npm just to dogfood; bundling Takumi natives into a JS action |
 
 ---
 

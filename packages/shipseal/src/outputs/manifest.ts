@@ -55,7 +55,7 @@ export function buildManifest(input: {
       sha256: file.sha256,
     })),
     facts: flattenFacts(input.result.facts),
-    computed: {},
+    computed: input.result.computed,
     warnings: input.result.warnings,
     missing: input.result.missing,
   };
@@ -96,6 +96,9 @@ export function flattenFacts(
   }
   if (facts.bench !== undefined) {
     walk("bench", facts.bench);
+  }
+  if (facts.milestone !== undefined) {
+    walk("milestone", facts.milestone);
   }
   return out;
 }

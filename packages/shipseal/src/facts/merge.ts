@@ -4,18 +4,20 @@
 
 import { ShipsealError } from "../core/errors.js";
 import type { Facts } from "./schema.js";
-import type { PartialFacts, PartialMetrics, PartialProject, PartialRelease } from "./partial.js";
+import type { PartialFacts, PartialMetrics, PartialMilestone, PartialProject, PartialRelease } from "./partial.js";
 
 export function mergeFacts(parts: PartialFacts[]): Facts {
   const project: PartialProject = {};
   const release: PartialRelease = {};
   const metrics: PartialMetrics = {};
+  const milestone: PartialMilestone = {};
   let bench: Facts["bench"];
 
   for (const part of parts) {
     fillObject(project, part.project);
     mergeRelease(release, part.release);
     fillObject(metrics, part.metrics);
+    fillObject(milestone, part.milestone);
     if (part.bench !== undefined) {
       bench = part.bench;
     }
@@ -85,6 +87,9 @@ export function mergeFacts(parts: PartialFacts[]): Facts {
   }
   if (bench !== undefined) {
     facts.bench = bench;
+  }
+  if (milestone.metric !== undefined && milestone.threshold !== undefined) {
+    facts.milestone = { metric: milestone.metric, threshold: milestone.threshold };
   }
   return facts;
 }

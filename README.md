@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="./assets/brand/wordmark-800.png" alt="Shipseal" width="400">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/brand/wordmark-white-800.png">
+    <img src="./assets/brand/wordmark-800.png" alt="Shipseal" width="400">
+  </picture>
 </p>
 
 <p align="center">
@@ -37,7 +40,7 @@ jobs:
   visuals:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: akii09/shipseal@v1
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
@@ -62,8 +65,10 @@ print or large surfaces and the sized variants for the web:
 
 | File | Size | Use |
 |---|---|---|
-| `wordmark.png` | 2120x742 | source wordmark |
-| `wordmark-800.png` | 800 wide | README, docs headers |
+| `wordmark.png` | 2120x742 | source wordmark (light) |
+| `wordmark-800.png` | 800 wide | README, docs headers (light) |
+| `wordmark-white.png` | 2119x742 | source wordmark (dark) |
+| `wordmark-white-800.png` | 800 wide | README, docs headers (dark) |
 | `icon.png` | 1254x1254 | source icon |
 | `icon-512.png` | 512x512 | app icon, social profile |
 | `icon-180.png` | 180x180 | apple touch icon |

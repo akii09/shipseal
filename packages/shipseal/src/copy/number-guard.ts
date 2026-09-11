@@ -39,7 +39,14 @@ export function allowedNumbers(facts: Facts): Set<string> {
 
 export function unsourcedDigits(text: string, allowed: Set<string>): string[] {
   const found: string[] = [];
-  for (const match of text.match(/\d+(?:\.\d+)*/g) ?? []) {
+  const withoutGrouped = text.replace(/\d{1,3}(?:,\d{3})+/g, (match) => {
+    const compact = match.replaceAll(",", "");
+    if (!allowed.has(match) && !allowed.has(compact)) {
+      found.push(match);
+    }
+    return " ";
+  });
+  for (const match of withoutGrouped.match(/\d+(?:\.\d+)*/g) ?? []) {
     if (!allowed.has(match)) {
       found.push(match);
     }

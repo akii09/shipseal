@@ -31,9 +31,15 @@ export type PartialMetrics = {
   contributorCount?: Fact<number>;
 };
 
+export type PartialMilestone = {
+  metric?: Fact<string>;
+  threshold?: Fact<number>;
+};
+
 export type PartialFacts = {
   project?: PartialProject;
   release?: PartialRelease;
   metrics?: PartialMetrics;
   bench?: Facts["bench"];
+  milestone?: PartialMilestone;
 };

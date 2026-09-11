@@ -6,9 +6,11 @@ import { ShipsealError } from "../core/errors.js";
 import { mergeFacts } from "../facts/merge.js";
 import type { Facts } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
+import { collectBenchFile } from "./bench-file.js";
 import { collectChangelog } from "./changelog.js";
 import { collectGit } from "./git.js";
 import { collectGithub } from "./github.js";
+import { collectNpm } from "./npm.js";
 import { collectPackageJson } from "./package-json.js";
 import { collectConfiguredSnippet, collectReadme } from "./readme.js";
 
@@ -18,6 +20,7 @@ export interface CollectOptions {
   packagePath?: string;
   changelogPath?: string;
   snippet?: string | null;
+  benchFile?: string;
   githubToken?: string;
   fetchImpl?: typeof fetch;
   skipNetwork?: boolean;
@@ -49,6 +52,10 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
 
   const parts: PartialFacts[] = [pkg, git, readme, changelog, snippet];
 
+  if (options.event.kind === "bench") {
+    parts.push(await collectBenchFile(options.cwd, options.benchFile ?? ".shipseal/bench.json"));
+  }
+
   if (options.skipNetwork !== true) {
     const repo = pkg.project?.repo?.value ?? gitRepoFromParts(pkg, readme);
     if (repo !== undefined) {
@@ -74,12 +81,21 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
       parts.push(githubWithoutFeatures);
       const mergedPreview = mergeFacts(parts);
       if (
+        options.event.kind === "release" &&
         (mergedPreview.release?.features.length ?? 0) === 0 &&
         github.release?.features !== undefined &&
         github.release.features.length > 0
       ) {
         parts.push({ release: { features: github.release.features } });
       }
+    }
+    const npmPackage = pkg.project?.npmPackage?.value;
+    if (npmPackage !== undefined) {
+      const npmOpts: Parameters<typeof collectNpm>[0] = { npmPackage };
+      if (options.fetchImpl !== undefined) {
+        npmOpts.fetchImpl = options.fetchImpl;
+      }
+      parts.push(await collectNpm(npmOpts));
     }
   }
 

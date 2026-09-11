@@ -45,6 +45,17 @@ describe("cli", () => {
     const code = await runCli(["node", "shipseal", "release", "--cwd", await emptyDir()]);
     expect(code).toBe(1);
   });
+
+  it("skips milestone when no threshold is crossed", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-ms-"));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo-app", description: "Demo application used in milestone tests" }),
+    );
+    await runInit({ cwd: dir, yes: true, force: false });
+    const code = await runCli(["node", "shipseal", "milestone", "--cwd", dir, "--quiet", "--dry-run"]);
+    expect(code).toBe(0);
+  });
 });
 
 async function emptyDir(): Promise<string> {

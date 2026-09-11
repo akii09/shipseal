@@ -53,6 +53,43 @@ export function deterministicCopy(facts: Facts, maxHighlights = MAX_HIGHLIGHTS):
   };
 }
 
+export function formatCount(value: number): string {
+  return value.toLocaleString("en-US");
+}
+
+export function milestoneCopy(
+  facts: Facts,
+  metric: "stars" | "downloads" | "contributors",
+  threshold: number,
+): Copy {
+  const formatted = formatCount(threshold);
+  const line =
+    metric === "stars"
+      ? `Thank you for ${formatted} stars`
+      : metric === "downloads"
+        ? `${formatted} weekly downloads`
+        : `Thank you, ${formatted} contributors`;
+  const tagline = facts.project.tagline?.value;
+  return {
+    headline: facts.project.name.value,
+    subheadline: tagline !== undefined && tagline.length > 0 ? cleanLine(tagline) : "",
+    highlights: [],
+    cta: ctaFor(facts),
+    milestoneLine: line,
+  };
+}
+
+export function benchCopy(facts: Facts): Copy {
+  const title = facts.bench?.title.value ?? facts.project.name.value;
+  const note = facts.bench?.note?.value;
+  return {
+    headline: title,
+    subheadline: note !== undefined && note.length > 0 ? note : (facts.project.tagline?.value ?? ""),
+    highlights: [],
+    cta: ctaFor(facts),
+  };
+}
+
 export function cleanLine(text: string): string {
   const stripped = text.replaceAll("\u2014", ":").replaceAll("\u2013", "-").replaceAll("!", ".").trim();
   const noTrail = stripped.endsWith(".") ? stripped.slice(0, -1) : stripped;

@@ -5,13 +5,16 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { cac } from "cac";
+import { runBench, type BenchFlags } from "./commands/bench.js";
 import { runDoctor } from "./commands/doctor.js";
 import { runInit } from "./commands/init.js";
+import { runMilestone, type MilestoneFlags } from "./commands/milestone.js";
 import { runRelease, type ReleaseFlags } from "./commands/release.js";
 import { ShipsealError, formatError } from "./core/errors.js";
 import { resolvePackageRoot } from "./render/takumi.js";
 
 export async function runCli(argv = process.argv): Promise<number> {
+  process.exitCode = 0;
   const cli = cac("shipseal");
   cli.option("--cwd <path>", "Working directory", { default: process.cwd() });
   cli.option("--json", "Machine-readable JSON output");
@@ -72,12 +75,14 @@ export async function runCli(argv = process.argv): Promise<number> {
     .option("--strict", "Fit warnings exit with code 2")
     .option("--dry-run", "Collect facts and print them; render nothing")
     .option("--package <path>", "package.json path for monorepos")
+    .option("--upload", "Upload PNG files to the GitHub release")
     .action(async (flags: Record<string, unknown>) => {
       const releaseFlags: ReleaseFlags = {
         cwd: stringFlag(flags.cwd, process.cwd()),
         strict: flags.strict === true,
         dryRun: flags.dryRun === true,
       };
+      applySharedFlags(releaseFlags, flags);
       const tag = optionalString(flags.tag);
       if (tag !== undefined) {
         releaseFlags.tag = tag;
@@ -86,58 +91,82 @@ export async function runCli(argv = process.argv): Promise<number> {
       if (from !== undefined) {
         releaseFlags.from = from;
       }
-      const formats = optionalString(flags.formats);
-      if (formats !== undefined) {
-        releaseFlags.formats = formats;
-      }
       const templates = optionalString(flags.templates);
       if (templates !== undefined) {
         releaseFlags.templates = templates;
       }
-      const themes = optionalString(flags.themes);
-      if (themes !== undefined) {
-        releaseFlags.themes = themes;
-      }
-      if (flags.copy === false) {
-        releaseFlags.copy = false;
-      }
-      const out = optionalString(flags.out);
-      if (out !== undefined) {
-        releaseFlags.out = out;
-      }
-      const pkg = optionalString(flags.package);
-      if (pkg !== undefined) {
-        releaseFlags.package = pkg;
-      }
       const result = await runRelease(releaseFlags);
       process.exitCode = result.exitCode;
+      writeCommandOutput(flags, result);
+    });
+
+  cli
+    .command("milestone", "Generate a milestone card for the highest crossed threshold")
+    .option("--metric <stars|downloads|contributors>", "Metric to check")
+    .option("--threshold <n>", "Force a specific threshold")
+    .option("--formats <list>", "Comma-separated formats")
+    .option("--themes <dark|light|both>", "Themes to render")
+    .option("--copy", "Allow optional LLM copy (default: on when config.copy.llm is true)")
+    .option("--out <dir>", "Output directory")
+    .option("--strict", "Fit warnings exit with code 2")
+    .option("--dry-run", "Collect facts and print them; render nothing")
+    .option("--package <path>", "package.json path for monorepos")
+    .action(async (flags: Record<string, unknown>) => {
+      const milestoneFlags: MilestoneFlags = {
+        cwd: stringFlag(flags.cwd, process.cwd()),
+        strict: flags.strict === true,
+        dryRun: flags.dryRun === true,
+      };
+      applySharedFlags(milestoneFlags, flags);
+      const metric = optionalString(flags.metric);
+      if (metric !== undefined) {
+        milestoneFlags.metric = metric;
+      }
+      const threshold = optionalString(flags.threshold);
+      if (threshold !== undefined) {
+        milestoneFlags.threshold = threshold;
+      }
+      const result = await runMilestone(milestoneFlags);
+      process.exitCode = result.exitCode;
       if (flags.json === true) {
-        process.stdout.write(`${JSON.stringify(result.manifest ?? result.facts, null, 2)}\n`);
+        writeJson(resultToJson(result));
         return;
       }
       if (flags.quiet === true) {
         return;
       }
-      if (result.dryRun) {
-        process.stdout.write(`${JSON.stringify(result.facts, null, 2)}\n`);
+      if (result.skipped) {
+        process.stdout.write(`${result.message ?? "No milestone threshold crossed."}\n`);
         return;
       }
-      if (result.dir !== undefined) {
-        process.stdout.write(`Wrote ${result.dir}\n`);
-      }
-      if (result.copyWarning !== undefined) {
-        process.stdout.write(`Copy: ${result.copyWarning}\n`);
-      }
-      for (const warning of result.warnings) {
-        process.stdout.write(`Warning: ${warning.template} ${warning.format} ${warning.slot} ${warning.action}\n`);
-      }
+      writeHumanResult(result);
     });
-  cli.command("milestone", "Generate a milestone card").action(() => {
-    throw notImplemented("milestone");
-  });
-  cli.command("bench", "Generate benchmark cards").action(() => {
-    throw notImplemented("bench");
-  });
+
+  cli
+    .command("bench", "Generate benchmark cards from bench JSON")
+    .option("--file <path>", "Path to bench JSON")
+    .option("--formats <list>", "Comma-separated formats")
+    .option("--themes <dark|light|both>", "Themes to render")
+    .option("--copy", "Allow optional LLM copy (default: on when config.copy.llm is true)")
+    .option("--out <dir>", "Output directory")
+    .option("--strict", "Fit warnings exit with code 2")
+    .option("--dry-run", "Collect facts and print them; render nothing")
+    .option("--package <path>", "package.json path for monorepos")
+    .action(async (flags: Record<string, unknown>) => {
+      const benchFlags: BenchFlags = {
+        cwd: stringFlag(flags.cwd, process.cwd()),
+        strict: flags.strict === true,
+        dryRun: flags.dryRun === true,
+      };
+      applySharedFlags(benchFlags, flags);
+      const file = optionalString(flags.file);
+      if (file !== undefined) {
+        benchFlags.file = file;
+      }
+      const result = await runBench(benchFlags);
+      process.exitCode = result.exitCode;
+      writeCommandOutput(flags, result);
+    });
 
   cli.help();
   cli.version(readVersion());
@@ -145,7 +174,7 @@ export async function runCli(argv = process.argv): Promise<number> {
   try {
     cli.parse(argv, { run: false });
     await cli.runMatchedCommand();
-    return process.exitCode === 1 ? 1 : 0;
+    return typeof process.exitCode === "number" ? process.exitCode : 0;
   } catch (error) {
     if (error instanceof ShipsealError) {
       process.stderr.write(`${formatError(error)}\n`);
@@ -167,12 +196,110 @@ function optionalString(value: unknown): string | undefined {
   return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
-function notImplemented(command: string): ShipsealError {
-  return new ShipsealError(
-    "cli.not-implemented",
-    `shipseal ${command} is not implemented yet.`,
-    "This command lands in a later phase. Use shipseal init and shipseal doctor for now.",
-  );
+function applySharedFlags(target: { formats?: string; themes?: string; copy?: boolean; out?: string; package?: string; upload?: boolean }, flags: Record<string, unknown>): void {
+  const formats = optionalString(flags.formats);
+  if (formats !== undefined) {
+    target.formats = formats;
+  }
+  const themes = optionalString(flags.themes);
+  if (themes !== undefined) {
+    target.themes = themes;
+  }
+  if (flags.copy === false) {
+    target.copy = false;
+  }
+  const out = optionalString(flags.out);
+  if (out !== undefined) {
+    target.out = out;
+  }
+  const pkg = optionalString(flags.package);
+  if (pkg !== undefined) {
+    target.package = pkg;
+  }
+  if (flags.upload === true) {
+    target.upload = true;
+  }
+}
+
+function writeCommandOutput(
+  flags: Record<string, unknown>,
+  result: {
+    dryRun: boolean;
+    facts: unknown;
+    dir?: string;
+    manifest?: unknown;
+    copyWarning?: string;
+    warnings: Array<{ template: string; format: string; slot: string; action: string }>;
+    skipped?: boolean;
+    message?: string;
+  },
+): void {
+  if (flags.json === true) {
+    writeJson(resultToJson(result));
+    return;
+  }
+  if (flags.quiet === true) {
+    return;
+  }
+  writeHumanResult(result);
+}
+
+function resultToJson(result: {
+  dryRun: boolean;
+  facts: unknown;
+  dir?: string;
+  manifest?: unknown;
+  skipped?: boolean;
+  message?: string;
+}): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (result.skipped === true) {
+    payload.skipped = true;
+  }
+  if (result.message !== undefined) {
+    payload.message = result.message;
+  }
+  if (result.dir !== undefined) {
+    payload.dir = result.dir;
+  }
+  if (result.manifest !== undefined) {
+    payload.manifest = result.manifest;
+  } else {
+    payload.facts = result.facts;
+  }
+  return payload;
+}
+
+function writeHumanResult(result: {
+  dryRun: boolean;
+  facts: unknown;
+  dir?: string;
+  copyWarning?: string;
+  warnings: Array<{ template: string; format: string; slot: string; action: string }>;
+  skipped?: boolean;
+  message?: string;
+}): void {
+  if (result.skipped === true) {
+    process.stdout.write(`${result.message ?? "Nothing to generate."}\n`);
+    return;
+  }
+  if (result.dryRun) {
+    process.stdout.write(`${JSON.stringify(result.facts, null, 2)}\n`);
+    return;
+  }
+  if (result.dir !== undefined) {
+    process.stdout.write(`Wrote ${result.dir}\n`);
+  }
+  if (result.copyWarning !== undefined) {
+    process.stdout.write(`Copy: ${result.copyWarning}\n`);
+  }
+  for (const warning of result.warnings) {
+    process.stdout.write(`Warning: ${warning.template} ${warning.format} ${warning.slot} ${warning.action}\n`);
+  }
+}
+
+function writeJson(value: unknown): void {
+  process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 }
 
 function readVersion(): string {

@@ -2,6 +2,7 @@
 // Spec: docs/PROJECT_PLAN.md §6.1
 
 import { createHash } from "node:crypto";
+import { percentChange } from "../bench/percent.js";
 import type { Brand } from "../brand/schema.js";
 import type { Config } from "../config/schema.js";
 import type { Copy } from "../copy/slots.js";
@@ -55,10 +56,11 @@ export interface GenerateResult {
   copy: Copy;
   copyMode: "deterministic" | "llm";
   generatedAt: string;
+  computed: Record<string, { value: unknown; computedFrom: string[] }>;
 }
 
 export async function generate(input: GenerateInput): Promise<GenerateResult> {
-  const templateIds = input.config.release?.templates ?? ["release-hero", "release-highlights", "code-card"];
+  const templateIds = templateIdsFor(input.event, input.config);
   const formatIds = input.config.formats ?? ["og", "github-social", "x", "linkedin"];
   const imageFormat: ImageFormat = input.config.output?.imageFormat ?? "png";
   const attribution = input.config.attribution !== false;
@@ -148,7 +150,34 @@ export async function generate(input: GenerateInput): Promise<GenerateResult> {
     copy: input.copy,
     copyMode: input.copyMode,
     generatedAt: input.generatedAt,
+    computed: computedFromFacts(input.facts),
   };
+}
+
+function templateIdsFor(event: ShipsealEvent, config: Config): string[] {
+  if (event.kind === "milestone") {
+    return ["milestone"];
+  }
+  if (event.kind === "bench") {
+    return ["bench"];
+  }
+  return config.release?.templates ?? ["release-hero", "release-highlights", "code-card"];
+}
+
+function computedFromFacts(facts: Facts): Record<string, { value: unknown; computedFrom: string[] }> {
+  const out: Record<string, { value: unknown; computedFrom: string[] }> = {};
+  if (facts.bench === undefined) {
+    return out;
+  }
+  facts.bench.metrics.forEach((metric, index) => {
+    const change = percentChange(metric.before.value, metric.after.value, metric.better.value);
+    const prefix = `bench.metrics[${String(index)}]`;
+    out[`${prefix}.percent`] = {
+      value: change.signed,
+      computedFrom: [`${prefix}.before`, `${prefix}.after`, `${prefix}.better`],
+    };
+  });
+  return out;
 }
 
 async function fitSlots(

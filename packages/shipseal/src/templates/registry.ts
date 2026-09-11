@@ -3,11 +3,13 @@
 
 import { ShipsealError } from "../core/errors.js";
 import type { TemplateDefinition } from "./contract.js";
+import { bench } from "./bench.js";
 import { codeCard } from "./code-card.js";
+import { milestone } from "./milestone.js";
 import { releaseHero } from "./release-hero.js";
 import { releaseHighlights } from "./release-highlights.js";
 
-const templates = [releaseHero, releaseHighlights, codeCard] as const;
+const templates = [releaseHero, releaseHighlights, codeCard, milestone, bench] as const;
 
 export function getTemplate(id: string): TemplateDefinition {
   const found = templates.find((template) => template.id === id);

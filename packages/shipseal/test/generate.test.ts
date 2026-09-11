@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { generate } from "../src/core/generate.js";
 import { flattenFacts } from "../src/outputs/manifest.js";
 import { createTakumiRenderer } from "../src/render/takumi.js";
-import { deterministicCopy } from "../src/copy/deterministic.js";
+import { benchCopy, deterministicCopy, milestoneCopy } from "../src/copy/deterministic.js";
 import { unsourcedDigits, allowedNumbers } from "../src/copy/number-guard.js";
-import { FIXTURE_BRAND, FIXTURE_CONFIG, FIXTURE_FACTS, LONG_HEADLINE_FACTS } from "./helpers/facts.js";
+import { bench } from "../src/templates/bench.js";
+import { FIXTURE_BRAND, FIXTURE_CONFIG, FIXTURE_FACTS, LONG_HEADLINE_FACTS, BENCH_FACTS, MILESTONE_FACTS } from "./helpers/facts.js";
 
 describe("generate", () => {
   it("renders release cards and records provenance for every number in copy", async () => {
@@ -69,5 +70,49 @@ describe("generate", () => {
     expect(result.warnings.some((warning) => warning.slot === "headline" && warning.action === "truncated")).toBe(
       true,
     );
+  });
+
+  it("renders a 1,000-stars milestone card and records the threshold", async () => {
+    const renderer = await createTakumiRenderer();
+    const copy = milestoneCopy(MILESTONE_FACTS, "stars", 1000);
+    const result = await generate({
+      event: { kind: "milestone", metric: "stars", threshold: 1000 },
+      facts: MILESTONE_FACTS,
+      brand: FIXTURE_BRAND,
+      config: { ...FIXTURE_CONFIG, formats: ["og"] },
+      copy,
+      copyMode: "deterministic",
+      renderer,
+      themes: ["dark"],
+      generatedAt: "2026-09-11T10:00:00.000Z",
+    });
+    expect(result.files[0]?.fileName).toBe("milestone-og.png");
+    expect(result.files[0]?.bytes[0]).toBe(0x89);
+    const flat = flattenFacts(MILESTONE_FACTS);
+    expect(flat["milestone.threshold"]?.value).toBe(1000);
+    expect(flat["milestone.threshold"]?.source).toBe("user-config");
+    expect(unsourcedDigits(copy.milestoneLine ?? "", allowedNumbers(MILESTONE_FACTS))).toEqual([]);
+  });
+
+  it("renders a regression bench card with a negative computed percent", async () => {
+    const renderer = await createTakumiRenderer();
+    const copy = benchCopy(BENCH_FACTS);
+    const result = await generate({
+      event: { kind: "bench", file: ".shipseal/bench.json" },
+      facts: BENCH_FACTS,
+      brand: FIXTURE_BRAND,
+      config: { ...FIXTURE_CONFIG, formats: ["x"] },
+      copy,
+      copyMode: "deterministic",
+      renderer,
+      themes: ["dark"],
+      generatedAt: "2026-09-11T10:00:00.000Z",
+    });
+    expect(result.files[0]?.fileName).toBe("bench-x.png");
+    expect(result.computed["bench.metrics[0].percent"]?.value).toBe(-13);
+    const built = bench.buildProps(BENCH_FACTS, copy, FIXTURE_BRAND);
+    expect(built.props).toMatchObject({
+      rows: [{ changeText: "13% slower", regression: true }],
+    });
   });
 });

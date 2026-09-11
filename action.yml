@@ -1,14 +1,103 @@
-# Composite action (PROJECT_PLAN §19). Placeholder until Phase 3.
+# Composite action. Spec: docs/PROJECT_PLAN.md §19
+# Docs checked 2026-09-11: actions/checkout@v7, actions/setup-node@v7, gh release upload --clobber
 name: Shipseal
 description: Every release, sealed and ready to share. Verified release visuals from your repo.
 branding: { icon: award, color: red }
 inputs:
-  command: { description: "release | milestone | bench", default: release }
-  upload-assets: { description: "Upload images to the GitHub release", default: "true" }
-  strict: { description: "Fail on fit warnings", default: "false" }
-  version: { description: "Shipseal version to run", default: "latest" }
+  command:
+    description: "release | milestone | bench"
+    default: release
+  formats:
+    description: Comma-separated formats (defaults to config)
+    required: false
+  upload-assets:
+    description: Upload images to the GitHub release
+    default: "true"
+  artifact:
+    description: Also upload the output folder as a workflow artifact
+    default: "true"
+  strict:
+    description: Fail the job on fit warnings
+    default: "false"
+  llm:
+    description: Enable LLM copy (requires SHIPSEAL_LLM_API_KEY)
+    default: "false"
+  version:
+    description: "Shipseal version to run, or workspace to use the checked-out package"
+    default: latest
+outputs:
+  dir:
+    description: Directory containing the generated pack
+    value: ${{ steps.generate.outputs.dir }}
+  skipped:
+    description: "true when a milestone command found no crossed threshold"
+    value: ${{ steps.generate.outputs.skipped }}
 runs:
   using: composite
   steps:
-    - shell: bash
-      run: echo "TODO(Phase 3): setup-node, run npx shipseal@${{ inputs.version }} ${{ inputs.command }} --json, upload assets, write job summary"
+    - uses: pnpm/action-setup@v4
+      if: ${{ inputs.version == 'workspace' || inputs.version == '.' }}
+    - uses: actions/setup-node@v7
+      if: ${{ inputs.version == 'workspace' || inputs.version == '.' }}
+      with:
+        node-version: "22"
+        cache: pnpm
+    - uses: actions/setup-node@v7
+      if: ${{ inputs.version != 'workspace' && inputs.version != '.' }}
+      with:
+        node-version: "22"
+    - name: Build local CLI
+      if: ${{ inputs.version == 'workspace' || inputs.version == '.' }}
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        pnpm install --frozen-lockfile
+        pnpm --filter shipseal build
+    - name: Generate visuals
+      id: generate
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      env:
+        SHIPSEAL_COMMAND: ${{ inputs.command }}
+        SHIPSEAL_FORMATS: ${{ inputs.formats }}
+        SHIPSEAL_UPLOAD: ${{ inputs.upload-assets }}
+        SHIPSEAL_STRICT: ${{ inputs.strict }}
+        SHIPSEAL_LLM: ${{ inputs.llm }}
+        SHIPSEAL_VERSION: ${{ inputs.version }}
+        SHIPSEAL_ACTION_PATH: ${{ github.action_path }}
+      run: |
+        set -euo pipefail
+        if [[ "$SHIPSEAL_VERSION" == "workspace" || "$SHIPSEAL_VERSION" == "." ]]; then
+          CLI=(node "$SHIPSEAL_ACTION_PATH/packages/shipseal/dist/cli.js")
+        else
+          CLI=(npx --yes "shipseal@$SHIPSEAL_VERSION")
+        fi
+        ARGS=("$SHIPSEAL_COMMAND" --json --cwd "$GITHUB_WORKSPACE")
+        if [[ -n "${SHIPSEAL_FORMATS}" ]]; then
+          ARGS+=(--formats "$SHIPSEAL_FORMATS")
+        fi
+        if [[ "$SHIPSEAL_STRICT" == "true" ]]; then
+          ARGS+=(--strict)
+        fi
+        if [[ "$SHIPSEAL_LLM" != "true" ]]; then
+          ARGS+=(--no-copy)
+        fi
+        if [[ "$SHIPSEAL_UPLOAD" == "true" && "$SHIPSEAL_COMMAND" == "release" ]]; then
+          ARGS+=(--upload)
+        fi
+        JSON_PATH="$RUNNER_TEMP/shipseal.json"
+        "${CLI[@]}" "${ARGS[@]}" | tee "$JSON_PATH"
+        DIR="$(node -e 'const fs=require("fs"); const j=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(j.dir??"")' "$JSON_PATH")"
+        SKIPPED="$(node -e 'const fs=require("fs"); const j=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(j.skipped===true?"true":"false")' "$JSON_PATH")"
+        echo "dir=$DIR" >> "$GITHUB_OUTPUT"
+        echo "skipped=$SKIPPED" >> "$GITHUB_OUTPUT"
+        if [[ -n "$DIR" ]]; then
+          echo "SHIPSEAL_DIR=$DIR" >> "$GITHUB_ENV"
+        fi
+    - name: Upload pack artifact
+      if: ${{ inputs.artifact == 'true' && env.SHIPSEAL_DIR != '' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: shipseal
+        path: ${{ env.SHIPSEAL_DIR }}

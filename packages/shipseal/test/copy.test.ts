@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { deterministicCopy } from "../src/copy/deterministic.js";
+import { deterministicCopy, milestoneCopy } from "../src/copy/deterministic.js";
 import { llmCopy } from "../src/copy/llm.js";
 import { allowedNumbers, guardCopy, unsourcedDigits } from "../src/copy/number-guard.js";
-import { FIXTURE_FACTS } from "./helpers/facts.js";
+import { FIXTURE_FACTS, MILESTONE_FACTS } from "./helpers/facts.js";
 
 describe("deterministic copy", () => {
   it("uses the first feature as the headline and interpolates npm cta", () => {
@@ -13,6 +13,12 @@ describe("deterministic copy", () => {
     expect(copy.cta).toBe("npm i pdfx");
     expect(copy.headline.includes("\u2014")).toBe(false);
   });
+
+  it("inserts the threshold with a locale grouping separator from code", () => {
+    const copy = milestoneCopy(MILESTONE_FACTS, "stars", 1000);
+    expect(copy.milestoneLine).toBe("Thank you for 1,000 stars");
+    expect(unsourcedDigits(copy.milestoneLine ?? "", allowedNumbers(MILESTONE_FACTS))).toEqual([]);
+  });
 });
 
 describe("number guard", () => {
@@ -20,6 +26,7 @@ describe("number guard", () => {
     const allowed = allowedNumbers(FIXTURE_FACTS);
     expect(unsourcedDigits("QR and barcode support", allowed)).toEqual([]);
     expect(unsourcedDigits("Thank you for 9999 stars", allowed)).toEqual(["9999"]);
+    expect(unsourcedDigits("Thank you for 1,000 stars", allowedNumbers(MILESTONE_FACTS))).toEqual([]);
     const copy = deterministicCopy(FIXTURE_FACTS);
     expect(guardCopy(copy, FIXTURE_FACTS).ok).toBe(true);
     expect(guardCopy({ ...copy, headline: "We hit 9999 stars" }, FIXTURE_FACTS).ok).toBe(false);

@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/akii09/shipseal/main/assets/brand/wordmark-800.png" alt="Shipseal" width="400">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/akii09/shipseal/main/assets/brand/wordmark-white-800.png">
+    <img src="https://raw.githubusercontent.com/akii09/shipseal/main/assets/brand/wordmark-800.png" alt="Shipseal" width="400">
+  </picture>
 </p>
 
 <p align="center">
@@ -44,7 +47,7 @@ jobs:
   visuals:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - uses: akii09/shipseal@v1
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }

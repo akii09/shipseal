@@ -93,6 +93,12 @@ export const factsSchema = z.object({
       note: stringFact.optional(),
     })
     .optional(),
+  milestone: z
+    .object({
+      metric: stringFact,
+      threshold: numberFact,
+    })
+    .optional(),
 });
 
 export type Facts = z.infer<typeof factsSchema>;

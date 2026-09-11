@@ -21,6 +21,11 @@ export const FIXTURE_FACTS: Facts = {
     }),
     repo: fact("akii09/pdfx", { source: "package-json", ref: "package.json#repository", fetchedAt }),
   },
+  metrics: {
+    stars: fact(1042, { source: "github-api", ref: "GET /repos/akii09/pdfx stargazers_count", fetchedAt }),
+    weeklyDownloads: fact(12000, { source: "npm-api", ref: "GET /downloads/point/last-week/pdfx downloads", fetchedAt }),
+    contributorCount: fact(18, { source: "github-api", ref: "GET /repos/akii09/pdfx/contributors", fetchedAt }),
+  },
   release: {
     version: fact("2.0.0", { source: "git", ref: "git tag v2.0.0", fetchedAt }),
     tag: fact("v2.0.0", { source: "git", ref: "git tag v2.0.0", fetchedAt }),
@@ -91,4 +96,30 @@ export const FIXTURE_CONFIG: Config = {
     templates: ["release-hero", "release-highlights", "code-card"],
   },
   attribution: false,
+};
+
+export const MILESTONE_FACTS: Facts = {
+  project: FIXTURE_FACTS.project,
+  metrics: FIXTURE_FACTS.metrics,
+  milestone: {
+    metric: fact("stars", { source: "user-config", ref: "shipseal milestone --metric", fetchedAt }),
+    threshold: fact(1000, { source: "user-config", ref: "config.json milestones.stars", fetchedAt }),
+  },
+};
+
+export const BENCH_FACTS: Facts = {
+  project: FIXTURE_FACTS.project,
+  bench: {
+    title: fact("Render time went up", { source: "bench-file", ref: ".shipseal/bench.json#title", fetchedAt }),
+    metrics: [
+      {
+        label: fact("Render time", { source: "bench-file", ref: ".shipseal/bench.json#metrics[0].label", fetchedAt }),
+        before: fact(87, { source: "bench-file", ref: ".shipseal/bench.json#metrics[0].before", fetchedAt }),
+        after: fact(98, { source: "bench-file", ref: ".shipseal/bench.json#metrics[0].after", fetchedAt }),
+        unit: fact("ms", { source: "bench-file", ref: ".shipseal/bench.json#metrics[0].unit", fetchedAt }),
+        better: fact("lower", { source: "bench-file", ref: ".shipseal/bench.json#metrics[0].better", fetchedAt }),
+      },
+    ],
+    note: fact("vitest bench fixture", { source: "bench-file", ref: ".shipseal/bench.json#note", fetchedAt }),
+  },
 };

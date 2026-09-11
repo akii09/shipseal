@@ -8,6 +8,8 @@ import { collectChangelog, cleanChangelogItem } from "../src/sources/changelog.j
 import { collectFacts } from "../src/sources/collect.js";
 import { collectGit, parseConventional } from "../src/sources/git.js";
 import { collectGithub } from "../src/sources/github.js";
+import { collectNpm } from "../src/sources/npm.js";
+import { collectBenchFile } from "../src/sources/bench-file.js";
 import { collectPackageJson } from "../src/sources/package-json.js";
 import { collectReadme } from "../src/sources/readme.js";
 import { mergeFacts } from "../src/facts/merge.js";
@@ -200,8 +202,54 @@ describe("collectFacts", () => {
   });
 });
 
+describe("npm source", () => {
+  it("reads weekly downloads from a mocked fetch and encodes scoped names", async () => {
+    const seen: string[] = [];
+    const fetchImpl: typeof fetch = async (input) => {
+      seen.push(String(input));
+      return new Response(
+        JSON.stringify({ downloads: 31623, start: "2026-09-01", end: "2026-09-07", package: "@acme/demo" }),
+        { status: 200, headers: { "Content-Type": "application/json" } },
+      );
+    };
+    const facts = await collectNpm({ npmPackage: "@acme/demo", fetchImpl });
+    expect(facts.metrics?.weeklyDownloads?.value).toBe(31623);
+    expect(facts.metrics?.weeklyDownloads?.provenance.source).toBe("npm-api");
+    expect(seen[0]).toBe("https://api.npmjs.org/downloads/point/last-week/%40acme%2Fdemo");
+  });
+
+  it("returns nothing when the package is missing", async () => {
+    const facts = await collectNpm({ npmPackage: "no-such-pkg", fetchImpl: missingNpmFetch });
+    expect(facts.metrics?.weeklyDownloads).toBeUndefined();
+  });
+});
+
+describe("bench-file source", () => {
+  it("wraps each metric field with provenance", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-bench-"));
+    await writeFile(
+      join(dir, "bench.json"),
+      JSON.stringify({
+        title: "Rendering got faster",
+        metrics: [{ label: "Render time", before: 420, after: 87, unit: "ms", better: "lower" }],
+        note: "vitest bench fixture",
+      }),
+    );
+    const facts = await collectBenchFile(dir, "bench.json");
+    expect(facts.bench?.title.value).toBe("Rendering got faster");
+    expect(facts.bench?.metrics[0]?.before.value).toBe(420);
+    expect(facts.bench?.metrics[0]?.after.provenance.ref).toBe("bench.json#metrics[0].after");
+  });
+
+  it("throws a fix-it error when the file is missing", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-bench-missing-"));
+    await expect(collectBenchFile(dir, "missing.json")).rejects.toMatchObject({ code: "bench.missing-file" });
+  });
+});
+
 async function git(cwd: string, args: string[]): Promise<void> {
   await execFileAsync("git", args, { cwd });
 }
 
 const forbiddenFetch: typeof fetch = async () => new Response("nope", { status: 403 });
+const missingNpmFetch: typeof fetch = async () => new Response("not found", { status: 404 });
