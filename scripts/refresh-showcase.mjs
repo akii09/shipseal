@@ -25,10 +25,29 @@ const tag = `v${version}`;
 
 const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: "pipe" }).toString();
 
-/** The README cards come from this repository's own release, so they are real output. */
+/**
+ * The README cards come from this repository's own release, so they are real output.
+ *
+ * The tag usually does not exist yet: this runs inside `pnpm release`, before the release is
+ * created, and `pnpm release` refuses when the tag already exists. So tag HEAD temporarily,
+ * render, then remove it. The real tag lands on the same commit moments later.
+ */
 function readmeCards() {
   const out = mkdtempSync(join(tmpdir(), "shipseal-showcase-"));
-  run("node", [cli, "release", "--tag", tag, "--formats", "og,x", "--out", out], root);
+  let temporary = false;
+  try {
+    run("git", ["rev-parse", "--verify", `${tag}^{commit}`], root);
+  } catch {
+    run("git", ["tag", tag], root);
+    temporary = true;
+  }
+  try {
+    run("node", [cli, "release", "--tag", tag, "--formats", "og,x", "--out", out], root);
+  } finally {
+    if (temporary) {
+      run("git", ["tag", "-d", tag], root);
+    }
+  }
   const from = join(out, tag);
   const pairs = [
     ["release-hero-og.png", "release-hero.png"],
