@@ -464,3 +464,21 @@ describe("changelog nested bullets", () => {
     expect(fixes[0]).toContain("Read theme colours properly");
   });
 });
+
+describe("project name on a private root", () => {
+  // A workspace root's name reached a real hero card as "shipseal-monorepo 0.0.5".
+  it("uses the directory rather than a private package name", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-privname-"));
+    await writeFile(join(dir, "package.json"), JSON.stringify({ name: "demo-monorepo", private: true }), "utf8");
+    const part = await collectPackageJson(dir);
+    expect(part.project?.name?.value).not.toBe("demo-monorepo");
+    expect(part.project?.name?.provenance.ref).toContain("directory name");
+  });
+
+  it("keeps the name of a publishable package", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-pubname-"));
+    await writeFile(join(dir, "package.json"), JSON.stringify({ name: "@scope/demo" }), "utf8");
+    const part = await collectPackageJson(dir);
+    expect(part.project?.name?.value).toBe("demo");
+  });
+});

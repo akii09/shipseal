@@ -639,7 +639,7 @@ Templates declare text **slots**. The copy layer fills them.
 
 | Slot | Example | Max length (chars) |
 |---|---|---|
-| `headline` | "QR and barcode support" | 48 |
+| `headline` | "QR and barcode support" | 72 |
 | `subheadline` | "Render scannable codes in any PDF component" | 90 |
 | `highlights[]` | "New `<QRCode>` component" | 56 each, max 4 |
 | `cta` | "npm i pdfx" | 32 |

@@ -191,3 +191,44 @@ describe("highlights from changelog entries", () => {
     expect(copy.highlights[1]).toBe("Add bench cards");
   });
 });
+
+describe("headline length budget", () => {
+  // The v0.0.5 hero card shipped with a headline truncated mid-phrase. Taking the first
+  // sentence is not enough when that sentence is itself too long for the card.
+  const at = (v: string) => fact(v, { source: "changelog" as const, ref: "CHANGELOG.md", fetchedAt: NOW });
+  const withFixes = (lines: string[]): Facts => ({
+    ...FIXTURE_FACTS,
+    release: {
+      ...FIXTURE_FACTS.release,
+      version: at("0.0.5"),
+      tag: at("v0.0.5"),
+      date: at("2026-09-11"),
+      features: [],
+      fixes: lines.map(at),
+      breaking: [],
+    },
+  });
+
+  it("skips an entry that is too long and takes the next one that fits", () => {
+    const copy = deterministicCopy(
+      withFixes([
+        "Write one sentence per highlight instead of a whole changelog paragraph, so entries fit the card rather than truncating mid-word",
+        "Fold nested bullets into the entry above",
+      ]),
+    );
+    expect(copy.headline).toBe("Fold nested bullets into the entry above");
+  });
+
+  it("falls back to name and version when nothing is short enough", () => {
+    const copy = deterministicCopy(
+      withFixes(["A sentence that runs on and on and on well past anything that could ever fit onto a release card headline"]),
+    );
+    expect(copy.headline).toContain("0.0.5");
+  });
+
+  it("keeps a headline that fits", () => {
+    expect(deterministicCopy(withFixes(["Fix brand detection on PNG logos"])).headline).toBe(
+      "Fix brand detection on PNG logos",
+    );
+  });
+});

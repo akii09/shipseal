@@ -55,7 +55,14 @@ describe("generate", () => {
 
   it("records a truncation warning for a deliberately long headline", async () => {
     const renderer = await createTakumiRenderer();
-    const copy = deterministicCopy(LONG_HEADLINE_FACTS);
+    // The copy layer now refuses an over-long headline, so force one into the slot directly.
+    // R6 still has to hold for text that reaches a template by any route, including a
+    // user-supplied headline or a future template with a tighter slot.
+    const copy = {
+      ...deterministicCopy(LONG_HEADLINE_FACTS),
+      headline:
+        "A headline so long that no font size in the range can fit it onto two lines of this card without cutting it short",
+    };
     const result = await generate({
       event: { kind: "release", tag: "v2.0.0" },
       facts: LONG_HEADLINE_FACTS,

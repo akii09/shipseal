@@ -14,13 +14,15 @@ export function deterministicCopy(facts: Facts, maxHighlights = MAX_HIGHLIGHTS):
   // Breaking changes lead, then features, then fixes. Looking only at features meant a
   // patch release (every Changesets "Patch Changes" entry maps to a fix) fell through to
   // "{name} {version}", or worse, to a raw commit subject when git was the only source.
-  const headlineSource = breaking[0] ?? features[0] ?? fixes[0];
+  // Prefer the first entry whose opening sentence actually fits a headline. Taking the first
+  // sentence is not enough on its own: a single long sentence still overflowed, and the
+  // v0.0.5 card shipped with a headline truncated mid-phrase. A release with nothing short
+  // enough to say is better titled by its name and version than by a cut-off sentence.
+  const headlineSource = [...breaking, ...features, ...fixes]
+    .map((line) => cleanLine(firstSentence(line)))
+    .find((line) => line.length <= HEADLINE_MAX_CHARS);
   const headline =
-    headlineSource !== undefined
-      ? cleanLine(firstSentence(headlineSource))
-      : version === undefined
-        ? name
-        : `${name} ${version}`;
+    headlineSource ?? (version === undefined ? name : `${name} ${version}`);
 
   const tagline = facts.project.tagline?.value;
   const subheadline =
@@ -105,6 +107,13 @@ export function firstSentence(text: string): string {
   const match = /^(.+?[.?!])\s+[A-Z]/.exec(collapsed);
   return match?.[1] ?? collapsed;
 }
+
+/**
+ * Longest headline that fits two lines at the minimum font size on a 1200 wide card.
+ * Measured rather than guessed: §13.1 originally said 48, which rejects most real changelog
+ * sentences, and the fitting pass comfortably handles more.
+ */
+const HEADLINE_MAX_CHARS = 72;
 
 export function cleanLine(text: string): string {
   // Replace an em dash with a colon and swallow the space in front of it, so "shops \u2014 mobile"

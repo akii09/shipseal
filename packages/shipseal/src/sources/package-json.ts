@@ -39,10 +39,14 @@ export async function collectPackageJson(
     return {};
   }
   const fetchedAt = new Date().toISOString();
+  // A private package.json is a workspace root and its name is plumbing, not a brand. Using
+  // it put "shipseal-monorepo 0.0.5" on a real hero card. Fall back to the directory, and let
+  // a README heading or the git remote win if either has something better.
+  const rawName = pkg.data.private === true ? undefined : pkg.data.name;
   const project: PartialProject = {
-    name: fact(stripScope(pkg.data.name ?? basenameFromPath(cwd)), {
+    name: fact(stripScope(rawName ?? basenameFromPath(cwd)), {
       source: "package-json",
-      ref: `${packagePath}#name`,
+      ref: rawName === undefined ? `${packagePath} directory name` : `${packagePath}#name`,
       fetchedAt,
     }),
   };
