@@ -68,7 +68,10 @@ const here = Astro.url.pathname.replace(/\/$/, "");
   </div>
 
   <style>
-    .shell { display: grid; gap: clamp(2rem, 5vw, 3.5rem); padding-block: clamp(2.5rem, 5vw, 3.5rem); grid-template-columns: 1fr; align-items: start; }
+    /* minmax(0, 1fr), not 1fr: a bare track takes its minimum from the widest unbreakable
+       content, so a long line in a code block widened the whole page instead of scrolling
+       inside its own pre. The 900px rule below already had this right. */
+    .shell { display: grid; gap: clamp(2rem, 5vw, 3.5rem); padding-block: clamp(2.5rem, 5vw, 3.5rem); grid-template-columns: minmax(0, 1fr); align-items: start; }
     @media (min-width: 900px) { .shell { grid-template-columns: 212px minmax(0, 1fr); } }
 
     aside { position: sticky; top: 82px; }
@@ -105,7 +108,9 @@ const here = Astro.url.pathname.replace(/\/$/, "");
     .prose :global(li) { margin-top: 0.45rem; }
     .prose :global(a) { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
     .prose :global(pre) { margin-top: 1.3rem; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 1.05rem 1.15rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.7; color: #cfcfd8; }
-    .prose :global(:not(pre) > code) { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 0.1rem 0.35rem; color: var(--accent); }
+    /* overflow-wrap: anywhere lets a long inline token (a path, a command) break rather than
+       set the minimum width of the page. break-word would not: it does not affect min-content. */
+    .prose :global(:not(pre) > code) { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 0.1rem 0.35rem; color: var(--accent); overflow-wrap: anywhere; }
     .prose :global(table) { width: 100%; border-collapse: collapse; margin-top: 1.3rem; font-size: 0.92rem; display: block; overflow-x: auto; }
     .prose :global(th), .prose :global(td) { text-align: left; padding: 0.6rem 0.9rem 0.6rem 0; border-bottom: 1px solid var(--line); vertical-align: top; }
     .prose :global(th) { font-family: var(--mono); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: #5e5e66; font-weight: 500; }
