@@ -1,0 +1,32 @@
+# Shipseal
+
+> Open source CLI and GitHub Action that turns repository events into ready-to-post images.
+> Every number on a card comes from a real source and is recorded with provenance.
+
+Package: shipseal (npm), Node 22+, MIT.
+Action: akii09/shipseal@v1 (composite). Requires actions/checkout with fetch-depth: 0.
+Rendering: Takumi. No headless browser and no image generation model.
+
+## Commands
+- shipseal init: detect brand, write .shipseal/brand.json and .shipseal/config.json
+- shipseal release: generate the release pack for a tag
+- shipseal milestone: card for a crossed stars, downloads or contributors threshold
+- shipseal bench: before and after cards from a benchmark JSON file
+- shipseal doctor: check environment, brand, fonts and renderer
+
+Shared flags: --cwd, --json, --quiet, --verbose, --dry-run, --strict
+
+## Output
+.shipseal/output/<event-id>/ contains the images plus manifest.json, which lists every file,
+fact, computed value, fit warning and missing fact with its source.
+
+## Rules that matter
+- A wrong number is a source problem, not a template problem. Check the fact's ref in the manifest.
+- fit-warning means text was shrunk or truncated. Shorten the copy instead of widening the template.
+- Colours that could not be detected are reported as built-in defaults by init. They are not your brand.
+- Do not commit .shipseal/output/.
+
+## Links
+- Docs: https://shipseal.dev
+- Agent prompts: https://shipseal.dev/ai
+- Source: https://github.com/akii09/shipseal

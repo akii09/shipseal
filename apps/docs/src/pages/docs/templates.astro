@@ -1,0 +1,59 @@
+---
+import Docs from "../../layouts/Docs.astro";
+const tpl = [
+  ["release-hero", "release", "Logo, name, version, headline, tagline, install command", "og, github-social, x, linkedin"],
+  ["release-highlights", "release", "What changed, up to four one-line highlights", "x, linkedin"],
+  ["code-card", "release", "Headline plus a syntax highlighted snippet, about 14 lines", "x, linkedin"],
+  ["milestone", "milestone", "One large number, the metric, a thank-you line", "og, x, linkedin"],
+  ["bench", "bench", "Up to three metrics as before to after with percent change", "x, linkedin"],
+];
+const fmt = [
+  ["og", "1200x630", "Open Graph link previews"],
+  ["github-social", "1280x640", "GitHub repository preview"],
+  ["x", "1200x675", "X posts"],
+  ["linkedin", "1200x627", "LinkedIn posts"],
+  ["square", "1080x1080", "Instagram and generic square"],
+  ["portrait", "1080x1350", "LinkedIn carousel page"],
+  ["producthunt", "1270x760", "Product Hunt gallery"],
+  ["readme-banner", "1280x400", "README header"],
+];
+---
+<Docs title="Templates and formats: Shipseal" description="The five v1 templates, the platform sizes they support, and how text fitting works." heading="Templates">
+  <table>
+    <thead><tr><th>Template</th><th>Event</th><th>Content</th><th>Formats</th></tr></thead>
+    <tbody>{tpl.map(([a,b,c,d]) => <tr><td><code>{a}</code></td><td>{b}</td><td>{c}</td><td>{d}</td></tr>)}</tbody>
+  </table>
+  <p>Every template renders in dark and light. The brand's <code>theme</code> decides the default.</p>
+
+  <h2>Formats</h2>
+  <table>
+    <thead><tr><th>Id</th><th>Size</th><th>Use</th></tr></thead>
+    <tbody>{fmt.map(([a,b,c]) => <tr><td><code>{a}</code></td><td>{b}</td><td>{c}</td></tr>)}</tbody>
+  </table>
+  <p>
+    Templates are designed per format rather than scaled. A 1200x630 landscape card and a 1080x1350
+    portrait card need different arrangements, so each one gets its own.
+  </p>
+
+  <h2>Text fitting</h2>
+  <p>
+    Text never silently overflows. For each slot Shipseal measures the real fonts at decreasing sizes until
+    the line count fits, using Takumi's own measurement so the result matches what gets rendered.
+  </p>
+  <ol>
+    <li>Try font sizes from the maximum down to the minimum.</li>
+    <li>Take the first size where the text fits the allowed number of lines.</li>
+    <li>If nothing fits, truncate at a word boundary and record a <code>fit-warning</code> in the manifest.</li>
+  </ol>
+  <div class="callout">
+    <strong>Treat a fit warning as a copy problem.</strong> It means the text was shrunk or cut. Shorten
+    the sentence rather than widening the template. <code>--strict</code> turns any fit warning into exit
+    code 2, which is worth using in CI.
+  </div>
+
+  <h2>Safe zones</h2>
+  <p>
+    Critical text stays at least 64px from the edge on landscape formats, because platforms crop previews
+    and overlay their own interface near the edges.
+  </p>
+</Docs>

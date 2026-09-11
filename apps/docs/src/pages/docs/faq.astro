@@ -1,0 +1,58 @@
+---
+import Docs from "../../layouts/Docs.astro";
+---
+<Docs title="FAQ: Shipseal" description="Common questions about how Shipseal renders, what it sends anywhere, and what it refuses to do." heading="FAQ">
+  <h2>Does it use an AI image model?</h2>
+  <p>
+    No, and it never will. Output has to be deterministic and brand exact. The same facts, brand, template
+    and version produce the same bytes. Image models cannot promise that, and they mangle text.
+  </p>
+
+  <h2>Do I need an API key?</h2>
+  <p>
+    No. Deterministic rules write good default copy. An optional LLM can improve headline wording if you
+    enable it, and even then it only writes words.
+  </p>
+
+  <h2>Does it run a headless browser?</h2>
+  <p>
+    No. Rendering uses <a href="https://takumi.kane.tw">Takumi</a>, a Rust engine with no browser involved.
+    A 1200x630 card renders in a few milliseconds.
+  </p>
+
+  <h2>What gets sent anywhere?</h2>
+  <p>
+    Without the LLM enabled, nothing leaves your machine except public API reads for stars and download
+    counts. There is no Shipseal server and no telemetry. With the LLM enabled, only changelog lines, your
+    tagline and names are sent, never source code or secrets.
+  </p>
+
+  <h2>Can I use my own fonts?</h2>
+  <p>
+    Yes. Point <code>fonts.*.file</code> at a TTF, OTF, WOFF or WOFF2. Geist ships as the default and Geist
+    Mono is bundled for code cards.
+  </p>
+
+  <h2>Does it work in a monorepo?</h2>
+  <p>
+    Yes. Use <code>--package &lt;path&gt;</code> to pick a workspace package. Shipseal also looks for a
+    changelog under <code>packages/*</code> and <code>apps/*</code>, and ignores the name of a private
+    workspace root, since that is plumbing rather than a brand.
+  </p>
+
+  <h2>A number on a card is wrong</h2>
+  <p>
+    Open <code>manifest.json</code> and find the fact. Its <code>ref</code> names exactly where the value came
+    from, so you can check the source. Numbers are never generated, so a wrong number always means a wrong
+    source. See <a href="/docs/manifest">the manifest reference</a>.
+  </p>
+
+  <h2>Can I write my own template?</h2>
+  <p>
+    Not as a stable public interface yet. Templates live in the package and the contract is still moving.
+    Open an issue describing what you need and it will inform the design.
+  </p>
+
+  <h2>What does it cost?</h2>
+  <p>MIT licensed and free. No account, no hosted service, no metering.</p>
+</Docs>

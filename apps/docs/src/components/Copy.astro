@@ -1,0 +1,31 @@
+---
+/**
+ * Wraps a code block with a copy button. The button is added by script, so a reader with no
+ * JavaScript still sees the code and can select it by hand.
+ */
+---
+<div class="copywrap" data-copy><slot /></div>
+
+<script>
+  for (const wrap of document.querySelectorAll<HTMLElement>("[data-copy]")) {
+    const code = wrap.querySelector("pre");
+    if (code === null) continue;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "Copy";
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(code.innerText.trim());
+        button.textContent = "Copied";
+        button.dataset.copied = "";
+        setTimeout(() => {
+          button.textContent = "Copy";
+          delete button.dataset.copied;
+        }, 1600);
+      } catch {
+        button.textContent = "Press Cmd C";
+      }
+    });
+    wrap.append(button);
+  }
+</script>

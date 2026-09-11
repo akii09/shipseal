@@ -1,0 +1,16 @@
+{
+  "name": "@shipseal/docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "typecheck": "echo 'docs: astro check not wired yet'",
+    "test": "echo 'no tests for the docs site'"
+  },
+  "devDependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.2"
+  }
+}

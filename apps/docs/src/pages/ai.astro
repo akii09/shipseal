@@ -1,0 +1,188 @@
+---
+import Base from "../layouts/Base.astro";
+import Copy from "../components/Copy.astro";
+
+const setupPrompt = `# Task
+Add Shipseal to this repository so publishing a GitHub release automatically generates and
+attaches social images.
+
+# Context
+Shipseal is an open source CLI and composite GitHub Action.
+Docs: https://shipseal.dev  Machine readable: https://shipseal.dev/llms.txt
+Package: shipseal on npm, Node 22+, MIT. Renders with Takumi, no browser and no image model.
+
+# Steps
+1. Run \`npx shipseal@latest init --yes\` at the repository root. It detects the brand
+   (name, tagline, colours, logo, fonts) and writes .shipseal/brand.json and
+   .shipseal/config.json. Commit both.
+2. Open .shipseal/brand.json and check the colours. Any colour it could not detect is
+   reported as a built-in default in the init output, so fix those by hand.
+3. Add .github/workflows/shipseal.yml:
+
+   name: Shipseal
+   on:
+     release:
+       types: [published]
+   permissions:
+     contents: write
+   jobs:
+     visuals:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+           with:
+             fetch-depth: 0
+         - uses: akii09/shipseal@v1
+           env:
+             GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+
+4. Add .shipseal/output/ to .gitignore.
+5. Verify locally with \`npx shipseal@latest release --dry-run\`, which prints the facts it
+   collected without rendering anything.
+
+# Constraints
+- fetch-depth: 0 is required. Without full history and tags the release facts are incomplete.
+- Do not invent values in brand.json. If a colour is not found in the project, leave the
+  default in place and tell me which ones need my attention.
+- Do not add an image generation dependency, and do not add a headless browser. Shipseal is
+  deterministic on purpose.
+- Do not edit files under .shipseal/output. They are generated.
+
+# Done when
+- .shipseal/brand.json and .shipseal/config.json exist and are committed.
+- The workflow file exists with fetch-depth: 0 and contents: write.
+- \`npx shipseal@latest release --dry-run\` prints facts with no error.
+- You have told me every colour that fell back to a built-in default.`;
+
+const debugPrompt = `# Task
+A Shipseal card came out wrong. Diagnose it from evidence, not from guesses.
+
+# Gather evidence first, change nothing yet
+1. Run \`npx shipseal@latest doctor\`. It checks Node, git, a shallow clone, brand.json,
+   fonts, the logo and the renderer.
+2. Run \`npx shipseal@latest release --dry-run --json\`. This prints every collected fact
+   with its provenance and renders nothing.
+3. Read .shipseal/output/<tag>/manifest.json. Every file, fact, computed value, warning and
+   missing fact is listed there.
+
+Read these before changing anything:
+- A wrong number is a source problem, never a template problem. Find the fact in the
+  manifest and check its \`ref\`.
+- A "fit-warning" means text was shrunk or truncated. Shorten the copy rather than widening
+  the template.
+- A missing element is listed under \`missing\` with the fact that caused it.
+- Wrong colours mean detection failed. The init output names every colour that fell back to
+  a built-in default.`;
+
+const facts = [
+  ["Package", "shipseal on npm, Node 22 or newer, MIT"],
+  ["Action", "akii09/shipseal@v1, composite, needs fetch-depth: 0"],
+  ["Commands", "init, release, milestone, bench, doctor"],
+  ["Config", ".shipseal/brand.json and .shipseal/config.json"],
+  ["Output", ".shipseal/output/<event-id>/ plus manifest.json"],
+  ["Rendering", "Takumi. No headless browser, no image model"],
+];
+---
+
+<Base
+  title="Shipseal for coding agents: prompts, rules and machine-readable docs"
+  description="Ready-to-paste prompts that wire Shipseal into a repository, plus an AGENTS.md snippet and llms.txt for coding agents."
+>
+  <section class="head">
+    <div class="wrap centered">
+      <p class="eyebrow">For your agent</p>
+      <h1>You were never going to read all this.</h1>
+      <p class="lede muted">
+        Fair enough. Copy a prompt, paste it into Claude Code, Cursor, Copilot or whatever is
+        typing for you today, and it will wire Shipseal into your repo properly.
+        The prompts below tell it where the real docs are and which mistakes to avoid,
+        so it checks instead of guessing.
+      </p>
+      <p class="tiny muted">
+        Humans are also allowed here. <a href="/docs/quick-start">The quick start</a> takes
+        about four minutes.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap prompts">
+      <div class="promptcard">
+        <div class="phead">
+          <h2>Set it up</h2>
+          <span class="tag">paste into any agent</span>
+        </div>
+        <Copy><pre><code>{setupPrompt}</code></pre></Copy>
+      </div>
+
+      <div class="promptcard">
+        <div class="phead">
+          <h2>Something looks wrong</h2>
+          <span class="tag">debugging</span>
+        </div>
+        <Copy><pre><code>{debugPrompt}</code></pre></Copy>
+      </div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <p class="eyebrow">Facts an agent needs</p>
+      <h2>The short version</h2>
+      <dl class="facts section-body">
+        {facts.map(([k, v]) => (
+          <div>
+            <dt>{k}</dt>
+            <dd>{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <p class="note muted">
+        Machine readable: <a href="/llms.txt">llms.txt</a>, which agents that support it read
+        instead of scraping this page. An MCP server is not available yet, so point your agent
+        at these prompts for now.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">If your repo has an AGENTS.md</p>
+      <h2>Drop this in</h2>
+      <Copy><pre class="plain section-body"><code>{`## Release visuals
+
+This repo uses Shipseal (https://shipseal.dev) to generate release images.
+
+- Brand config lives in .shipseal/brand.json. Edit it rather than hard-coding colours.
+- Never put a number on a card by hand. Numbers come from sources with provenance and
+  land in manifest.json.
+- After changing a template or the brand, run \`npx shipseal@latest release --dry-run\`
+  and read the facts before rendering.
+- .shipseal/output/ is generated. Do not commit it.`}</code></pre></Copy>
+    </div>
+  </section>
+
+  <style>
+    .head { padding-top: clamp(3rem, 7vw, 5rem); }
+    .lede { font-size: clamp(1rem, 1.6vw, 1.12rem); max-width: var(--measure); }
+    .head h1 { max-width: 18ch; }
+    .tiny { font-size: 0.88rem; margin-top: 1.2rem; }
+    .tiny a { color: var(--primary); }
+
+    .promptcard { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+    .prompts { display: grid; gap: 2rem; }
+    .phead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+    .phead h2 { font-size: 1.1rem; }
+    .tag { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 0.2rem 0.6rem; }
+    .promptcard pre, .plain { margin: 0; padding: 1.25rem; overflow-x: auto; font-size: 0.83rem; line-height: 1.7; color: #c9c9d1; }
+    .plain { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+
+    .facts { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; margin: 0 0 1.5rem; grid-template-columns: 1fr; }
+    @media (min-width: 720px) { .facts { grid-template-columns: 1fr 1fr; } }
+    .facts > div { background: var(--bg); padding: 1.1rem 1.25rem; }
+    dt { font-family: var(--mono); font-size: 0.72rem; color: var(--primary); }
+    dd { margin: 0.3rem 0 0; font-size: 0.92rem; }
+    .note { font-size: 0.95rem; max-width: var(--measure); }
+    .note a { color: var(--primary); }
+  </style>
+</Base>

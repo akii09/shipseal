@@ -1,0 +1,203 @@
+---
+import Base from "../layouts/Base.astro";
+import SealedCard from "../components/SealedCard.astro";
+import SadPost from "../components/SadPost.astro";
+
+const steps = [
+  { n: "01", t: "Read", d: "Facts already in your repo: the tag, the changelog, contributors, stars, downloads." },
+  { n: "02", t: "Decide", d: "Optional AI picks the highlights and writes the headline. Words only, never numbers." },
+  { n: "03", t: "Design", d: "Facts drop into templates wearing your brand colours, fonts and logo." },
+  { n: "04", t: "Render", d: "Takumi rasterises to PNG in milliseconds. No browser, no image model." },
+  { n: "05", t: "Deliver", d: "Files land in a folder, attach to the GitHub release, or both." },
+];
+
+const formats = [
+  ["og", "1200x630", "Link previews"],
+  ["github-social", "1280x640", "Repo preview"],
+  ["x", "1200x675", "X posts"],
+  ["linkedin", "1200x627", "LinkedIn"],
+];
+---
+
+<Base
+  title="Shipseal: release visuals from one line of YAML"
+  description="Turn releases, milestones and benchmarks into ready-to-post images in your brand colours. Every number verified from your repository, with provenance in a manifest. No browser, no image model."
+>
+  <section class="hero">
+    <div class="wrap grid">
+      <div class="copy">
+        <p class="eyebrow">Open source CLI and GitHub Action</p>
+        <h1>Your release, <span class="hl">as an image</span>. Automatically.</h1>
+        <p class="lede muted">
+          Shipseal is a command line tool that reads your repo, then renders a folder of
+          ready-to-post images for a release, a milestone or a benchmark. Your colours, your
+          logo, correct size for every platform. <strong class="fg">Every number on the card
+          comes from a real source</strong>, never from a model.
+        </p>
+        <div class="actions">
+          <a class="btn btn-primary" href="/docs/quick-start">Get started</a>
+          <a class="btn btn-ghost" href="https://github.com/akii09/shipseal">Star on GitHub</a>
+        </div>
+        <div class="cmd"><span class="dollar">$</span> npx shipseal@latest init</div>
+      </div>
+      <SealedCard />
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap split problem">
+      <div>
+        <p class="eyebrow">The problem</p>
+        <h2 class="claim">
+          Shipping got faster.<br />
+          <span class="muted">Announcing it did not.</span>
+        </h2>
+        <p class="lede muted">
+          Every release wants an OG image, an X card, a LinkedIn card, a GitHub preview. So you
+          skip them, or lose an hour in Figma, or let an image model invent a number that was
+          never true and mangle the text on the way.
+        </p>
+        <p class="lede muted">
+          Shipseal takes the hour back, and refuses to invent anything.
+        </p>
+      </div>
+      <SadPost />
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">What you get</p>
+      <h2>One command, one folder, eight images</h2>
+      <pre class="code tree section-body"><code>{`.shipseal/output/v2.0.0/
+├── og.png                 1200x630   link previews
+├── github-social.png      1280x640   repo preview
+├── x.png                  1200x675   X posts
+├── linkedin.png           1200x627   LinkedIn
+├── highlights.png                    what changed
+├── code.png                          API snippet
+└── manifest.json                     every fact, and where it came from`}</code></pre>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <p class="eyebrow">How it works</p>
+      <h2>Five steps, no browser</h2>
+      <ol class="steps section-body">
+        {steps.map((s) => (
+          <li>
+            <span class="n">{s.n}</span>
+            <h3>{s.t}</h3>
+            <p class="muted">{s.d}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow">Verified facts</p>
+        <h2>The manifest is the proof</h2>
+        <p class="lede muted">
+          An AI writes words. Code writes numbers. Every figure on a card comes from git, the
+          GitHub API, npm or your own CI, and lands in <code>manifest.json</code> with the
+          exact reference it came from. If a fact is missing, the element is hidden. Nothing
+          is estimated and nothing is invented.
+        </p>
+      </div>
+      <pre class="code"><code>{`"metrics.stars": {
+  "value": 1042,
+  "source": "github-api",
+  "ref": "GET /repos/akii09/pdfx
+          stargazers_count",
+  "fetchedAt": "2026-09-11T10:00:00Z"
+}`}</code></pre>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <p class="eyebrow">One event, every size</p>
+      <h2>Sized for the places you post</h2>
+      <div class="formats section-body">
+        {formats.map(([id, size, use]) => (
+          <div class="fmt">
+            <code>{id}</code>
+            <span class="size">{size}</span>
+            <span class="muted use">{use}</span>
+          </div>
+        ))}
+      </div>
+      <p class="muted note">Plus square, portrait, Product Hunt and README banner sizes.</p>
+    </div>
+  </section>
+
+  <section class="agents">
+    <div class="wrap">
+      <div class="agentbox">
+        <p class="eyebrow">For your agent</p>
+        <h2>Reading docs? In this economy?</h2>
+        <p class="lede muted">
+          Copy the prompt, paste it into your coding agent, go get a coffee. It reads the
+          real API and wires Shipseal into your repo. We will not tell anyone.
+        </p>
+        <a class="btn btn-primary" href="/ai">Take the prompt</a>
+        <p class="smallprint muted">Humans welcome too. The docs are right there.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="final">
+    <div class="wrap center">
+      <h2>Your next release deserves better than a text post.</h2>
+      <div class="cmd"><span class="dollar">$</span> npx shipseal@latest init</div>
+      <p class="muted smallprint">MIT licensed. Node 22 or newer. No account, no server, no telemetry.</p>
+    </div>
+  </section>
+
+  <style>
+    .hero { padding-top: clamp(3rem, 7vw, 5.5rem); }
+    .grid { display: grid; gap: clamp(2.5rem, 6vw, 4rem); align-items: center; grid-template-columns: 1fr; }
+    @media (min-width: 900px) { .grid { grid-template-columns: 1.05fr 1fr; } }
+
+    .hl { color: var(--primary); }
+    .fg { color: var(--fg); font-weight: 600; }
+    .problem { align-items: start; }
+    .tree { color: var(--muted); font-size: 0.84rem; }
+    .tree code { color: inherit; }
+    .lede { font-size: clamp(1rem, 1.6vw, 1.12rem); max-width: var(--measure); }
+    .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-block: 2rem 1.1rem; }
+
+    .band { background: linear-gradient(180deg, transparent, #0e0e10 12%, #0e0e10 88%, transparent); }
+    .claim { margin-top: 0.7rem; }
+
+    .steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; grid-template-columns: 1fr; }
+    @media (min-width: 720px) { .steps { grid-template-columns: repeat(5, 1fr); } }
+    .steps li { background: var(--bg); padding: 1.5rem 1.25rem; }
+    .steps .n { font-family: var(--mono); font-size: 0.72rem; color: var(--primary); }
+    .steps h3 { font-size: 1.05rem; margin: 0.45rem 0 0.35rem; }
+    .steps p { font-size: 0.9rem; }
+
+    .split { display: grid; gap: 2.5rem; align-items: center; grid-template-columns: 1fr; }
+    @media (min-width: 900px) { .split { grid-template-columns: 1fr 1fr; } }
+    .code { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem; overflow-x: auto; font-size: 0.86rem; line-height: 1.65; margin-block: 0; color: var(--accent); }
+
+    .formats { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; grid-template-columns: 1fr; }
+    @media (min-width: 640px) { .formats { grid-template-columns: repeat(4, 1fr); } }
+    .fmt { background: var(--bg); padding: 1.35rem 1.15rem; display: grid; gap: 0.3rem; }
+    .fmt code { color: var(--primary); }
+    .size { font-family: var(--mono); font-size: 0.82rem; }
+    .use { font-size: 0.85rem; }
+    .note { margin-top: 1.1rem; font-size: 0.9rem; }
+
+    .agentbox { border: 1px dashed #3a3a40; border-radius: var(--radius); padding: clamp(1.8rem, 5vw, 3rem); background: radial-gradient(120% 140% at 0% 0%, #17141a 0%, #0f0f11 60%); }
+    .agentbox .btn { margin-top: 1.7rem; }
+    .smallprint { font-size: 0.85rem; margin-top: 1rem; }
+
+    .final .center { display: grid; justify-items: center; gap: 1.5rem; text-align: center; }
+    .final h2 { max-width: 22ch; }
+  </style>
+</Base>

@@ -1,0 +1,81 @@
+---
+import Docs from "../../layouts/Docs.astro";
+const inputs = [
+  ["command", "release", "release, milestone or bench"],
+  ["formats", "from config", "Comma separated list"],
+  ["upload-assets", "true", "Attach images to the GitHub release"],
+  ["artifact", "true", "Also upload the folder as a workflow artifact"],
+  ["strict", "false", "Fail the job on any fit warning"],
+  ["llm", "false", "Enable LLM copy, needs a secret"],
+  ["version", "latest", "Shipseal version to run"],
+];
+---
+<Docs title="GitHub Action: Shipseal" description="Run Shipseal on release, attach images automatically, and see what it did in the job summary." heading="GitHub Action">
+  <p>A composite action. It sets up Node, runs the published CLI, and uploads the result.</p>
+
+  <h2>Minimal workflow</h2>
+  <pre><code>{`name: Shipseal
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  visuals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: akii09/shipseal@v1
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}`}</code></pre>
+  <div class="callout">
+    <strong>Two things are not optional.</strong> <code>fetch-depth: 0</code>, or the release facts are
+    incomplete. And <code>contents: write</code>, or the images cannot be attached to the release.
+  </div>
+
+  <h2>Inputs</h2>
+  <table>
+    <thead><tr><th>Input</th><th>Default</th><th>Meaning</th></tr></thead>
+    <tbody>{inputs.map(([a,b,c]) => <tr><td><code>{a}</code></td><td><code>{b}</code></td><td>{c}</td></tr>)}</tbody>
+  </table>
+
+  <h2>Outputs</h2>
+  <ul>
+    <li><code>dir</code>: the folder containing the generated pack.</li>
+    <li><code>skipped</code>: <code>true</code> when a milestone run found no crossed threshold.</li>
+  </ul>
+
+  <h2>Pin the version</h2>
+  <p>
+    <code>version</code> defaults to <code>latest</code>, which is convenient but means a release can change
+    under you. Pin an exact version for anything you care about being reproducible.
+  </p>
+  <pre><code>{`- uses: akii09/shipseal@v1
+  with:
+    version: "0.0.5"`}</code></pre>
+
+  <h2>Milestones on a schedule</h2>
+  <p>
+    Milestones are not tied to a release, so run them on a cron. The job exits cleanly and generates
+    nothing when no threshold has been crossed.
+  </p>
+  <pre><code>{`on:
+  schedule:
+    - cron: "0 9 * * 1"
+
+jobs:
+  milestone:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: akii09/shipseal@v1
+        with:
+          command: milestone`}</code></pre>
+
+  <h2>Fail on bad layout</h2>
+  <p>Set <code>strict: true</code> to turn any fit warning into a failed job, rather than shipping truncated text.</p>
+</Docs>

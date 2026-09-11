@@ -1,0 +1,48 @@
+---
+import Docs from "../../layouts/Docs.astro";
+---
+<Docs title="Configuration: Shipseal" description="Every field in .shipseal/config.json, with defaults." heading="Configuration">
+  <p><code>.shipseal/config.json</code> is written by <code>init</code>. Every field is optional.</p>
+  <pre><code>{`{
+  "version": 1,
+  "outputDir": ".shipseal/output",
+  "formats": ["og", "github-social", "x", "linkedin"],
+  "release": {
+    "templates": ["release-hero", "release-highlights", "code-card"],
+    "maxHighlights": 4,
+    "changelogPath": "CHANGELOG.md",
+    "snippet": null
+  },
+  "milestones": {
+    "stars": [100, 250, 500, 1000, 2500, 5000, 10000],
+    "downloads": [1000, 10000, 100000, 1000000],
+    "contributors": [10, 25, 50, 100]
+  },
+  "bench": { "file": ".shipseal/bench.json" },
+  "copy": { "llm": false, "provider": null, "model": null, "maxRetries": 2 },
+  "output": { "imageFormat": "png" },
+  "attribution": true
+}`}</code></pre>
+
+  <h2>Notable fields</h2>
+  <ul>
+    <li><code>release.snippet</code> forces the code card to use a specific range, for example <code>"src/index.ts#L10-L24"</code>. Otherwise the first fenced code block in your README is used.</li>
+    <li><code>release.changelogPath</code> defaults to the repository root. In a monorepo, Shipseal also looks under <code>packages/*</code> and <code>apps/*</code>, which is where Changesets writes it.</li>
+    <li><code>copy.llm</code> is <code>false</code> by default. Everything works without an API key.</li>
+    <li><code>output.imageFormat</code> defaults to <code>png</code>. WebP is 58 percent smaller, but GitHub social previews accept PNG, JPG and GIF only.</li>
+    <li><code>attribution</code> adds a small "made with shipseal.dev" mark. Set it to <code>false</code> and it disappears. It is never forced.</li>
+  </ul>
+
+  <h2>Environment variables</h2>
+  <table>
+    <thead><tr><th>Variable</th><th>Purpose</th></tr></thead>
+    <tbody>
+      <tr><td><code>GITHUB_TOKEN</code></td><td>Optional. Raises API limits and enables release asset upload</td></tr>
+      <tr><td><code>SHIPSEAL_LLM_API_KEY</code></td><td>Only needed when <code>copy.llm</code> is true</td></tr>
+    </tbody>
+  </table>
+  <div class="callout">
+    <strong>Never put keys in config files.</strong> They are read from the environment only, and config
+    files are committed.
+  </div>
+</Docs>

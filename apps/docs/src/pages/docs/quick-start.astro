@@ -1,0 +1,64 @@
+---
+import Docs from "../../layouts/Docs.astro";
+---
+<Docs title="Quick start: Shipseal" description="Go from an empty repository to images attached to a GitHub release in about four minutes." heading="Quick start">
+  <p>Four minutes, start to finish. You need Node 22 or newer and a git repository with at least one tag.</p>
+
+  <h2>1. Detect your brand</h2>
+  <pre><code>npx shipseal@latest init</code></pre>
+  <p>
+    This reads your <code>package.json</code>, README, stylesheets and logo files, then writes
+    <code>.shipseal/brand.json</code> and <code>.shipseal/config.json</code>. It prints where every value
+    came from and renders one sample card so you can see the result immediately.
+  </p>
+  <div class="callout">
+    <strong>Read the output.</strong> Any colour Shipseal could not find in your project is reported as a
+    built-in default. Those are not your brand, so open <code>brand.json</code> and set them.
+  </div>
+  <p>Commit both files. They belong in the repository.</p>
+
+  <h2>2. Generate a pack</h2>
+  <pre><code>npx shipseal@latest release</code></pre>
+  <p>
+    Images land in <code>.shipseal/output/&lt;tag&gt;/</code> alongside a <code>manifest.json</code> listing
+    every fact and where it came from. To see the facts without rendering anything:
+  </p>
+  <pre><code>npx shipseal@latest release --dry-run</code></pre>
+
+  <h2>3. Automate it</h2>
+  <p>Add <code>.github/workflows/shipseal.yml</code>:</p>
+  <pre><code>{`name: Shipseal
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  visuals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: akii09/shipseal@v1
+        env:
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}`}</code></pre>
+  <div class="callout">
+    <strong><code>fetch-depth: 0</code> is required.</strong> Checkout uses a shallow clone by default,
+    which leaves Shipseal without the history and tags it needs. <code>shipseal doctor</code> warns you
+    if this is wrong.
+  </div>
+  <p>Publish a release. The images are generated and attached to it automatically.</p>
+
+  <h2>4. Ignore the output</h2>
+  <pre><code>echo ".shipseal/output/" &gt;&gt; .gitignore</code></pre>
+
+  <h2>If something looks off</h2>
+  <pre><code>npx shipseal@latest doctor</code></pre>
+  <p>
+    It checks Node, git, shallow clones, the brand file, fonts, the logo and the renderer, and tells you
+    how to fix each failure. See <a href="/docs/manifest">the manifest reference</a> for tracing a wrong value.
+  </p>
+</Docs>
