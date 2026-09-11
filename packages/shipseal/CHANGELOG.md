@@ -1,5 +1,20 @@
 # shipseal
 
+## 0.0.6
+
+### Patch Changes
+
+- a011b44: Never put a truncated headline on a card. Taking the first sentence of a changelog entry was
+  not enough on its own: a single long sentence still overflowed, and one release shipped a hero
+  card cut off mid-phrase. Shipseal now picks the first entry whose opening sentence fits, and
+  titles the card with the project name and version when nothing is short enough.
+- 17e0a06: Fill the highlights card when a release has only one or two entries. The list now grows to the
+  available height and centres itself, instead of leaving most of the card empty, which read as a
+  broken render rather than a small release.
+- a011b44: Do not use a private workspace root's name as the project name. It reached a real hero card as
+  "shipseal-monorepo 0.0.5". The directory name is used instead, and a README heading or the git
+  remote still wins when either has something better.
+
 ## 0.0.5
 
 ### Patch Changes
