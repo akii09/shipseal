@@ -3,6 +3,12 @@
 #
 # Before the first run, configure the trusted publisher on npmjs.com under the
 # package's Settings, using the values in docs/RELEASING.md.
+#
+# Actions here are pinned to full commit SHAs, not tags. GitHub's secure-use guidance
+# (checked 2026-09-12) calls a SHA "the only way to use an action as an immutable release",
+# because a tag can be moved or deleted by anyone who gains access to the action's repository.
+# This job holds the npm publishing identity over OIDC, so it is the one worth hardening first.
+# Dependabot's github-actions ecosystem bumps these and keeps the trailing version comment.
 name: Publish
 
 on:
@@ -26,11 +32,11 @@ jobs:
     # Provenance proves where a package was built, not that the source was reviewed.
     environment: npm-publish
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6.1.0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           registry-url: https://registry.npmjs.org
