@@ -74,6 +74,18 @@ describe("tailwind v3 and css vars", () => {
     expect(colors.background).toBe("#0b0b0c");
     expect(colors.primary).toBe("#ff4d4d");
   });
+
+  it("prefers .dark variables and muted-foreground for text", () => {
+    const css = `
+      :root { --background: #ffffff; --foreground: #111111; --muted: #f4f4f5; --muted-foreground: #71717a; --primary: #111111; }
+      .dark { --background: #090910; --foreground: #fafafa; --muted: #1c1c22; --muted-foreground: #a1a1aa; --primary: #fafafa; --accent: #1c1c22; }
+    `;
+    const colors = extractCssRootColors(css);
+    expect(colors.background).toBe("#090910");
+    expect(colors.foreground).toBe("#fafafa");
+    expect(colors.muted).toBe("#a1a1aa");
+    expect(colors.primary).toBe("#fafafa");
+  });
 });
 
 describe("dtcg and logo", () => {
@@ -113,5 +125,38 @@ describe("detectBrand", () => {
     expect(detection.sources.some((s) => s.field === "name" && s.source === "package.json#name")).toBe(
       true,
     );
+  });
+
+  it("uses README H1 casing when it matches package.json#name ignoring case", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-detect-h1-"));
+    await writeFile(join(dir, "package.json"), JSON.stringify({ name: "pdfx", description: "A demo project for tests" }));
+    await writeFile(join(dir, "README.md"), "# PDFx\n\nA demo project used to check display casing.\n");
+    const detection = await detectBrand(dir);
+    expect(detection.brand.name).toBe("PDFx");
+    expect(detection.sources.some((s) => s.field === "name" && s.source === "README.md H1")).toBe(true);
+  });
+
+  it("uses muted-foreground and rejects a muted surface that fails contrast", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-detect-muted-"));
+    await writeFile(join(dir, "package.json"), JSON.stringify({ name: "demo", description: "A demo project for tests" }));
+    await writeFile(
+      join(dir, "app.css"),
+      `
+        :root { --background: #ffffff; --foreground: #111111; --muted: #f4f4f5; --muted-foreground: #71717a; --primary: #111111; --accent: #f4f4f5; }
+        .dark { --background: #090910; --foreground: #fafafa; --muted: #1c1c22; --muted-foreground: #a1a1aa; --primary: #fafafa; --accent: #1c1c22; }
+        @theme inline {
+          --color-background: var(--background);
+          --color-foreground: var(--foreground);
+          --color-muted: var(--muted);
+          --color-muted-foreground: var(--muted-foreground);
+          --color-primary: var(--primary);
+          --color-accent: var(--accent);
+        }
+      `,
+    );
+    const detection = await detectBrand(dir);
+    expect(detection.brand.colors.background).toBe("#090910");
+    expect(detection.brand.colors.muted).toBe("#a1a1aa");
+    expect(detection.brand.colors.accent).toBe("#fafafa");
   });
 });

@@ -503,17 +503,17 @@ Run all detectors, score candidates, then show the result to the user for confir
 
 | Field | Detection sources, in order |
 |---|---|
-| name | `package.json#name` (strip scope), README first `# H1`, repo name |
+| name | `package.json#name` (strip scope), README first `# H1`, repo name. If the H1 matches the package name ignoring case, keep the H1 casing for display (`pdfx` + `# PDFx` → `PDFx`). |
 | tagline | `package.json#description`, first README paragraph after H1 (strip badges/images) |
 | url | `package.json#homepage`, `package.json#repository`, `git remote get-url origin` |
 | logo | `logo.svg`/`logo.png` in: repo root, `assets/`, `public/`, `.github/`, `docs/`, `static/`, `branding/`; then `favicon.svg` |
-| colors | Tailwind v4 `@theme { --color-* }` in CSS files; Tailwind v3 `theme.extend.colors` in `tailwind.config.*`; CSS `:root` variables named `--primary`, `--brand`, `--accent`, `--background`, `--foreground`; dominant non-neutral color of the SVG logo |
+| colors | Tailwind v4 `@theme { --color-* }` in CSS files; Tailwind v3 `theme.extend.colors` in `tailwind.config.*`; CSS `:root` and `.dark` variables named `--primary`, `--brand`, `--accent`, `--background`, `--foreground`, `--muted-foreground` (preferred over `--muted`, which is often a surface); dominant non-neutral color of the SVG logo |
 | fonts | Custom font files in `public/fonts` or `assets/fonts`; otherwise Geist |
 
 Rules:
 
 - Never execute project code to read config. Parse files statically. For `tailwind.config.js/ts`, extract color literals with a conservative parser and fall back to defaults if unsure.
-- Always ensure sufficient contrast between `background` and `foreground` (WCAG AA for large text, ratio at least 3:1). If detected colors fail, adjust `foreground` and tell the user.
+- Always ensure sufficient contrast between `background` and `foreground` (WCAG AA for large text, ratio at least 3:1). If detected colors fail, adjust `foreground` and tell the user. Apply the same 3:1 check to `muted` (secondary text) and `accent`. If `muted` fails, use the default muted gray. If `accent` fails, reuse `primary` instead of inventing a new hue.
 - `init` prints what it detected and where it found each value, then asks for confirmation (skippable with `--yes`).
 
 ---
@@ -571,13 +571,13 @@ Each source is a function returning partial `Facts` with provenance. Sources nev
 - Current tag: from event or `git describe --tags --abbrev=0`.
 - Previous tag: the tag before the current one in version order (`git tag --sort=-v:refname`).
 - Commits between tags: `git log <prev>..<tag> --pretty=format:...`.
-- Conventional Commit parsing: `feat`, `fix`, `perf`, `!`/`BREAKING CHANGE:` footers. Strip scopes for display; keep the original for the manifest.
+- Conventional Commit parsing: `feat`, `fix`, `perf`, `!`/`BREAKING CHANGE:` footers. Strip scopes, PR numbers, hashes, and author mentions from display; keep the original for the manifest. Namespaced tags (`pdfx-cli@0.6.2`) expose the semver after `@` as `version`.
 - Contributors: unique commit authors between tags (dedupe by email). Exclude bots (`[bot]` suffix, `dependabot`, `renovate`, `github-actions`).
 - In GitHub Actions, `actions/checkout` uses shallow clones by default. The Action must use `fetch-depth: 0` (Section 19) or git facts will be incomplete. `doctor` warns about shallow clones.
 
 ### 12.2 package-json
 
-`name`, `description`, `version`, `homepage`, `repository`, `license`. For monorepos, support `--package <path>` to pick a workspace package.
+`name`, `description`, `version`, `homepage`, `repository`, `license`. For monorepos, support `--package <path>` to pick a workspace package. This source does not invent a git tag from the version string. When the configured changelog has no matching section, also try `CHANGELOG.md` next to that package (Changesets monorepos).
 
 ### 12.3 readme
 
@@ -1181,6 +1181,10 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | npm downloads: `GET https://api.npmjs.org/downloads/point/last-week/{package}`; scoped names via `encodeURIComponent` | Current registry docs. 404 returns nothing. Tests mock fetch | Live network in tests; bulk query endpoint |
 | 2026-09-11 | GitHub Action uses `actions/checkout@v7` and `actions/setup-node@v7`, Node 22 from `.nvmrc` | Current majors as of 2026-09. Plan §19.3 example still showed `@v4` | Staying on v4 after the v7 majors shipped |
 | 2026-09-11 | Action input `version: workspace` runs the checked-out `packages/shipseal` CLI after a local build | The package is unpublished (`0.0.0`); `npx shipseal@latest` cannot dogfood this repo yet. Users keep `npx shipseal@<version>` | Publishing a dummy 0.0.0 to npm just to dogfood; bundling Takumi natives into a JS action |
+| 2026-09-11 | Brand name uses README H1 casing when it matches `package.json#name` ignoring case | Display names like `PDFx` are the H1, while npm names are lowercase. Source order in §10.3 stays the same | Inventing a title-case transform; ignoring the H1 when a package name exists |
+| 2026-09-11 | Prefer `--muted-foreground` and drop muted/accent that fail 3:1 against background | shadcn `--muted` is a surface, so cards rendered unreadable secondary text. Do not invent a chroma the repo does not have | Treating `--muted` as text; falling back to default red/amber when the site is zinc/white |
+| 2026-09-11 | `package-json` does not invent `v{version}` as `release.tag`; namespaced tags yield the semver after `@` | First-wins merge let a fake `v0.6.2` hide `pdfx-cli@0.6.2`, and previousVersion showed the full tag | Keeping the invented tag; stripping only a leading `v` |
+| 2026-09-11 | Pack `outputDir` resolves against `--cwd` | A relative `.shipseal/output` followed `process.cwd()`, so `shipseal release --cwd /other/repo` wrote into the Shipseal checkout | Resolving against the process working directory |
 
 ---
 

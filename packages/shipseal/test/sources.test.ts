@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { execFile } from "node:child_process";
@@ -6,7 +6,7 @@ import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
 import { collectChangelog, cleanChangelogItem } from "../src/sources/changelog.js";
 import { collectFacts } from "../src/sources/collect.js";
-import { collectGit, parseConventional } from "../src/sources/git.js";
+import { collectGit, parseConventional, versionFromTag } from "../src/sources/git.js";
 import { collectGithub } from "../src/sources/github.js";
 import { collectNpm } from "../src/sources/npm.js";
 import { collectBenchFile } from "../src/sources/bench-file.js";
@@ -36,6 +36,7 @@ describe("package-json source", () => {
     expect(facts.project?.npmPackage?.value).toBe("@acme/demo");
     expect(facts.project?.repo?.value).toBe("acme/demo");
     expect(facts.release?.version?.value).toBe("1.2.3");
+    expect(facts.release?.tag).toBeUndefined();
     expect(facts.release?.date).toBeUndefined();
   });
 });
@@ -83,6 +84,14 @@ describe("changelog source", () => {
   it("cleanChangelogItem strips hashes and authors", () => {
     expect(cleanChangelogItem("- abcdef1: Add thing (@bob)")).toBe("Add thing");
   });
+
+  it("cleanChangelogItem strips Changesets PR links, hashes, and thanks", () => {
+    expect(
+      cleanChangelogItem(
+        "- [#174](https://github.com/acme/demo/pull/174) [`eb437f2`](https://github.com/acme/demo/commit/eb437f2) Thanks [@ada](https://github.com/ada)! - Fix EPIPE crashes",
+      ),
+    ).toBe("Fix EPIPE crashes");
+  });
 });
 
 describe("git source", () => {
@@ -93,6 +102,17 @@ describe("git source", () => {
       breaking: false,
     });
     expect(parseConventional("feat!: drop v1")).toMatchObject({ breaking: true, type: "feat" });
+    expect(parseConventional("feat: add QR support (#168)")).toEqual({
+      type: "feat",
+      display: "Add QR support",
+      breaking: false,
+    });
+  });
+
+  it("reads a semver from namespaced tags", () => {
+    expect(versionFromTag("v2.0.0")).toBe("2.0.0");
+    expect(versionFromTag("pdfx-cli@0.6.2")).toBe("0.6.2");
+    expect(versionFromTag("@acme/demo@1.2.3")).toBe("1.2.3");
   });
 
   it("collects features between tags from a fixture repo", async () => {
@@ -199,6 +219,29 @@ describe("collectFacts", () => {
     expect(facts.project.name.value).toBe("demo");
     expect(facts.release?.features[0]?.value).toBe("QR support");
     expect(facts.release?.date?.value).toBe("2026-09-10");
+  });
+
+  it("uses the package changelog when the root file has no matching version", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-collect-pkg-cl-"));
+    await mkdir(join(dir, "packages", "cli"), { recursive: true });
+    await writeFile(
+      join(dir, "packages", "cli", "package.json"),
+      JSON.stringify({ name: "demo-cli", description: "A demo CLI used in collect tests", version: "0.6.2" }),
+    );
+    await writeFile(join(dir, "CHANGELOG.md"), "# Changelog\n");
+    await writeFile(
+      join(dir, "packages", "cli", "CHANGELOG.md"),
+      `## 0.6.2 - 2026-07-21\n\n### Patch Changes\n- [#174](https://github.com/acme/demo/pull/174) Fix EPIPE crashes\n`,
+    );
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "demo-cli@0.6.2" },
+      packagePath: join("packages", "cli", "package.json"),
+      skipNetwork: true,
+    });
+    expect(facts.release?.fixes[0]?.value).toBe("Fix EPIPE crashes");
+    expect(facts.release?.features).toEqual([]);
+    expect(facts.release?.tag?.value).toBe("v0.6.2");
   });
 });
 

@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import { fact } from "../facts/fact.js";
 import type { Fact } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
+import { cleanChangelogItem } from "./changelog.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -26,7 +27,7 @@ export async function collectGit(
   if (exists === undefined) {
     return {};
   }
-  const version = tag.replace(/^v/, "");
+  const version = versionFromTag(tag);
   const tags = await gitLines(cwd, ["tag", "--sort=-v:refname"]);
   const tagIndex = tags.indexOf(tag);
   const previousTag =
@@ -78,7 +79,7 @@ export async function collectGit(
     }),
   };
   if (previousTag !== undefined) {
-    release.previousVersion = fact(previousTag.replace(/^v/, ""), {
+    release.previousVersion = fact(versionFromTag(previousTag), {
       source: "git",
       ref: `git tag ${previousTag}`,
       fetchedAt,
@@ -101,12 +102,20 @@ export function parseConventional(subject: string): {
 } {
   const match = /^(?<type>\w+)(?<scope>\([^)]+\))?(?<bang>!)?:\s*(?<rest>.+)$/.exec(subject);
   if (match === null || match.groups === undefined) {
-    return { type: undefined, display: stripTrailingPeriod(subject), breaking: false };
+    return { type: undefined, display: displaySubject(subject), breaking: false };
   }
   const type = match.groups.type;
   const rest = match.groups.rest ?? subject;
   const breaking = match.groups.bang === "!" || /BREAKING CHANGE:/.test(subject);
-  return { type, display: stripTrailingPeriod(capitalize(rest)), breaking };
+  return { type, display: displaySubject(rest), breaking };
+}
+
+export function versionFromTag(tag: string): string {
+  const at = tag.lastIndexOf("@");
+  if (at >= 0 && at < tag.length - 1) {
+    return tag.slice(at + 1).replace(/^v/, "");
+  }
+  return tag.replace(/^v/, "");
 }
 
 export async function gitCurrentTag(cwd: string): Promise<string | undefined> {
@@ -138,14 +147,11 @@ function isBot(author: string, email: string): boolean {
   );
 }
 
-function capitalize(text: string): string {
-  const first = text.at(0);
+function displaySubject(text: string): string {
+  const cleaned = cleanChangelogItem(text);
+  const first = cleaned.at(0);
   if (first === undefined) {
-    return text;
+    return cleaned;
   }
-  return first.toUpperCase() + text.slice(1);
-}
-
-function stripTrailingPeriod(text: string): string {
-  return text.endsWith(".") ? text.slice(0, -1) : text;
+  return first.toUpperCase() + cleaned.slice(1);
 }

@@ -117,13 +117,17 @@ export function findVersionSection(
 export function cleanChangelogItem(item: string): string {
   return item
     .replace(/^\s*[-*]\s*/, "")
+    .replace(/\[`[a-f0-9]{7,40}`]\([^)]+\)/gi, "")
     .replace(/^[a-f0-9]{7,40}:\s*/i, "")
     .replace(/\(#\d+\)/g, "")
     .replace(/\[#\d+]\([^)]+\)/g, "")
+    .replace(/Thanks\s+\[@[\w-]+]\([^)]+\)!?\s*-?\s*/gi, "")
     .replace(/\[@[\w-]+]\([^)]+\)/g, "")
     .replace(/\(@[\w-]+\)/g, "")
     .replace(/\s+by\s+@[\w-]+/gi, "")
     .replace(/@[\w-]+/g, "")
+    .replace(/^Thanks\s*!?\s*-?\s*/i, "")
+    .replace(/^\s*[-*]\s*/, "")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\.$/, "");
@@ -164,10 +168,25 @@ function parseGroups(body: string): Array<{ heading: string; items: string[] }> 
 }
 
 function listItems(block: string): string[] {
-  return block
-    .split("\n")
-    .map((line) => line.trim())
-    .filter((line) => line.startsWith("- ") || line.startsWith("* "));
+  const items: string[] = [];
+  let current: string | undefined;
+  for (const raw of block.split("\n")) {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      if (current !== undefined) {
+        items.push(current);
+      }
+      current = trimmed;
+      continue;
+    }
+    if (current !== undefined && trimmed.length > 0 && !trimmed.startsWith("#")) {
+      current = `${current} ${trimmed}`;
+    }
+  }
+  if (current !== undefined) {
+    items.push(current);
+  }
+  return items;
 }
 
 function bucketForHeading(heading: string): "features" | "fixes" | "breaking" | undefined {

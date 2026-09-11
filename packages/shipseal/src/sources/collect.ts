@@ -1,6 +1,7 @@
 // Orchestrate collectors into one Facts object
 // Spec: docs/PROJECT_PLAN.md §12
 
+import { dirname, join } from "node:path";
 import type { ShipsealEvent } from "../core/events.js";
 import { ShipsealError } from "../core/errors.js";
 import { mergeFacts } from "../facts/merge.js";
@@ -8,7 +9,7 @@ import type { Facts } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
 import { collectBenchFile } from "./bench-file.js";
 import { collectChangelog } from "./changelog.js";
-import { collectGit } from "./git.js";
+import { collectGit, versionFromTag } from "./git.js";
 import { collectGithub } from "./github.js";
 import { collectNpm } from "./npm.js";
 import { collectPackageJson } from "./package-json.js";
@@ -38,11 +39,15 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
     gitEvent.previousTag = previousTag;
   }
   const git = await collectGit(options.cwd, gitEvent);
-  const version = git.release?.version?.value ?? pkg.release?.version?.value ?? tag?.replace(/^v/, "");
-  const changelog = await collectChangelog(
+  const version =
+    git.release?.version?.value ??
+    pkg.release?.version?.value ??
+    (tag === undefined ? undefined : versionFromTag(tag));
+  const changelog = await collectBestChangelog(
     options.cwd,
     version,
     options.changelogPath ?? "CHANGELOG.md",
+    options.packagePath,
   );
   const readme = await collectReadme(options.cwd);
   const snippet =
@@ -108,6 +113,35 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
     );
   }
   return facts;
+}
+
+async function collectBestChangelog(
+  cwd: string,
+  version: string | undefined,
+  changelogPath: string,
+  packagePath: string | undefined,
+): Promise<PartialFacts> {
+  const paths = [changelogPath];
+  if (packagePath !== undefined) {
+    const sibling = join(dirname(packagePath), "CHANGELOG.md");
+    if (!paths.includes(sibling)) {
+      paths.push(sibling);
+    }
+  }
+  const collected = await Promise.all(paths.map((path) => collectChangelog(cwd, version, path)));
+  return collected.find((facts) => changelogHasNotes(facts)) ?? {};
+}
+
+function changelogHasNotes(facts: PartialFacts): boolean {
+  const release = facts.release;
+  if (release === undefined) {
+    return false;
+  }
+  return (
+    (release.features?.length ?? 0) > 0 ||
+    (release.fixes?.length ?? 0) > 0 ||
+    (release.breaking?.length ?? 0) > 0
+  );
 }
 
 function gitRepoFromParts(pkg: PartialFacts, readme: PartialFacts): string | undefined {

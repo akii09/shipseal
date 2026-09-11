@@ -4,14 +4,20 @@
 import { parseCssColor } from "./color.js";
 import type { ExtractedColors } from "./tailwind.js";
 
-const ROOT_BLOCK = /:root\s*\{/g;
-const PROP = /--(primary|brand|accent|background|foreground|muted)\s*:\s*([^;]+);/g;
+const PROP =
+  /--(primary|brand|accent|background|foreground|muted-foreground|muted)\s*:\s*([^;]+);/g;
 
 export function extractCssRootColors(css: string): ExtractedColors {
+  const fromRoot = extractBlockColors(css, /:root\s*\{/g);
+  const fromDark = extractBlockColors(css, /\.dark\s*\{/g);
+  return mapFoundColors({ ...fromRoot, ...fromDark });
+}
+
+function extractBlockColors(css: string, blockRe: RegExp): Record<string, string> {
   const found: Record<string, string> = {};
-  ROOT_BLOCK.lastIndex = 0;
+  blockRe.lastIndex = 0;
   let match: RegExpExecArray | null;
-  while ((match = ROOT_BLOCK.exec(css)) !== null) {
+  while ((match = blockRe.exec(css)) !== null) {
     const open = css.indexOf("{", match.index);
     if (open === -1) {
       break;
@@ -35,6 +41,10 @@ export function extractCssRootColors(css: string): ExtractedColors {
       }
     }
   }
+  return found;
+}
+
+function mapFoundColors(found: Record<string, string>): ExtractedColors {
   const out: ExtractedColors = {};
   const background = found.background;
   if (background !== undefined) {
@@ -44,8 +54,9 @@ export function extractCssRootColors(css: string): ExtractedColors {
   if (foreground !== undefined) {
     out.foreground = foreground;
   }
-  if (found.muted !== undefined) {
-    out.muted = found.muted;
+  const muted = found["muted-foreground"] ?? found.muted;
+  if (muted !== undefined) {
+    out.muted = muted;
   }
   const primary = found.primary ?? found.brand;
   if (primary !== undefined) {

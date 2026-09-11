@@ -78,6 +78,10 @@ export function ensureForegroundContrast(
   return { foreground: lightRatio >= darkRatio ? light : dark, adjusted: true };
 }
 
+export function readableOnBackground(background: string, candidate: string): boolean {
+  return contrastRatio(background, candidate) >= LARGE_TEXT_CONTRAST;
+}
+
 function srgbEncode(channel: number): number {
   const abs = Math.abs(channel);
   const encoded = abs <= 0.0031308 ? 12.92 * abs : 1.055 * abs ** (1 / 2.4) - 0.055;

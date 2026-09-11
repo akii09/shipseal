@@ -150,8 +150,9 @@ function mapBrandColors(found: Record<string, string>): ExtractedColors {
   if (foreground !== undefined) {
     out.foreground = foreground;
   }
-  if (found.muted !== undefined) {
-    out.muted = found.muted;
+  const muted = found["muted-foreground"] ?? found.muted;
+  if (muted !== undefined) {
+    out.muted = muted;
   }
   const primary = found.primary ?? found.brand;
   if (primary !== undefined) {

@@ -1,9 +1,10 @@
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { changePhrase, percentChange } from "../src/bench/percent.js";
 import { highestCrossed, selectMilestone } from "../src/commands/milestone.js";
 import { DEFAULT_CONFIG } from "../src/config/schema.js";
 import { jobSummaryMarkdown, uploadReleaseAssets } from "../src/outputs/github-release.js";
-import { eventId } from "../src/outputs/files.js";
+import { eventId, resolveOutputDir } from "../src/outputs/files.js";
 import { MILESTONE_FACTS } from "./helpers/facts.js";
 
 describe("percentChange", () => {
@@ -38,6 +39,13 @@ describe("eventId", () => {
       "bench-2026-09-11",
     );
     expect(eventId({ kind: "milestone", metric: "stars", threshold: 1000 })).toBe("milestone-stars-1000");
+  });
+});
+
+describe("resolveOutputDir", () => {
+  it("resolves a relative output dir against cwd and leaves absolute paths", () => {
+    expect(resolveOutputDir("/repo/pdfx", ".shipseal/output")).toBe(join("/repo/pdfx", ".shipseal/output"));
+    expect(resolveOutputDir("/repo/pdfx", "/tmp/out")).toBe("/tmp/out");
   });
 });
 

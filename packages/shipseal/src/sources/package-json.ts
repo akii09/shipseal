@@ -91,11 +91,6 @@ export async function collectPackageJson(
         ref: `${packagePath}#version`,
         fetchedAt,
       }),
-      tag: fact(pkg.data.version.startsWith("v") ? pkg.data.version : `v${pkg.data.version}`, {
-        source: "package-json",
-        ref: `${packagePath}#version`,
-        fetchedAt,
-      }),
     };
   }
   return out;

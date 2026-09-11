@@ -6,7 +6,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, relative, basename } from "node:path";
 import { promisify } from "node:util";
 import { z } from "zod";
-import { ensureForegroundContrast, isNeutralHex, parseCssColor } from "./color.js";
+import { ensureForegroundContrast, isNeutralHex, parseCssColor, readableOnBackground } from "./color.js";
 import { extractCssRootColors } from "./css-vars.js";
 import { extractDtcgColors } from "./dtcg.js";
 import { findLogoPair } from "./logo.js";
@@ -70,6 +70,8 @@ export async function detectBrand(cwd: string): Promise<BrandDetection> {
     );
     upsertSource(sources, "colors.foreground", "contrast adjustment");
   }
+  applyReadableMuted(colors, sources, notes);
+  applyReadableAccent(colors, sources, notes);
 
   const brand: Brand = {
     version: 1,
@@ -105,9 +107,14 @@ function detectName(
   sources: FieldSource[],
 ): string {
   if (pkg?.name !== undefined) {
-    const name = stripScope(pkg.name);
+    const fromPkg = stripScope(pkg.name);
+    const h1 = readme === undefined ? undefined : extractH1(readme);
+    if (h1 !== undefined && h1.toLowerCase() === fromPkg.toLowerCase() && h1 !== fromPkg) {
+      sources.push({ field: "name", source: "README.md H1" });
+      return h1;
+    }
     sources.push({ field: "name", source: "package.json#name" });
-    return name;
+    return fromPkg;
   }
   const h1 = readme === undefined ? undefined : extractH1(readme);
   if (h1 !== undefined) {
@@ -235,6 +242,34 @@ async function detectColors(
     primary: merged.primary ?? DEFAULT_BRAND_COLORS.primary,
     accent: merged.accent ?? DEFAULT_BRAND_COLORS.accent,
   };
+}
+
+function applyReadableMuted(
+  colors: Brand["colors"],
+  sources: FieldSource[],
+  notes: string[],
+): void {
+  if (colors.muted === undefined || readableOnBackground(colors.background, colors.muted)) {
+    return;
+  }
+  colors.muted = DEFAULT_BRAND_COLORS.muted;
+  notes.push(
+    `Muted text color failed WCAG AA large-text contrast (3:1) against background, so it was set to ${DEFAULT_BRAND_COLORS.muted}.`,
+  );
+  upsertSource(sources, "colors.muted", "contrast adjustment");
+}
+
+function applyReadableAccent(
+  colors: Brand["colors"],
+  sources: FieldSource[],
+  notes: string[],
+): void {
+  if (colors.accent === undefined || readableOnBackground(colors.background, colors.accent)) {
+    return;
+  }
+  colors.accent = colors.primary ?? DEFAULT_BRAND_COLORS.primary;
+  notes.push("Accent failed contrast against background, so it uses the primary color.");
+  upsertSource(sources, "colors.accent", "contrast adjustment");
 }
 
 function applyColors(

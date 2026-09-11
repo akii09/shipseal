@@ -2,7 +2,7 @@
 // Spec: docs/PROJECT_PLAN.md §17.1
 
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import type { GenerateResult } from "../core/generate.js";
 import { buildManifest, type Manifest } from "./manifest.js";
 import type { Brand } from "../brand/schema.js";
@@ -27,6 +27,10 @@ export async function writePack(input: {
   });
   await writeFile(join(dir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   return { dir, manifest };
+}
+
+export function resolveOutputDir(cwd: string, configured: string): string {
+  return isAbsolute(configured) ? configured : join(cwd, configured);
 }
 
 export function eventId(event: ShipsealEvent, generatedAt = ""): string {
