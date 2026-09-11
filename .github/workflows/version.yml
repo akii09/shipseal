@@ -35,8 +35,13 @@ jobs:
 
       - uses: changesets/action@v2
         with:
-          version: pnpm changeset:version
-          commit: "chore: version packages"
-          title: "chore: version packages"
+          version-script: pnpm changeset:version
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
+          # No publish-script, so this job only opens the version pull request.
+          # Tags and releases stay manual: creating the GitHub release is the human
+          # decision that triggers publish.yml, and both default to true.
+          create-github-releases: false
+          push-git-tags: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
