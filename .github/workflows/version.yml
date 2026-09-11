@@ -57,11 +57,16 @@ jobs:
       # This is honest: the version commit only rewrites package.json, CHANGELOG.md and the
       # consumed changeset files, and these gates run against the versioned branch.
       - name: Verify and report the required check
-        if: steps.changesets.outputs.pullRequestNumber != ''
+        # No `if` on the action's outputs: the output name differs between "created" and
+        # "updated" runs, and guessing it silently skipped this step. Check for the branch.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          if ! git ls-remote --exit-code --heads origin changeset-release/main >/dev/null; then
+            echo "No version branch, nothing to verify."
+            exit 0
+          fi
           git fetch origin changeset-release/main
           git checkout changeset-release/main
           pnpm install --frozen-lockfile
