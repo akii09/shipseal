@@ -4,9 +4,10 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 
-const DIRECTORIES = ["", "assets", "public", ".github", "docs", "static", "branding"];
+const DIRECTORIES = ["", "assets", "assets/brand", "public", "public/brand", ".github", "docs", "static", "branding"];
+const ICON_NAMES = ["icon.svg", "icon.png"];
 const NAMES = ["logo.svg", "logo.png", "logo-light.svg", "logo-light.png"];
-const FALLBACKS = ["favicon.svg"];
+const FALLBACKS = [...ICON_NAMES, "favicon.svg"];
 
 export function findLogo(cwd: string): string | undefined {
   for (const dir of DIRECTORIES) {
@@ -17,9 +18,12 @@ export function findLogo(cwd: string): string | undefined {
       }
     }
   }
-  for (const name of FALLBACKS) {
-    if (existsSync(join(cwd, name))) {
-      return name;
+  for (const dir of DIRECTORIES) {
+    for (const name of FALLBACKS) {
+      const relative = dir === "" ? name : join(dir, name);
+      if (existsSync(join(cwd, relative))) {
+        return relative;
+      }
     }
   }
   return undefined;

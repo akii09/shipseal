@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "name": "shipseal",
+  "tagline": "Every release, sealed and ready to share.",
+  "url": "https://github.com/akii09/shipseal",
+  "logo": {
+    "light": "assets/brand/icon.png"
+  },
+  "colors": {
+    "background": "#0b0b0c",
+    "foreground": "#fafafa",
+    "muted": "#a1a1aa",
+    "primary": "#fb4c4b",
+    "accent": "#fbbf24"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Geist",
+      "weight": 700
+    },
+    "body": {
+      "family": "Geist",
+      "weight": 400
+    },
+    "mono": {
+      "family": "Geist Mono",
+      "weight": 400
+    }
+  },
+  "radius": 16,
+  "theme": "dark",
+  "style": "minimal",
+  "tokens": null
+}

@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "outputDir": ".shipseal/output",
+  "formats": [
+    "og",
+    "github-social",
+    "x",
+    "linkedin"
+  ],
+  "release": {
+    "templates": [
+      "release-hero",
+      "release-highlights",
+      "code-card"
+    ],
+    "maxHighlights": 4,
+    "changelogPath": "CHANGELOG.md",
+    "snippet": null
+  },
+  "milestones": {
+    "stars": [
+      100,
+      250,
+      500,
+      1000,
+      2500,
+      5000,
+      10000
+    ],
+    "downloads": [
+      1000,
+      10000,
+      100000,
+      1000000
+    ],
+    "contributors": [
+      10,
+      25,
+      50,
+      100
+    ]
+  },
+  "bench": {
+    "file": ".shipseal/bench.json"
+  },
+  "copy": {
+    "llm": false,
+    "provider": null,
+    "model": null,
+    "maxRetries": 2
+  },
+  "output": {
+    "imageFormat": "png"
+  },
+  "attribution": true
+}

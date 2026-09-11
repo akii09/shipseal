@@ -11,7 +11,7 @@ import { collectGithub } from "../src/sources/github.js";
 import { collectNpm } from "../src/sources/npm.js";
 import { collectBenchFile } from "../src/sources/bench-file.js";
 import { collectPackageJson } from "../src/sources/package-json.js";
-import { collectReadme } from "../src/sources/readme.js";
+import { collectReadme, extractH1, extractTagline } from "../src/sources/readme.js";
 import { mergeFacts } from "../src/facts/merge.js";
 import { fact } from "../src/facts/fact.js";
 
@@ -352,5 +352,61 @@ describe("partial release facts", () => {
       },
     ]);
     expect(facts.release?.version.value).toBe("1.0.0");
+  });
+});
+
+describe("README prose extraction", () => {
+  // Regression, found by running init on Shipseal's own repo. A README that opens with a
+  // centred logo and contains a YAML example yielded the name ".github/workflows/shipseal.yml"
+  // and a tagline of raw workflow YAML. A `#` comment inside a fence is not a heading, and a
+  // blank line inside a fence does not start a paragraph.
+  const README = [
+    '<p align="center">',
+    '  <img src="./assets/brand/wordmark.png" alt="Shipseal" width="400">',
+    "</p>",
+    "",
+    "Shipseal turns repository events into ready to post visuals.",
+    "",
+    "```yaml",
+    "# .github/workflows/shipseal.yml",
+    "on: { release: { types: [published] } }",
+    "",
+    "jobs:",
+    "  visuals:",
+    "    runs-on: ubuntu-latest",
+    "```",
+  ].join("\n");
+
+  it("does not read a comment inside a code fence as the H1", () => {
+    expect(extractH1(README)).toBeUndefined();
+  });
+
+  it("does not read fenced YAML as the tagline", () => {
+    const tagline = extractTagline(README);
+    expect(tagline).toBe("Shipseal turns repository events into ready to post visuals.");
+    expect(tagline).not.toContain("runs-on");
+  });
+
+  it("still reads a normal H1 and paragraph", () => {
+    const md = "# Shipseal\n\nEvery release, sealed and ready to share.\n";
+    expect(extractH1(md)).toBe("Shipseal");
+    expect(extractTagline(md)).toBe("Every release, sealed and ready to share.");
+  });
+});
+
+describe("workspace root name", () => {
+  // A private package.json is a workspace root. Its name is plumbing, not a brand:
+  // Shipseal's own root is "shipseal-monorepo", which must never reach a card.
+  it("ignores the name of a private package", async () => {
+    const { detectBrand } = await import("../src/brand/detect.js");
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-private-"));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo-monorepo", private: true }),
+      "utf8",
+    );
+    await writeFile(join(dir, "README.md"), "# Demo\n\nA demo project for testing.\n", "utf8");
+    const detection = await detectBrand(dir);
+    expect(detection.brand.name).toBe("Demo");
   });
 });

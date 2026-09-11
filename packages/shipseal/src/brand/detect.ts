@@ -11,6 +11,9 @@ import { extractCssRootColors } from "./css-vars.js";
 import { extractDtcgColors } from "./dtcg.js";
 import { findLogoPair } from "./logo.js";
 import { decodePng, dominantNonNeutralColor } from "./png.js";
+// One implementation only. detect.ts previously carried its own copies of these, which
+// drifted from the ones in sources/readme.ts and read a YAML comment as the project name.
+import { extractH1, extractTagline } from "../sources/readme.js";
 import {
   DEFAULT_BRAND_COLORS,
   DEFAULT_BRAND_FONTS,
@@ -42,6 +45,7 @@ export interface BrandDetection {
 }
 
 const packageSchema = z.object({
+  private: z.boolean().optional(),
   name: z.string().optional(),
   description: z.string().optional(),
   homepage: z.string().optional(),
@@ -107,7 +111,9 @@ function detectName(
   cwd: string,
   sources: FieldSource[],
 ): string {
-  if (pkg?.name !== undefined) {
+  // A private package.json is a workspace root, and its name is plumbing, not a brand.
+  // The shipseal repo's own root is "shipseal-monorepo", which is not what to put on a card.
+  if (pkg?.name !== undefined && pkg.private !== true) {
     const fromPkg = stripScope(pkg.name);
     const h1 = readme === undefined ? undefined : extractH1(readme);
     if (h1 !== undefined && h1.toLowerCase() === fromPkg.toLowerCase() && h1 !== fromPkg) {
@@ -391,37 +397,6 @@ function stripScope(name: string): string {
   return parts[parts.length - 1] ?? name;
 }
 
-function extractH1(markdown: string): string | undefined {
-  const match = /^#\s+(.+)$/m.exec(markdown);
-  const heading = match?.[1];
-  if (heading === undefined) {
-    return undefined;
-  }
-  return heading.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").trim();
-}
-
-function extractTagline(markdown: string): string | undefined {
-  const h1 = /^#\s+.+$/m.exec(markdown);
-  const start = h1 === null ? 0 : (h1.index ?? 0) + h1[0].length;
-  const rest = markdown.slice(start);
-  for (const block of rest.split(/\n\s*\n/)) {
-    const cleaned = stripBadges(block).trim();
-    if (cleaned.length >= 20 && !cleaned.startsWith("#")) {
-      return cleaned;
-    }
-  }
-  return undefined;
-}
-
-function stripBadges(text: string): string {
-  return text
-    .replace(/!\[[^\]]*]\([^)]+\)/g, "")
-    .replace(/<img[^>]*>/gi, "")
-    .replace(/\[!\[[^\]]*]\([^)]+\)]\([^)]+\)/g, "")
-    .replace(/<[^>]+>/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 function repositoryUrl(repository: z.infer<typeof packageSchema>["repository"]): string | undefined {
   if (typeof repository === "string") {

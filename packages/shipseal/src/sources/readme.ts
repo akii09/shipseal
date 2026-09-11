@@ -72,8 +72,23 @@ export async function collectConfiguredSnippet(
   };
 }
 
+/**
+ * Strip fenced code and HTML before reading prose out of a README.
+ *
+ * Skipping blocks that merely *start* with a fence is not enough. A `#` comment inside a YAML
+ * example reads as a markdown H1, and a blank line inside a fence makes its body look like a
+ * paragraph. Shipseal's own README hit both: the detected name became
+ * ".github/workflows/shipseal.yml" and the tagline became a chunk of workflow YAML.
+ */
+function stripNonProse(markdown: string): string {
+  return markdown
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/~~~[\s\S]*?~~~/g, "")
+    .replace(/<[^>]+>/g, "");
+}
+
 export function extractH1(markdown: string): string | undefined {
-  const match = /^#\s+(.+)$/m.exec(markdown);
+  const match = /^#\s+(.+)$/m.exec(stripNonProse(markdown));
   const heading = match?.[1];
   if (heading === undefined) {
     return undefined;
@@ -82,9 +97,10 @@ export function extractH1(markdown: string): string | undefined {
 }
 
 export function extractTagline(markdown: string): string | undefined {
-  const h1 = /^#\s+.+$/m.exec(markdown);
+  const prose = stripNonProse(markdown);
+  const h1 = /^#\s+.+$/m.exec(prose);
   const start = h1 === null ? 0 : (h1.index ?? 0) + h1[0].length;
-  for (const block of markdown.slice(start).split(/\n\s*\n/)) {
+  for (const block of prose.slice(start).split(/\n\s*\n/)) {
     const cleaned = stripBadges(block).trim();
     if (cleaned.length >= 20 && !cleaned.startsWith("#") && !cleaned.startsWith("```")) {
       return cleaned;
