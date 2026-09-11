@@ -10,6 +10,7 @@ import { ensureForegroundContrast, isNeutralHex, parseCssColor, readableOnBackgr
 import { extractCssRootColors } from "./css-vars.js";
 import { extractDtcgColors } from "./dtcg.js";
 import { findLogoPair } from "./logo.js";
+import { decodePng, dominantNonNeutralColor } from "./png.js";
 import {
   DEFAULT_BRAND_COLORS,
   DEFAULT_BRAND_FONTS,
@@ -225,6 +226,11 @@ async function detectColors(
   }
 
   if (merged.primary === undefined && logoPath !== undefined) {
+    const fromPng = logoPath.endsWith(".png") ? await dominantLogoColor(join(cwd, logoPath)) : undefined;
+    if (fromPng !== undefined) {
+      merged.primary = fromPng;
+      sources.push({ field: "colors.primary", source: `dominant colour in ${logoPath}` });
+    }
     const svg = logoPath.endsWith(".svg") ? await readMaybe(join(cwd, logoPath)) : undefined;
     if (svg !== undefined) {
       const fromLogo = firstNonNeutralSvgColor(svg);
@@ -233,6 +239,19 @@ async function detectColors(
         sources.push({ field: "colors.primary", source: `SVG fill in ${logoPath}` });
       }
     }
+  }
+
+  // Say which colours are built-in defaults rather than anything found in this project.
+  // Every other detected field prints its source, so staying silent here would let a user
+  // read Shipseal's own red as their brand colour.
+  const fellBack = (["background", "foreground", "muted", "primary", "accent"] as const).filter(
+    (field) => merged[field] === undefined,
+  );
+  if (fellBack.length > 0) {
+    notes.push(
+      `Using built-in defaults for ${fellBack.map((f) => `colors.${f}`).join(", ")}. ` +
+        "Nothing in this project set them. Edit .shipseal/brand.json to use your own.",
+    );
   }
 
   return {
@@ -420,6 +439,25 @@ function normalizeGitUrl(url: string): string {
     return `https://${ssh[1]}/${ssh[2].replace(/\.git$/, "")}`;
   }
   return url.replace(/^git\+/, "").replace(/\.git$/, "");
+}
+
+/**
+ * Dominant non-neutral colour of a PNG logo, or undefined when the file cannot be read or
+ * carries no colour. Detection reports the colour as not found rather than falling back to a
+ * built-in default that would be presented to the user as "your brand".
+ */
+async function dominantLogoColor(path: string): Promise<string | undefined> {
+  let buffer: Buffer;
+  try {
+    buffer = await readFile(path);
+  } catch {
+    return undefined;
+  }
+  const png = decodePng(buffer);
+  if (png === undefined) {
+    return undefined;
+  }
+  return dominantNonNeutralColor(png);
 }
 
 function firstNonNeutralSvgColor(svg: string): string | undefined {

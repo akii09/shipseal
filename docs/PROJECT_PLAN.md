@@ -507,14 +507,14 @@ Run all detectors, score candidates, then show the result to the user for confir
 | tagline | `package.json#description`, first README paragraph after H1 (strip badges/images) |
 | url | `package.json#homepage`, `package.json#repository`, `git remote get-url origin` |
 | logo | `logo.svg`/`logo.png` in: repo root, `assets/`, `public/`, `.github/`, `docs/`, `static/`, `branding/`; then `favicon.svg` |
-| colors | Tailwind v4 `@theme { --color-* }` in CSS files; Tailwind v3 `theme.extend.colors` in `tailwind.config.*`; CSS `:root` and `.dark` variables named `--primary`, `--brand`, `--accent`, `--background`, `--foreground`, `--muted-foreground` (preferred over `--muted`, which is often a surface); dominant non-neutral color of the SVG logo |
+| colors | Tailwind v4 `@theme { --color-* }` in CSS files; Tailwind v3 `theme.extend.colors` in `tailwind.config.*`; CSS `:root` and `.dark` variables named `--primary`, `--brand`, `--accent`, `--background`, `--foreground`, `--muted-foreground` (preferred over `--muted`, which is often a surface); dominant non-neutral color of the logo, read from SVG fills or decoded from PNG pixels |
 | fonts | Custom font files in `public/fonts` or `assets/fonts`; otherwise Geist |
 
 Rules:
 
 - Never execute project code to read config. Parse files statically. For `tailwind.config.js/ts`, extract color literals with a conservative parser and fall back to defaults if unsure.
 - Always ensure sufficient contrast between `background` and `foreground` (WCAG AA for large text, ratio at least 3:1). If detected colors fail, adjust `foreground` and tell the user. Apply the same 3:1 check to `muted` (secondary text) and `accent`. If `muted` fails, use the default muted gray. If `accent` fails, reuse `primary` instead of inventing a new hue.
-- `init` prints what it detected and where it found each value, then asks for confirmation (skippable with `--yes`).
+- `init` prints what it detected and where it found each value, then asks for confirmation (skippable with `--yes`). Colors that fall back to built-in defaults are named as defaults, including under `--yes`. A field with no source line was not detected.
 
 ---
 

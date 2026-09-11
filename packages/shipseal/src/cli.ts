@@ -42,6 +42,12 @@ export async function runCli(argv = process.argv): Promise<number> {
         for (const field of result.detection.sources) {
           process.stdout.write(`  ${field.field}: ${field.source}\n`);
         }
+        // Notes carry the "this is a built-in default, not your brand" disclosures.
+        // The interactive prompt already shows them, and --yes skips that prompt, so
+        // without this the user never learns which colours were not detected.
+        for (const note of result.detection.notes) {
+          process.stdout.write(`  note: ${note}\n`);
+        }
       }
     });
 
