@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write # commit the version bump to the release branch
   pull-requests: write # open and update the version PR
+  statuses: write # report the required check on the version branch, see below
 
 concurrency:
   group: version-${{ github.ref }}
@@ -33,7 +34,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - uses: changesets/action@v2
+      - id: changesets
+        uses: changesets/action@v2
         with:
           version-script: pnpm changeset:version
           commit-message: "chore: version packages"
@@ -45,3 +47,29 @@ jobs:
           push-git-tags: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Branch protection on main requires the "check" status, but GitHub deliberately does
+      # not trigger workflows for commits pushed with GITHUB_TOKEN, so CI never runs on the
+      # version branch and its pull request is blocked forever. The alternative fix is a
+      # personal access token, which reintroduces the long-lived credential that trusted
+      # publishing removed. Instead, run the same gates here and report the status ourselves.
+      #
+      # This is honest: the version commit only rewrites package.json, CHANGELOG.md and the
+      # consumed changeset files, and these gates run against the versioned branch.
+      - name: Verify and report the required check
+        if: steps.changesets.outputs.pullRequestNumber != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch origin changeset-release/main
+          git checkout changeset-release/main
+          pnpm install --frozen-lockfile
+          STATE=success
+          pnpm lint && pnpm typecheck && pnpm test && pnpm build || STATE=failure
+          SHA="$(git rev-parse HEAD)"
+          gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
+            -f state="$STATE" -f context=check \
+            -f description="Gates run by the version workflow" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          [[ "$STATE" == "success" ]]
