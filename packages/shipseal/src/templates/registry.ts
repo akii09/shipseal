@@ -1,4 +1,28 @@
 // Template registry
 // Spec: docs/PROJECT_PLAN.md §14.3
-// TODO: implement. Read AGENTS.md before editing.
-export {};
+
+import { ShipsealError } from "../core/errors.js";
+import type { TemplateDefinition } from "./contract.js";
+import { codeCard } from "./code-card.js";
+import { releaseHero } from "./release-hero.js";
+import { releaseHighlights } from "./release-highlights.js";
+
+const templates = [releaseHero, releaseHighlights, codeCard] as const;
+
+export function getTemplate(id: string): TemplateDefinition {
+  const found = templates.find((template) => template.id === id);
+  if (found === undefined) {
+    throw new ShipsealError(
+      "template.unknown",
+      `Unknown template "${id}".`,
+      `Use one of: ${templates.map((template) => template.id).join(", ")}.`,
+    );
+  }
+  return found;
+}
+
+export function templatesForEvent(kind: "release" | "milestone" | "bench"): TemplateDefinition[] {
+  return templates.filter((template) => template.events.includes(kind));
+}
+
+export const RELEASE_TEMPLATE_IDS = ["release-hero", "release-highlights", "code-card"] as const;

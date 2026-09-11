@@ -39,10 +39,14 @@ describe("init and doctor", () => {
 });
 
 describe("cli", () => {
-  it("prints help and a not-implemented error for release", async () => {
+  it("prints help and errors when release has no brand.json", async () => {
     const help = await runCli(["node", "shipseal", "--help"]);
     expect(help).toBe(0);
-    const code = await runCli(["node", "shipseal", "release"]);
+    const code = await runCli(["node", "shipseal", "release", "--cwd", await emptyDir()]);
     expect(code).toBe(1);
   });
 });
+
+async function emptyDir(): Promise<string> {
+  return mkdtemp(join(tmpdir(), "shipseal-cli-"));
+}

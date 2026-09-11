@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Renderer, type Node } from "takumi-js/node";
 import { container, text as textNode } from "takumi-js/helpers";
+import { fromJsx as takumiFromJsx } from "takumi-js/helpers/jsx";
 import { ShipsealError } from "../core/errors.js";
 import type {
   LayoutNode,
@@ -108,17 +109,26 @@ export function testCardNode(): LayoutNode {
 class TakumiRenderer implements RendererAdapter {
   constructor(private readonly renderer: Renderer) {}
 
+  async fromJsx(element: unknown): Promise<LayoutNode> {
+    const result = await takumiFromJsx(asReactElementLike(element));
+    return pack(result.node, result.css);
+  }
+
   async render(node: LayoutNode, opts: RenderOptions): Promise<Uint8Array> {
-    const buffer = await this.renderer.render(asNode(node), {
-      width: opts.width,
-      height: opts.height,
-      format: opts.format,
-    });
+    const packed = unpack(node);
+    const extras: { css: string[]; images?: RenderOptions["images"] } = {
+      css: opts.css ?? packed.css,
+    };
+    if (opts.images !== undefined) {
+      extras.images = opts.images;
+    }
+    const buffer = await renderWithFormat(this.renderer, packed.node, opts, extras);
     return Uint8Array.from(buffer);
   }
 
   async measure(node: LayoutNode, opts?: MeasureOptions): Promise<MeasureResult> {
-    const measured = await this.renderer.measure(asNode(node), measureOpts(opts));
+    const packed = unpack(node);
+    const measured = await this.renderer.measure(packed.node, measureOpts(opts));
     return {
       lines: countLines(measured),
       width: measured.width,
@@ -134,6 +144,34 @@ class TakumiRenderer implements RendererAdapter {
       height: measured.height,
     };
   }
+}
+
+function renderWithFormat(
+  renderer: Renderer,
+  node: Node,
+  opts: RenderOptions,
+  extras: { css: string[]; images?: RenderOptions["images"] },
+): Promise<Buffer> {
+  const width = opts.width;
+  const height = opts.height;
+  const css = extras.css;
+  const images = extras.images;
+  if (opts.format === "webp") {
+    if (images !== undefined) {
+      return renderer.render(node, { width, height, format: "webp", css, images });
+    }
+    return renderer.render(node, { width, height, format: "webp", css });
+  }
+  if (opts.format === "jpeg") {
+    if (images !== undefined) {
+      return renderer.render(node, { width, height, format: "jpeg", css, images });
+    }
+    return renderer.render(node, { width, height, format: "jpeg", css });
+  }
+  if (images !== undefined) {
+    return renderer.render(node, { width, height, format: "png", css, images });
+  }
+  return renderer.render(node, { width, height, format: "png", css });
 }
 
 function measureOpts(opts?: MeasureOptions): { width?: number; height?: number } {
@@ -169,16 +207,49 @@ function textMeasureNode(value: string, opts: MeasureTextOptions): LayoutNode {
 }
 
 function asNode(node: LayoutNode): Node {
-  if (!isTakumiNode(node)) {
-    throw new ShipsealError(
-      "render.invalid-node",
-      "render/measure received a value that is not a Takumi node tree.",
-      "Pass a node built by the renderer adapter (measureText or testCardNode).",
-    );
+  return unpack(node).node;
+}
+
+type PackedLayout = { readonly __shipseal: true; node: Node; css: string[] };
+
+function pack(node: Node, css: string[] = []): LayoutNode {
+  const packed: PackedLayout = { __shipseal: true, node, css };
+  return packed;
+}
+
+function unpack(node: LayoutNode): PackedLayout {
+  if (isPacked(node)) {
+    return node;
   }
-  return node;
+  if (isTakumiNode(node)) {
+    return { __shipseal: true, node, css: [] };
+  }
+  throw new ShipsealError(
+    "render.invalid-node",
+    "render/measure received a value that is not a Takumi node tree.",
+    "Pass a node built by the renderer adapter (fromJsx, measureText, or testCardNode).",
+  );
+}
+
+function isPacked(node: LayoutNode): node is PackedLayout {
+  return typeof node === "object" && node !== null && "__shipseal" in node;
 }
 
 function isTakumiNode(node: LayoutNode): node is Node {
   return typeof node === "object" && node !== null && "type" in node;
+}
+
+function asReactElementLike(element: unknown): { type: unknown; props: unknown; key: string | null } {
+  if (typeof element !== "object" || element === null || !("type" in element)) {
+    throw new ShipsealError(
+      "render.invalid-jsx",
+      "fromJsx received a value that is not a JSX element.",
+      "Return JSX from a template render function.",
+    );
+  }
+  const record = element;
+  const type = "type" in record ? record.type : undefined;
+  const props = "props" in record ? record.props : null;
+  const key = "key" in record && typeof record.key === "string" ? record.key : null;
+  return { type, props, key };
 }

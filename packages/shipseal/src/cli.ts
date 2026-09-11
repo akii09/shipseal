@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { cac } from "cac";
 import { runDoctor } from "./commands/doctor.js";
 import { runInit } from "./commands/init.js";
+import { runRelease, type ReleaseFlags } from "./commands/release.js";
 import { ShipsealError, formatError } from "./core/errors.js";
 import { resolvePackageRoot } from "./render/takumi.js";
 
@@ -59,9 +60,78 @@ export async function runCli(argv = process.argv): Promise<number> {
     }
   });
 
-  cli.command("release", "Generate the release pack").action(() => {
-    throw notImplemented("release");
-  });
+  cli
+    .command("release", "Generate the release pack")
+    .option("--tag <tag>", "Release tag")
+    .option("--from <tag>", "Previous tag")
+    .option("--formats <list>", "Comma-separated formats")
+    .option("--templates <list>", "Comma-separated templates")
+    .option("--themes <dark|light|both>", "Themes to render")
+    .option("--copy", "Allow optional LLM copy (default: on when config.copy.llm is true)")
+    .option("--out <dir>", "Output directory")
+    .option("--strict", "Fit warnings exit with code 2")
+    .option("--dry-run", "Collect facts and print them; render nothing")
+    .option("--package <path>", "package.json path for monorepos")
+    .action(async (flags: Record<string, unknown>) => {
+      const releaseFlags: ReleaseFlags = {
+        cwd: stringFlag(flags.cwd, process.cwd()),
+        strict: flags.strict === true,
+        dryRun: flags.dryRun === true,
+      };
+      const tag = optionalString(flags.tag);
+      if (tag !== undefined) {
+        releaseFlags.tag = tag;
+      }
+      const from = optionalString(flags.from);
+      if (from !== undefined) {
+        releaseFlags.from = from;
+      }
+      const formats = optionalString(flags.formats);
+      if (formats !== undefined) {
+        releaseFlags.formats = formats;
+      }
+      const templates = optionalString(flags.templates);
+      if (templates !== undefined) {
+        releaseFlags.templates = templates;
+      }
+      const themes = optionalString(flags.themes);
+      if (themes !== undefined) {
+        releaseFlags.themes = themes;
+      }
+      if (flags.copy === false) {
+        releaseFlags.copy = false;
+      }
+      const out = optionalString(flags.out);
+      if (out !== undefined) {
+        releaseFlags.out = out;
+      }
+      const pkg = optionalString(flags.package);
+      if (pkg !== undefined) {
+        releaseFlags.package = pkg;
+      }
+      const result = await runRelease(releaseFlags);
+      process.exitCode = result.exitCode;
+      if (flags.json === true) {
+        process.stdout.write(`${JSON.stringify(result.manifest ?? result.facts, null, 2)}\n`);
+        return;
+      }
+      if (flags.quiet === true) {
+        return;
+      }
+      if (result.dryRun) {
+        process.stdout.write(`${JSON.stringify(result.facts, null, 2)}\n`);
+        return;
+      }
+      if (result.dir !== undefined) {
+        process.stdout.write(`Wrote ${result.dir}\n`);
+      }
+      if (result.copyWarning !== undefined) {
+        process.stdout.write(`Copy: ${result.copyWarning}\n`);
+      }
+      for (const warning of result.warnings) {
+        process.stdout.write(`Warning: ${warning.template} ${warning.format} ${warning.slot} ${warning.action}\n`);
+      }
+    });
   cli.command("milestone", "Generate a milestone card").action(() => {
     throw notImplemented("milestone");
   });
@@ -91,6 +161,10 @@ export async function runCli(argv = process.argv): Promise<number> {
 
 function stringFlag(value: unknown, fallback: string): string {
   return typeof value === "string" && value.length > 0 ? value : fallback;
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }
 
 function notImplemented(command: string): ShipsealError {

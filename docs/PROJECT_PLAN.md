@@ -1175,7 +1175,9 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | Phase 1 CLI uses **node:util.parseArgs**, not cac | Init and doctor do not justify a new dependency under R7. parseArgs is built into Node 22. Revisit cac when release/milestone/bench land | Installing cac or commander now |
 | 2026-09-11 | CLI uses **cac** `7.0.0` (supersedes parseArgs row) | Owner approved the install. Matches the cac vs commander decision | node:util.parseArgs (works, but we already paid for cac) |
 | 2026-09-11 | First runtime dependency: **zod** `^4.6.2` (MIT) | Plan §7 already chose zod for facts, config, brand, and LLM output. 4.6.2 is current `latest` | Hand-rolled parsers; ajv (JSON-schema only, weaker TS inference) |
-| _(Phase 2)_ | LLM provider approach | _to decide_ | |
+| 2026-09-11 | LLM copy uses **OpenAI-compatible `fetch`**, not the Vercel AI SDK | Keeps the optional path a lazy HTTP call behind `copy.llm` and `--no-copy` (R7, R8). Env: `SHIPSEAL_LLM_API_KEY`, optional `SHIPSEAL_LLM_BASE_URL`. Model from `config.copy.model` | Installing `ai` (extra dependency for a single JSON chat call) |
+| 2026-09-11 | Syntax highlighting: **shiki** `4.4.3` (MIT), tokens only | Plan §7 and spike S5. `codeToTokens` feeds colored spans; `whiteSpace: "pre"` stays required | A hand-rolled tokenizer; bundling shiki into dist (it stays in node_modules via tsdown `neverBundle`) |
+| 2026-09-11 | Golden diffs: **pixelmatch** + **pngjs** as devDependencies | Plan §7. Tolerance stays 0.1% differing pixels | Raising the tolerance; comparing PNG bytes (too brittle across encoder settings) |
 
 ---
 

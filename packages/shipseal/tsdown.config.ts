@@ -12,9 +12,9 @@ export default defineConfig({
   platform: "node",
   target: "node22",
   clean: true,
-  // Native Takumi binaries must resolve from node_modules, not a bundle.
+  // Native Takumi binaries and Shiki language data must resolve from node_modules.
   deps: {
-    neverBundle: [/^takumi-js/, /^@takumi-rs\//],
+    neverBundle: [/^takumi-js/, /^@takumi-rs\//, /^shiki/, /^@shikijs\//],
   },
   // package.json declares "type": "module", so .js is already ESM.
   // Without this tsdown emits cli.mjs and the `bin` path breaks.

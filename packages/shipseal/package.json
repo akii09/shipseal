@@ -4,6 +4,10 @@
   "description": "Every release, sealed and ready to share. Verified release visuals from your repo.",
   "license": "MIT",
   "type": "module",
+  "imports": {
+    "#takumi-jsx/jsx-runtime": "./src/takumi-jsx/jsx-runtime.ts",
+    "#takumi-jsx/jsx-dev-runtime": "./src/takumi-jsx/jsx-dev-runtime.ts"
+  },
   "bin": {
     "shipseal": "./dist/cli.js"
   },
@@ -36,12 +40,15 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
+    "pixelmatch": "7.1.0",
+    "pngjs": "7.0.0",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
     "vitest": "^5.0.0"
   },
   "dependencies": {
     "cac": "7.0.0",
+    "shiki": "4.4.3",
     "takumi-js": "2.13.7",
     "zod": "4.6.2"
   }

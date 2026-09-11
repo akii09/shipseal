@@ -10,6 +10,8 @@ export interface RenderOptions {
   width: number;
   height: number;
   format: ImageFormat;
+  css?: string[];
+  images?: Array<{ src: string; data: Uint8Array }>;
 }
 
 export interface MeasureOptions {
@@ -36,4 +38,5 @@ export interface RendererAdapter {
   render(node: LayoutNode, opts: RenderOptions): Promise<Uint8Array>;
   measure(node: LayoutNode, opts?: MeasureOptions): Promise<MeasureResult>;
   measureText(text: string, opts: MeasureTextOptions): Promise<MeasureResult>;
+  fromJsx(element: unknown): Promise<LayoutNode>;
 }
