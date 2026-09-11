@@ -28,14 +28,27 @@ const run = (args) => execFileSync("git", args, { cwd: root, stdio: "pipe" }).to
  */
 const pending = `v${JSON.parse(readFileSync(join(root, "packages/shipseal/package.json"), "utf8")).version}`;
 
-/** Docs use `@<branch-or-sha>`, and the release script holds a `${tag}` template. Neither is a ref. */
-const isPlaceholder = (ref) => ref.startsWith("<") || ref.includes("$");
+/** Docs use `@<branch-or-sha>` as a stand-in. That is a placeholder, not a ref to resolve. */
+const isPlaceholder = (ref) => ref.startsWith("<");
+
+/**
+ * The two scripts that rewrite and check these references are not documentation.
+ *
+ * Both carry the pattern in their own source: this file in the regex below, and the release
+ * script in its replacement template. Searching them means the checker fails on itself, which
+ * is exactly what happened the first time this ran in CI, where the file was tracked and so
+ * visible to `git grep` for the first time.
+ */
+const excluded = [
+  ":(exclude)scripts/check-action-ref.mjs",
+  ":(exclude)scripts/refresh-showcase.mjs",
+];
 
 /** `git grep` exits 1 when nothing matches, which is a real failure here rather than a pass. */
 function findReferences() {
   let output;
   try {
-    output = run(["grep", "-nE", "akii09/shipseal@[^ `'\"),]+"]);
+    output = run(["grep", "-nE", "akii09/shipseal@[^ `'\"),]+", "--", ".", ...excluded]);
   } catch {
     return [];
   }
