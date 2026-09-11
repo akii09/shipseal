@@ -1,0 +1,83 @@
+---
+import "../styles/global.css";
+import Connect from "../components/Connect.astro";
+
+interface Props {
+  title: string;
+  description: string;
+}
+const { title, description } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content="https://shipseal.dev/og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "Shipseal",
+        applicationCategory: "DeveloperApplication",
+        operatingSystem: "Node.js 22+",
+        description,
+        url: "https://shipseal.dev",
+        license: "https://opensource.org/licenses/MIT",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      })}
+    />
+  </head>
+  <body>
+    <header class="site">
+      <div class="wrap bar">
+        <a class="brand" href="/">
+          <img src="/icon-56.png" alt="" width="26" height="26" decoding="async" />
+          <span>Shipseal</span>
+        </a>
+        <nav>
+          <a href="/docs/quick-start">Docs</a>
+          <a href="/ai">For agents</a>
+          <a href="https://github.com/akii09/shipseal">GitHub</a>
+        </nav>
+      </div>
+    </header>
+
+    <main><slot /></main>
+
+    <footer class="site">
+      <div class="wrap foot">
+        <span class="muted">MIT. Rendering by <a href="https://takumi.kane.tw">Takumi</a>.</span>
+        <Connect />
+      </div>
+    </footer>
+
+    <style>
+      header.site { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(12px); background: rgb(11 11 12 / 0.72); border-bottom: 1px solid var(--line); }
+      .bar { display: flex; align-items: center; justify-content: space-between; height: 62px; }
+      .brand { display: flex; align-items: center; gap: 0.55rem; font-weight: 700; text-decoration: none; letter-spacing: -0.01em; }
+      .brand img { border-radius: 6px; }
+      nav { display: flex; gap: 1.4rem; font-size: 0.95rem; }
+      nav a { color: var(--muted); text-decoration: none; transition: color 0.15s ease; }
+      nav a:hover { color: var(--fg); }
+      footer.site { border-top: 1px solid var(--line); padding-block: 2rem; margin-top: 4rem; }
+      .foot { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: 0.9rem; }
+      .foot a { color: var(--muted); }
+      .foot a:hover { color: var(--fg); }
+      @media (max-width: 560px) { nav { gap: 0.9rem; font-size: 0.88rem; } }
+    </style>
+  </body>
+</html>

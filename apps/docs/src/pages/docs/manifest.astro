@@ -1,0 +1,55 @@
+---
+import Docs from "../../layouts/Docs.astro";
+---
+<Docs title="The manifest: Shipseal" description="How manifest.json records every fact, computation, warning and missing value behind a generated card." heading="The manifest">
+  <p>
+    Every pack ships with a <code>manifest.json</code>. It is the proof behind "verified visuals", and the
+    first place to look when a card is wrong.
+  </p>
+  <pre><code>{`{
+  "shipseal": "1.0.0",
+  "event": { "kind": "release", "tag": "v2.0.0", "previousTag": "v1.9.0" },
+  "generatedAt": "2026-09-11T10:00:00Z",
+  "brand": { "name": "PDFx", "theme": "dark", "source": ".shipseal/brand.json" },
+  "copy": { "mode": "deterministic" },
+  "files": [
+    { "path": "release-hero-og.png", "template": "release-hero", "format": "og",
+      "width": 1200, "height": 630, "bytes": 48213, "sha256": "..." }
+  ],
+  "facts": {
+    "release.version": { "value": "2.0.0", "source": "git", "ref": "git tag v2.0.0" },
+    "metrics.stars": { "value": 1042, "source": "github-api",
+      "ref": "GET /repos/akii09/pdfx stargazers_count", "fetchedAt": "..." }
+  },
+  "computed": {
+    "bench.metrics[0].percent": { "value": 79,
+      "computedFrom": ["bench.metrics[0].before", "bench.metrics[0].after"] }
+  },
+  "warnings": [
+    { "type": "fit-warning", "template": "release-hero", "format": "x",
+      "slot": "headline", "action": "truncated" }
+  ],
+  "missing": [
+    { "template": "release-hero", "fact": "project.npmPackage", "effect": "cta hidden" }
+  ]
+}`}</code></pre>
+
+  <h2>Reading it</h2>
+  <ul>
+    <li><code>facts</code> holds every value that came from somewhere, with the exact reference. A wrong number is always a source problem, so start here.</li>
+    <li><code>computed</code> holds values code derived from facts, such as a percent change, and names the inputs.</li>
+    <li><code>warnings</code> holds fit warnings. Nothing is ever clipped silently.</li>
+    <li><code>missing</code> explains why an element is absent. A missing fact hides an element, it never becomes a placeholder.</li>
+  </ul>
+
+  <h2>Why numbers never come from a model</h2>
+  <p>
+    When the optional LLM is enabled it receives facts with every number replaced by a placeholder. Its
+    output is then scanned for digits, and any digit that did not come from a placeholder is rejected. After
+    a couple of retries Shipseal falls back to deterministic copy and logs a warning.
+  </p>
+  <div class="callout">
+    <strong>The model writes words. Code writes numbers.</strong> That split is the whole reason the
+    manifest can be trusted.
+  </div>
+</Docs>

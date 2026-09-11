@@ -1,0 +1,147 @@
+---
+/**
+ * Hero animation: a release card being built from repository facts, then sealed.
+ *
+ * The layout mirrors the real `release-hero` template so the hero shows the actual product.
+ * Provenance is explained by a caption that cycles under the card rather than by labels
+ * floating beside each fact, which overflowed the card on narrow screens.
+ */
+---
+
+<figure class="stage">
+  <div class="card">
+    <div class="top">
+      <img class="logo" src="/icon-56.png" alt="" width="28" height="28" decoding="async" />
+      <span class="name">Shipseal</span>
+      <span class="badge s s1">v2.0.0</span>
+    </div>
+
+    <div class="middle">
+      <p class="headline s s2">QR and barcode support</p>
+      <p class="sub s s3">Render scannable codes in any PDF component</p>
+    </div>
+
+    <div class="bottom">
+      <span class="cta s s4">npm i shipseal</span>
+      <span class="stars s s5">1,042 stars</span>
+    </div>
+
+    <img class="seal" src="/icon-96.png" alt="" width="48" height="48" decoding="async" />
+  </div>
+
+  <figcaption class="prov">
+    <span class="p p1"><b>v2.0.0</b> from the git tag</span>
+    <span class="p p2"><b>headline</b> from CHANGELOG.md</span>
+    <span class="p p3"><b>1,042</b> from the GitHub API</span>
+    <span class="p p4"><b>sealed.</b> every number has a source</span>
+  </figcaption>
+</figure>
+
+<style>
+  .stage { margin: 0; display: grid; gap: 1.1rem; }
+
+  .card {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1200 / 630;
+    background: linear-gradient(155deg, #161619 0%, #0d0d0f 55%);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: clamp(1.1rem, 3vw, 2rem);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    box-shadow: 0 40px 80px -50px rgb(0 0 0 / 1), inset 0 1px 0 rgb(255 255 255 / 0.03);
+    overflow: hidden;
+    animation: recoil 10s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  }
+
+  .top { display: flex; align-items: center; gap: 0.6rem; }
+  .middle { display: grid; align-content: center; gap: 0.5rem; }
+  .bottom { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+
+  /* Width and height attributes on the element match this, so a stale or missing
+     stylesheet cannot render the source image at its natural size. */
+  .logo { width: clamp(18px, 3.4vw, 28px); height: auto; aspect-ratio: 1; flex: none; }
+  .name { font-weight: 700; font-size: clamp(0.8rem, 1.7vw, 1rem); letter-spacing: -0.01em; }
+
+  .badge {
+    font-family: var(--mono); font-size: clamp(0.58rem, 1.25vw, 0.72rem);
+    color: var(--primary); background: #201618; border: 1px solid #2e1e20;
+    border-radius: 999px; padding: 0.18rem 0.55rem;
+  }
+
+  .headline {
+    font-size: clamp(1.25rem, 3.9vw, 2.1rem);
+    font-weight: 800; letter-spacing: -0.025em; line-height: 1.1; margin: 0;
+  }
+  .sub { color: var(--muted); font-size: clamp(0.7rem, 1.8vw, 0.95rem); margin: 0; }
+
+  .cta {
+    font-family: var(--mono); font-weight: 700;
+    font-size: clamp(0.6rem, 1.4vw, 0.78rem);
+    background: var(--primary); color: #10100f;
+    border-radius: 999px; padding: 0.38rem 0.85rem;
+  }
+  .stars { font-family: var(--mono); font-size: clamp(0.62rem, 1.5vw, 0.82rem); color: var(--accent); font-weight: 700; }
+
+  /* Each element arrives in turn, in the order the pipeline produces it. */
+  .s { opacity: 0; animation: arrive 10s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; }
+  .s1 { animation-delay: 0.3s; }
+  .s2 { animation-delay: 1.2s; }
+  .s3 { animation-delay: 1.55s; }
+  .s4 { animation-delay: 2.4s; }
+  .s5 { animation-delay: 2.7s; }
+
+  .seal {
+    position: absolute;
+    right: clamp(0.9rem, 2.6vw, 1.7rem);
+    top: clamp(0.8rem, 2.4vw, 1.5rem);
+    width: clamp(30px, 7vw, 46px);
+    height: auto;
+    aspect-ratio: 1;
+    opacity: 0; transform-origin: center;
+    animation: stamp 10s cubic-bezier(0.2, 1.5, 0.35, 1) infinite;
+  }
+
+  /* The caption cycles through what just landed and where it came from. */
+  .prov { position: relative; min-height: 1.5em; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+  .p { position: absolute; inset: 0; opacity: 0; animation: caption 10s ease-in-out infinite; }
+  .p b { color: var(--fg); font-weight: 600; }
+  .p1 { animation-delay: 0.3s; }
+  .p2 { animation-delay: 1.2s; }
+  .p3 { animation-delay: 2.7s; }
+  .p4 { animation-delay: 3.9s; }
+  .p4 b { color: var(--primary); }
+
+  @keyframes arrive {
+    0%, 2%    { opacity: 0; transform: translateY(7px); filter: blur(4px); }
+    8%, 82%   { opacity: 1; transform: none; filter: none; }
+    92%, 100% { opacity: 0; transform: translateY(-4px); filter: blur(3px); }
+  }
+
+  @keyframes caption {
+    0%, 1%   { opacity: 0; }
+    4%, 11%  { opacity: 1; }
+    15%, 100%{ opacity: 0; }
+  }
+
+  @keyframes stamp {
+    0%, 33%   { opacity: 0; transform: scale(2.2) rotate(-20deg); }
+    38%       { opacity: 1; transform: scale(0.93) rotate(5deg); }
+    41%       { transform: scale(1.05) rotate(-2deg); }
+    44%, 84%  { opacity: 1; transform: scale(1) rotate(0deg); }
+    93%, 100% { opacity: 0; }
+  }
+
+  @keyframes recoil {
+    0%, 36%  { transform: none; }
+    39%      { transform: translateY(4px) scale(0.993); }
+    44%, 100%{ transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .s, .seal, .card { opacity: 1; animation: none; transform: none; filter: none; }
+    .p { animation: none; opacity: 0; }
+    .p4 { opacity: 1; }
+  }
+</style>

@@ -1,0 +1,114 @@
+/* Brand tokens come from .shipseal/brand.json, the same file the CLI reads. */
+:root {
+  --bg: #0b0b0c;
+  --fg: #fafafa;
+  --muted: #a1a1aa;
+  --primary: #fb4c4b;
+  --accent: #fbbf24;
+
+  --surface: #141416;
+  --surface-2: #1c1c1f;
+  --line: #26262a;
+
+  --radius: 16px;
+  --step: 8px;
+  --measure: 34rem;
+
+  --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a { color: inherit; }
+
+h1, h2, h3 { line-height: 1.1; letter-spacing: -0.025em; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.6rem, 7vw, 4.6rem); font-weight: 800; }
+h2 { font-size: clamp(1.9rem, 4vw, 2.6rem); font-weight: 700; }
+p { margin: 0; text-wrap: pretty; }
+
+code, kbd { font-family: var(--mono); font-size: 0.92em; }
+
+.wrap { width: min(1140px, 100% - 3rem); margin-inline: auto; }
+
+.muted { color: var(--muted); }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.8rem 1.3rem; border-radius: 999px;
+  font-weight: 650; font-size: 0.98rem; text-decoration: none;
+  border: 1px solid transparent; cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn-primary { background: var(--primary); color: #10100f; }
+.btn-primary:hover { background: #ff5f5e; }
+.btn-ghost { border-color: var(--line); color: var(--fg); background: transparent; }
+.btn-ghost:hover { border-color: #3a3a40; background: var(--surface); }
+
+/* A copyable command line */
+.cmd {
+  display: inline-flex; align-items: center; gap: 0.75rem;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 0.7rem 0.9rem;
+  font-family: var(--mono); font-size: 0.95rem; color: var(--fg);
+}
+.cmd .dollar { color: var(--muted); user-select: none; }
+
+.eyebrow {
+  font-family: var(--mono); font-size: 0.8rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--primary);
+}
+
+section { padding-block: clamp(4rem, 9vw, 7rem); }
+
+/* Section rhythm. Every section follows eyebrow, heading, lede, then content, with the
+   same gaps, so nothing needs a bespoke margin. */
+.eyebrow + h1,
+.eyebrow + h2 { margin-top: 0.75rem; }
+h1 + .lede,
+h2 + .lede { margin-top: 1.25rem; }
+.lede + .lede { margin-top: 1rem; }
+.section-body { margin-top: clamp(2rem, 4vw, 2.75rem) !important; }
+
+/* Copy button on a code block */
+.copywrap { position: relative; }
+.copywrap button {
+  position: absolute; top: 0.6rem; right: 0.6rem;
+  font: inherit; font-family: var(--mono); font-size: 0.7rem;
+  color: var(--muted); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 7px;
+  padding: 0.3rem 0.6rem; cursor: pointer; opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.copywrap:hover button, .copywrap button:focus-visible { opacity: 1; }
+.copywrap button:hover { color: var(--fg); border-color: #3a3a40; }
+.copywrap button[data-copied] { color: var(--primary); border-color: var(--primary); opacity: 1; }
+
+/* A page heading block that reads better centred when there is nothing beside it. */
+.centered { text-align: center; display: grid; justify-items: center; }
+.centered .lede { margin-inline: auto; }

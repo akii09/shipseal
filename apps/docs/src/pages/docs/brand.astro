@@ -1,0 +1,79 @@
+---
+import Docs from "../../layouts/Docs.astro";
+const detect = [
+  ["name", "package.json#name (private roots skipped), README H1, directory name"],
+  ["tagline", "package.json#description, first README paragraph"],
+  ["url", "package.json#homepage or repository, git remote origin"],
+  ["logo", "logo.svg or logo.png in the root, assets/, assets/brand/, public/, .github/, docs/, static/, branding/, then icon and favicon"],
+  ["colors", "Tailwind v4 @theme, Tailwind v3 config, CSS variables on :root, html, .light, .dark and [data-theme], then the dominant colour of the logo"],
+  ["fonts", "font files in public/fonts or assets/fonts, otherwise bundled Geist"],
+];
+---
+<Docs title="Brand kit: Shipseal" description="How Shipseal detects your brand and what every field in brand.json means." heading="Brand kit">
+  <p>
+    <code>.shipseal/brand.json</code> is written by <code>init</code> and committed to your repository.
+    It is meant to be edited by hand afterwards.
+  </p>
+  <pre><code>{`{
+  "version": 1,
+  "name": "PDFx",
+  "tagline": "React PDF components, shadcn style",
+  "url": "https://github.com/akii09/pdfx",
+  "logo": { "light": "./assets/logo.svg", "dark": "./assets/logo-dark.svg" },
+  "colors": {
+    "background": "#0b0b0c",
+    "foreground": "#fafafa",
+    "muted": "#a1a1aa",
+    "primary": "#ff4d4d",
+    "accent": "#fbbf24"
+  },
+  "fonts": {
+    "heading": { "family": "Geist", "weight": 700 },
+    "body": { "family": "Geist", "weight": 400 },
+    "mono": { "family": "Geist Mono", "weight": 400 }
+  },
+  "radius": 16,
+  "theme": "dark",
+  "style": "minimal",
+  "tokens": null
+}`}</code></pre>
+
+  <h2>Fields</h2>
+  <ul>
+    <li><code>colors.background</code> and <code>colors.foreground</code> are required. The rest are derived if absent.</li>
+    <li><code>fonts.*.file</code> optionally points at a TTF, OTF, WOFF or WOFF2 file. WOFF2 works.</li>
+    <li><code>theme</code> is the default theme. Templates render both, and <code>--themes both</code> emits both.</li>
+    <li><code>tokens</code> optionally points at a W3C Design Tokens file. Shipseal reads that standard rather than inventing one.</li>
+  </ul>
+
+  <h2>What detection looks at</h2>
+  <table>
+    <thead><tr><th>Field</th><th>Sources, in order</th></tr></thead>
+    <tbody>{detect.map(([f, s]) => <tr><td><code>{f}</code></td><td>{s}</td></tr>)}</tbody>
+  </table>
+  <p>
+    Project files are parsed statically. Shipseal never executes your config to read it, so a
+    <code>tailwind.config.ts</code> that computes colours at runtime falls back to defaults rather than
+    being run.
+  </p>
+
+  <h2>Colours it could not find</h2>
+  <div class="callout">
+    <strong>A default is not your brand.</strong> Every colour that falls back to a built-in value is named
+    in the <code>init</code> output. If you see that note, open <code>brand.json</code> and set those
+    colours yourself.
+  </div>
+  <p>
+    Contrast is checked as well. If a detected foreground fails against the background, Shipseal adjusts it
+    and tells you, rather than shipping text nobody can read.
+  </p>
+
+  <h2>Precedence</h2>
+  <ol>
+    <li>CLI flags</li>
+    <li><code>.shipseal/brand.json</code></li>
+    <li>The design tokens file named by <code>tokens</code></li>
+    <li>Auto-detection</li>
+    <li>Built-in defaults</li>
+  </ol>
+</Docs>

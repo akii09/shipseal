@@ -23,5 +23,8 @@
     "unicorn/require-module-specifiers": "off",
     "unicorn/no-empty-file": "off"
   },
-  "ignorePatterns": ["**/dist/**", "**/coverage/**", "**/node_modules/**", "spikes/**"]
+  "ignorePatterns": [
+    // Astro components: a bare CSS import is the documented way to load global styles,
+    // and oxlint parses .astro frontmatter as plain JS, so its findings there are noise.
+    "**/*.astro","**/dist/**", "**/coverage/**", "**/node_modules/**", "spikes/**"]
 }

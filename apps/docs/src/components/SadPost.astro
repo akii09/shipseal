@@ -1,0 +1,39 @@
+---
+/**
+ * The "before" state: a release announcement with no visual. Fills the right of the problem
+ * section and makes the point faster than the paragraph next to it does.
+ */
+---
+<div class="post" role="img" aria-label="A release announcement with no image, sitting at zero likes">
+  <div class="who">
+    <span class="pfp" aria-hidden="true"></span>
+    <div>
+      <strong>you</strong> <span class="handle">@you</span>
+      <div class="handle">2h ago</div>
+    </div>
+  </div>
+  <p class="body">v2.0.0 is out 🎉<br />Changelog: github.com/you/your-project/releases</p>
+  <div class="engagement">
+    <span>♡ 0</span><span>↻ 0</span><span>💬 0</span>
+    <span class="views">3 views</span>
+  </div>
+  <p class="verdict">Two hours of work. Nobody saw it.</p>
+</div>
+
+<style>
+  .post {
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: #0f0f11; padding: 1.4rem; max-width: 26rem;
+    filter: saturate(0.35); position: relative;
+  }
+  .who { display: flex; gap: 0.7rem; align-items: center; font-size: 0.9rem; }
+  .pfp { width: 38px; height: 38px; border-radius: 50%; background: #2a2a2e; flex: none; }
+  .handle { color: #6b6b73; font-weight: 400; font-size: 0.82rem; }
+  .body { margin: 0.9rem 0 1.1rem; color: #8d8d95; line-height: 1.5; font-size: 0.95rem; }
+  .engagement { display: flex; gap: 1.1rem; font-size: 0.82rem; color: #5c5c63; border-top: 1px solid #1a1a1d; padding-top: 0.8rem; }
+  .views { margin-left: auto; }
+  .verdict {
+    margin: 1.1rem 0 0; font-family: var(--mono); font-size: 0.75rem;
+    color: var(--muted); border-top: 1px dashed #26262a; padding-top: 0.9rem;
+  }
+</style>
