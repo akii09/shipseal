@@ -10,8 +10,11 @@ import { detectBrand, type BrandDetection } from "../brand/detect.js";
 import { brandSchema } from "../brand/schema.js";
 import { DEFAULT_CONFIG, configSchema } from "../config/schema.js";
 import { ShipsealError } from "../core/errors.js";
-import { FORMATS } from "../formats.js";
-import { createTakumiRenderer, testCardNode } from "../render/takumi.js";
+import { generate } from "../core/generate.js";
+import { deterministicCopy } from "../copy/deterministic.js";
+import { fact } from "../facts/fact.js";
+import type { Facts } from "../facts/schema.js";
+import { createTakumiRenderer } from "../render/takumi.js";
 
 export interface InitOptions {
   cwd: string;
@@ -62,12 +65,40 @@ export async function runInit(options: InitOptions): Promise<InitResult> {
   await mkdir(sampleDir, { recursive: true });
   const samplePath = join(sampleDir, "release-hero-og.png");
   const renderer = await createTakumiRenderer();
-  const png = await renderer.render(testCardNode(), {
-    width: FORMATS.og.width,
-    height: FORMATS.og.height,
-    format: "png",
+  // Render the real release-hero template with the brand just detected. This used to be a
+  // hard-coded card that said "Shipseal" for every user, which made the tool look like it had
+  // ignored their project. The point of the sample is to show them their own brand.
+  const fetchedAt = new Date().toISOString();
+  const provenance = { source: "brand" as const, ref: ".shipseal/brand.json", fetchedAt };
+  const sampleFacts: Facts = {
+    project: { name: fact(brand.name, provenance) },
+  };
+  if (brand.tagline !== undefined) {
+    sampleFacts.project.tagline = fact(brand.tagline, provenance);
+  }
+  if (brand.url !== undefined) {
+    sampleFacts.project.url = fact(brand.url, provenance);
+  }
+  const sample = await generate({
+    event: { kind: "release", tag: "v1.0.0" },
+    facts: sampleFacts,
+    brand,
+    config: { ...config, formats: ["og"], release: { ...config.release, templates: ["release-hero"] } },
+    copy: deterministicCopy(sampleFacts),
+    copyMode: "deterministic",
+    renderer,
+    themes: [brand.theme],
+    generatedAt: fetchedAt,
   });
-  await writeFile(samplePath, png);
+  const first = sample.files[0];
+  if (first === undefined) {
+    throw new ShipsealError(
+      "init.sample-failed",
+      "Could not render the sample card.",
+      "Run shipseal doctor to check fonts and the renderer.",
+    );
+  }
+  await writeFile(samplePath, first.bytes);
 
   return { brandPath, configPath, samplePath, detection };
 }
