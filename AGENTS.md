@@ -57,9 +57,11 @@ Write the code an experienced maintainer would sign off on. Concretely:
 
 ## Where the project actually is
 
-`docs/PROJECT_PLAN.md` §21 is the source of truth and carries a `Last reviewed` date. As of
-2026-09-11: Phases 1 to 3 are done and verified, Phase 4 (launch) is next, and `shipseal@0.0.3`
-is published. If that date is stale, trust the repository over the plan and say so.
+`docs/STATE.md` says where the repository actually is, and carries a `Last verified` date. Read it
+first: it is short, it lists the invariants that catch agents out, and it names what is open and
+who can do it. `docs/PROJECT_PLAN.md` is the design and the decisions log behind it.
+
+If the date in `STATE.md` is stale, trust the repository over both documents and say so.
 
 This project ships first and learns from users afterwards. Do not propose validation gates or
 surveys before building something the owner has asked for.

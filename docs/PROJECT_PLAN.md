@@ -2,10 +2,11 @@
 
 > **Every release, sealed and ready to share.**
 >
-> Domain: `shipseal.dev` · npm: `shipseal` · Status: **Phase 3 complete, 0.0.3 published** · Owner: Akash (akii09)
+> Domain: `shipseal.dev` · npm: `shipseal` · Status: **Phase 4 in progress, 0.0.8 published** · Owner: Akash (akii09)
 >
-> Last reviewed 2026-09-11. Phases 1 to 3 are built and verified end to end. Next is Phase 4
-> (launch). Read §21 for what each phase proved.
+> Last reviewed 2026-09-12. See `STATE.md` for the current repository state, which is shorter
+> and kept closer to the code. Phases 1 to 3 are built and verified end to end, and Phase 4
+> (launch) is in progress. Read §21 for what each phase proved.
 >
 > This project ships first and learns from real users afterwards. There is no validation gate to
 > pass before building (§25).
@@ -1079,12 +1080,17 @@ Acceptance criteria:
 - `shipseal milestone` on PDFx produces a correct 1,000-stars card with provenance.
 - A bench fixture showing a regression is rendered honestly as a regression.
 
-### Phase 4: Launch NEXT
+### Phase 4: Launch IN PROGRESS
+
+> Done: the README shows generated visuals, shipseal.dev is live with quick start, config,
+> templates, manifest, FAQ and an agent page, and the 2026-09-12 review's card and copy work is
+> closed (see `STATE.md`). Outstanding: the 30-second GIF, the external repositories, and the
+> launch sequence itself.
 
 Tasks:
-1. README with generated visuals of Shipseal itself, a 30-second GIF of the flow, and the two-line install.
-2. Minimal docs site at shipseal.dev: what it is, quick start, config reference, templates gallery, FAQ.
-3. Onboard 3 or more maintainers privately before the public launch.
+1. ~~README with generated visuals of Shipseal itself~~ and the two-line install. A 30-second GIF of the flow is still missing.
+2. ~~Minimal docs site at shipseal.dev: what it is, quick start, config reference, templates gallery, FAQ.~~
+3. Onboard 3 or more maintainers privately before the public launch. **Not started, and this is the gate.**
 4. Launch sequence (Section 22).
 
 Acceptance criteria:
