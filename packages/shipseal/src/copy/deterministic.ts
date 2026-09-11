@@ -4,25 +4,34 @@
 import type { Facts } from "../facts/schema.js";
 import { MAX_HIGHLIGHTS, type Copy } from "./slots.js";
 
-export function deterministicCopy(facts: Facts, maxHighlights = MAX_HIGHLIGHTS): Copy {
+export function deterministicCopy(
+  facts: Facts,
+  maxHighlights = MAX_HIGHLIGHTS,
+  // The card shows the brand wordmark beside the headline. Falling back to the raw project
+  // fact put "shipseal 0.0.8" under "Shipseal" on the same card.
+  displayName?: string,
+): Copy {
   const name = facts.project.name.value;
   const version = facts.release?.version.value;
   const features = (facts.release?.features ?? []).map((item) => item.value);
   const fixes = (facts.release?.fixes ?? []).map((item) => item.value);
   const breaking = (facts.release?.breaking ?? []).map((item) => item.value);
 
-  // Breaking changes lead, then features, then fixes. Looking only at features meant a
-  // patch release (every Changesets "Patch Changes" entry maps to a fix) fell through to
-  // "{name} {version}", or worse, to a raw commit subject when git was the only source.
-  // Prefer the first entry whose opening sentence actually fits a headline. Taking the first
-  // sentence is not enough on its own: a single long sentence still overflowed, and the
-  // v0.0.5 card shipped with a headline truncated mid-phrase. A release with nothing short
-  // enough to say is better titled by its name and version than by a cut-off sentence.
-  const headlineSource = [...breaking, ...features, ...fixes]
+  // Breaking changes lead, then features. Fixes are deliberately excluded: every Changesets
+  // "Patch Changes" entry maps to a fix, so including them put a maintainer's note on the hero.
+  // v0.0.6 announced itself as "Never put a truncated headline on a card", which reads as a
+  // strange instruction rather than a release, and nobody posts that. A release with only fixes
+  // is better titled by its name and version.
+  //
+  // Prefer the first entry whose opening sentence actually fits. Taking the first sentence is
+  // not enough on its own: a single long sentence still overflowed, and the v0.0.5 card shipped
+  // with a headline truncated mid-phrase.
+  const headlineSource = [...breaking, ...features]
     .map((line) => cleanLine(firstSentence(line)))
     .find((line) => line.length <= HEADLINE_MAX_CHARS);
+  const title = displayName ?? name;
   const headline =
-    headlineSource ?? (version === undefined ? name : `${name} ${version}`);
+    headlineSource ?? (version === undefined ? title : `${title} ${version}`);
 
   const tagline = facts.project.tagline?.value;
   const subheadline =

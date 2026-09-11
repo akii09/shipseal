@@ -9,6 +9,7 @@ import { llmCopy } from "../src/copy/llm.js";
 import { allowedNumbers, guardCopy, unsourcedDigits } from "../src/copy/number-guard.js";
 import { FIXTURE_FACTS, MILESTONE_FACTS } from "./helpers/facts.js";
 import { fact } from "../src/facts/fact.js";
+import { releaseKind } from "../src/sources/git.js";
 import type { Facts } from "../src/facts/schema.js";
 
 const NOW = "2026-09-11T00:00:00.000Z";
@@ -112,9 +113,13 @@ describe("headline from changelog entries", () => {
     },
   });
 
-  it("uses a fix when there are no features", () => {
+  // G2: a fix is never the headline. v0.0.6 announced itself as "Never put a truncated headline
+  // on a card", which reads as an instruction rather than a release. A fix-only release is
+  // better titled by its name and version.
+  it("never uses a fix as the headline, even when it is the only entry", () => {
     const copy = deterministicCopy(withRelease({ fixes: ["Fix brand detection on PNG logos"] }));
-    expect(copy.headline).toBe("Fix brand detection on PNG logos");
+    expect(copy.headline).not.toContain("Fix brand detection");
+    expect(copy.headline).toContain("0.0.2");
   });
 
   it("prefers a breaking change over a feature or fix", () => {
@@ -127,7 +132,7 @@ describe("headline from changelog entries", () => {
   it("takes only the first sentence of a prose entry", () => {
     const copy = deterministicCopy(
       withRelease({
-        fixes: [
+        features: [
           "Fix brand detection reading the wrong values out of a README. A `#` comment inside a code fence was read as the project name.",
         ],
       }),
@@ -201,22 +206,22 @@ describe("headline length budget", () => {
   // The v0.0.5 hero card shipped with a headline truncated mid-phrase. Taking the first
   // sentence is not enough when that sentence is itself too long for the card.
   const at = (v: string) => fact(v, { source: "changelog" as const, ref: "CHANGELOG.md", fetchedAt: NOW });
-  const withFixes = (lines: string[]): Facts => ({
+  const withEntries = (lines: string[]): Facts => ({
     ...FIXTURE_FACTS,
     release: {
       ...FIXTURE_FACTS.release,
       version: at("0.0.5"),
       tag: at("v0.0.5"),
       date: at("2026-09-11"),
-      features: [],
-      fixes: lines.map(at),
+      features: lines.map(at),
+      fixes: [],
       breaking: [],
     },
   });
 
   it("skips an entry that is too long and takes the next one that fits", () => {
     const copy = deterministicCopy(
-      withFixes([
+      withEntries([
         "Write one sentence per highlight instead of a whole changelog paragraph, so entries fit the card rather than truncating mid-word",
         "Fold nested bullets into the entry above",
       ]),
@@ -226,13 +231,13 @@ describe("headline length budget", () => {
 
   it("falls back to name and version when nothing is short enough", () => {
     const copy = deterministicCopy(
-      withFixes(["A sentence that runs on and on and on well past anything that could ever fit onto a release card headline"]),
+      withEntries(["A sentence that runs on and on and on well past anything that could ever fit onto a release card headline"]),
     );
     expect(copy.headline).toContain("0.0.5");
   });
 
   it("keeps a headline that fits", () => {
-    expect(deterministicCopy(withFixes(["Fix brand detection on PNG logos"])).headline).toBe(
+    expect(deterministicCopy(withEntries(["Fix brand detection on PNG logos"])).headline).toBe(
       "Fix brand detection on PNG logos",
     );
   });
@@ -283,5 +288,19 @@ describe("code card title", () => {
       },
     };
     expect(deterministicCopy(facts, { kind: "release", tag: "v2.0.0" }).codeTitle).toBeUndefined();
+  });
+});
+
+/** G2: how significant a release is, derived from semver rather than asserted by a human. */
+describe("releaseKind", () => {
+  it("reads the bump from the two tags", () => {
+    expect(releaseKind("v1.9.0", "v2.0.0")).toBe("major");
+    expect(releaseKind("0.0.7", "0.1.0")).toBe("minor");
+    expect(releaseKind("v0.0.7", "v0.0.8")).toBe("patch");
+  });
+
+  it("returns undefined rather than guessing", () => {
+    expect(releaseKind("v0.0.7", "v0.0.7")).toBeUndefined();
+    expect(releaseKind("nightly", "v0.0.8")).toBeUndefined();
   });
 });

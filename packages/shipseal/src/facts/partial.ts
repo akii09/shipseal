@@ -15,6 +15,7 @@ export type PartialProject = {
 export type PartialRelease = {
   version?: Fact<string>;
   tag?: Fact<string>;
+  kind?: Fact<"major" | "minor" | "patch">;
   previousVersion?: Fact<string>;
   date?: Fact<string>;
   features?: Fact<string>[];

@@ -84,6 +84,14 @@ export async function collectGit(
       ref: `git tag ${previousTag}`,
       fetchedAt,
     });
+    const kind = releaseKind(versionFromTag(previousTag), versionFromTag(tag));
+    if (kind !== undefined) {
+      release.kind = fact(kind, {
+        source: "git",
+        ref: `semver ${previousTag}..${tag}`,
+        fetchedAt,
+      });
+    }
   }
   if (names.length > 0) {
     release.contributors = fact(names, {
@@ -185,4 +193,37 @@ export async function collectGitRemote(cwd: string): Promise<PartialFacts> {
 function githubSlug(url: string): string | undefined {
   const cleaned = url.replace(/^git\+/, "").replace(/\.git$/, "");
   return /github\.com[/:]([^/]+\/[^/]+)$/.exec(cleaned)?.[1];
+}
+
+/**
+ * How significant is this release, by semver alone?
+ *
+ * Compared against the previous tag rather than read from a changelog heading, so it is a fact
+ * with a reference someone can re-run. Returns undefined when either tag is not semver, or when
+ * the two are equal: a caller should treat "unknown" as "announce it", never as "skip it".
+ */
+export function releaseKind(
+  previous: string,
+  current: string,
+): "major" | "minor" | "patch" | undefined {
+  const before = parseSemver(previous);
+  const after = parseSemver(current);
+  if (before === undefined || after === undefined) {
+    return undefined;
+  }
+  if (after[0] !== before[0]) {
+    return "major";
+  }
+  if (after[1] !== before[1]) {
+    return "minor";
+  }
+  return after[2] === before[2] ? undefined : "patch";
+}
+
+function parseSemver(value: string): [number, number, number] | undefined {
+  const match = /^(\d+)\.(\d+)\.(\d+)/.exec(value.replace(/^v/, ""));
+  if (match === null) {
+    return undefined;
+  }
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
 }

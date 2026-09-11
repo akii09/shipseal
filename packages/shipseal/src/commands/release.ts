@@ -27,8 +27,13 @@ export interface ReleaseFlags extends SharedFlags {
   templates?: string;
 }
 
+/** Lowest kind worth announcing, most significant first. */
+const ANNOUNCE_ORDER = ["major", "minor", "patch"] as const;
+
 export interface ReleaseResult {
   dryRun: boolean;
+  skipped?: boolean;
+  message?: string;
   facts: Awaited<ReturnType<typeof collectFacts>>;
   copy: import("../copy/slots.js").Copy;
   copyMode: "deterministic" | "llm";
@@ -79,8 +84,25 @@ export async function runRelease(flags: ReleaseFlags): Promise<ReleaseResult> {
   }
   const facts = await collectFacts(collectOpts);
 
+  // Below the configured threshold there is nothing worth posting. Reported the same way
+  // `milestone` reports an uncrossed threshold: exit 0, `skipped` true, and say why.
+  const announce = config.release?.announce ?? "patch";
+  const kind = facts.release?.kind?.value;
+  if (kind !== undefined && ANNOUNCE_ORDER.indexOf(kind) > ANNOUNCE_ORDER.indexOf(announce)) {
+    return {
+      dryRun: flags.dryRun === true,
+      skipped: true,
+      message: `This is a ${kind} release and release.announce is "${announce}". Nothing to generate.`,
+      facts,
+      copy: deterministicCopy(facts, config.release?.maxHighlights, brand.name),
+      copyMode: "deterministic",
+      warnings: [],
+      exitCode: 0,
+    };
+  }
+
   const noCopy = flags.copy === false;
-  const resolved = await resolveCopy(facts, config, noCopy, deterministicCopy(facts, config.release?.maxHighlights));
+  const resolved = await resolveCopy(facts, config, noCopy, deterministicCopy(facts, config.release?.maxHighlights, brand.name));
 
   if (flags.dryRun === true) {
     const dry: ReleaseResult = {

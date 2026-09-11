@@ -15,6 +15,7 @@ export const configSchema = z.object({
       maxHighlights: z.number().int().positive().optional(),
       changelogPath: z.string().optional(),
       snippet: z.string().nullable().optional(),
+      announce: z.enum(["major", "minor", "patch"]).optional(),
     })
     .optional(),
   milestones: z
@@ -55,6 +56,9 @@ export const DEFAULT_CONFIG: Config = {
     templates: ["release-hero", "release-highlights", "code-card"],
     maxHighlights: 4,
     changelogPath: "CHANGELOG.md",
+    // Announce everything by default. The review proposed "minor", but a project whose release
+    // script copies the rendered hero (this one does) breaks when a patch produces nothing.
+    announce: "patch",
     snippet: null,
   },
   milestones: {

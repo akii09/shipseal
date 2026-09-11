@@ -65,6 +65,9 @@ export function mergeFacts(parts: PartialFacts[]): Facts {
       fixes: release.fixes ?? [],
       breaking: release.breaking ?? [],
     };
+    if (release.kind !== undefined) {
+      facts.release.kind = release.kind;
+    }
     if (release.previousVersion !== undefined) {
       facts.release.previousVersion = release.previousVersion;
     }

@@ -61,6 +61,7 @@ export const factsSchema = z.object({
     .object({
       version: stringFact,
       tag: stringFact,
+      kind: factSchema(z.enum(["major", "minor", "patch"])).optional(),
       previousVersion: stringFact.optional(),
       date: stringFact,
       features: z.array(stringFact),

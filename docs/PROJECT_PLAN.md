@@ -415,6 +415,7 @@ interface Facts {
   release?: {
     version: Fact<string>;        // "2.0.0" (tag without leading "v")
     tag: Fact<string>;            // "v2.0.0"
+    kind?: Fact<"major" | "minor" | "patch">;  // semver of tag vs previousTag
     previousVersion?: Fact<string>;
     date: Fact<string>;
     features: Fact<string>[];     // changelog/conventional "feat" entries
@@ -538,7 +539,10 @@ File: `.shipseal/config.json`. All fields optional.
     "templates": ["release-hero", "release-highlights", "code-card"],
     "maxHighlights": 4,
     "changelogPath": "CHANGELOG.md",
-    "snippet": null
+    "snippet": null,
+    "announce": "patch",
+    "headline": null,
+    "subheadline": null
   },
   "milestones": {
     "stars": [100, 250, 500, 1000, 2500, 5000, 10000],
@@ -651,11 +655,20 @@ Numbers inside copy (like "1,000") are **inserted by code from facts**, never wr
 
 Rules, in order:
 
-- `headline`: first `features` entry, cleaned (sentence case, no trailing period). Fallback: `"{name} {version}"`.
+- `headline`: `release.headline` if configured, else the first `breaking` entry, else the first `features` entry, cleaned (sentence case, no trailing period). Fallback: `"{name} {version}"`.
+  - **A fix is never the headline.** A patch release announcing "Do not use a private workspace root's name" reads as a maintainer's note, not a release, and nobody posts it. A release with only fixes gets the `"{name} {version}"` fallback, which is a card worth posting.
 - `subheadline`: project tagline. Fallback: second feature entry.
 - `highlights`: first N features, then fixes, then breaking changes (breaking changes are labeled).
 - `cta`: `npm i {npmPackage}` if published to npm, else the repo URL without protocol.
 - Milestone lines use fixed phrasing templates with the number interpolated from facts.
+
+**Release significance.** `release.kind` is derived from semver, comparing the tag with the
+previous tag. `release.announce` sets the lowest kind worth announcing and defaults to `"patch"`,
+so every release produces a pack unless the user opts out. Setting it to `"minor"` makes
+`shipseal release` skip a patch release entirely and report `skipped`, the same way `milestone`
+does when no threshold was crossed. The default is deliberately permissive: a project whose
+release script copies the rendered hero (this one does) would break if a patch silently produced
+nothing.
 
 ### 13.3 LLM copy (opt-in)
 
@@ -1157,6 +1170,12 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | Build tool: **tsdown** `^0.23.0` | Rolldown-based, actively released, 0.17 MB, handles shebang bin entries and `.d.ts`. Accepted risk: still 0.x, so minor bumps can break | tsup 8.5.1 (stable API but last published 2025-11-12, roughly 10 months stale) |
 | 2026-09-11 | Test runner: **vitest** `^5.0.0` | Already assumed by Section 20. `vite` is an optional peer in v5, so the install stays small | node:test (no golden image tooling, weaker fixture ergonomics) |
 | 2026-09-11 | Linter: **oxlint** `^1.82.0`, single config at the repo root | Zero transitive dependencies and one binary, which matches the small-supply-chain rule. `tsc --strict` with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` already covers type-aware checks | eslint + typescript-eslint (roughly 100 transitive packages) |
+| 2026-09-12 | Documented Action reference pins an exact tag (`@v0.0.8`), not a moving `v1` | No `v1` tag ever existed, so every copied workflow failed with "unable to resolve action". A moving major tag is GitHub's recommendation for action authors, but it promises a stable interface this project has not committed to before 1.0 | Creating `v1` now (advertises stability that does not exist); leaving `@v1` broken |
+| 2026-09-12 | Versions in the docs site are generated or pinned, never hand-maintained | Six places drifted to `v0.0.6` while the package moved on, and the Action's `version` input sat at `0.0.5` for three releases. Enforced by `docs-versions.test.ts`: a version matches the release or sits in a `shipseal:pinned` region explaining why not | Bumping every occurrence at release time (would falsify real captured manifests); manual review |
+| 2026-09-12 | Snippet priority: configured, then release notes, then README | Explicit beats inferred. `release.snippet` was silently ignored on any project whose README had a code block, because the configured value was consulted last | The review's order (release notes above configured), which would override what the user asked for |
+| 2026-09-12 | Declared facts beat derived ones in the merge order | `mergeFacts` fills holes, so the first source wins, but the git remote sat first while a comment claimed package.json would win. A remote may point at a fork, a mirror or an SSH alias | Keeping remote-first; making the merge last-wins (would change every other source's priority) |
+| 2026-09-12 | `publish.yml` pins actions to full commit SHAs; other workflows still use tags | That job holds the npm publishing identity over OIDC, so it is the one worth hardening. GitHub's secure-use guidance calls a SHA the only immutable reference. Dependabot's `github-actions` ecosystem keeps them current | Pinning every workflow at once (more churn than the risk warrants today); pinning none |
+| 2026-09-12 | `release.announce` defaults to `"patch"`, so every release still produces a pack | The review proposed `"minor"`, which would make a patch release render nothing. `pnpm release` copies the rendered hero into the README showcase, so that default would break this repository's own release | `"minor"` default (breaks the release script); no threshold at all |
 | 2026-09-11 | **No demand validation gate.** Build the thing, release it, then learn from users | The owner has the problem first-hand, and the v1 scope is small enough that building it cost less than researching whether to build it. A gate would have delayed a working tool to collect opinions about a description of it | Phase 0 validation before writing product code, which the original plan required |
 | 2026-09-11 | Takumi confirmed as `takumi-js@2.13.7` (S1). Render via `render()` from `takumi-js`, measure via `Renderer` from `takumi-js/node` | Spike record: `docs/spikes/2026-09-11-takumi-s1-s2-s4.md`. Determinism verified byte-identical within and across processes; 1200x630 card renders in 4.3 ms warm against a 500 ms budget | Older package names `@takumi-rs/core` and `@takumi-rs/image-response` |
 | 2026-09-11 | Templates authored as `.tsx` with a local four-line JSX runtime, **no React dependency** (S1) | `RenderInput` accepts `ReactElementLike`, so `jsxImportSource` can point at a shim emitting `{type, props, key}`. Verified: real `.tsx` compiled by `tsc` and rendered with zero react packages installed | React as a runtime dependency; hand-writing node trees with `container()`/`text()` (unreadable for real layouts); HTML strings (no type safety) |
