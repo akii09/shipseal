@@ -15,6 +15,8 @@ import { collectReadme } from "../src/sources/readme.js";
 import { mergeFacts } from "../src/facts/merge.js";
 import { fact } from "../src/facts/fact.js";
 
+const NOW = "2026-09-11T00:00:00.000Z";
+
 const execFileAsync = promisify(execFile);
 
 describe("package-json source", () => {
@@ -296,3 +298,59 @@ async function git(cwd: string, args: string[]): Promise<void> {
 
 const forbiddenFetch: typeof fetch = async () => new Response("nope", { status: 403 });
 const missingNpmFetch: typeof fetch = async () => new Response("not found", { status: 404 });
+
+describe("npm repository shorthand", () => {
+  // Regression: `"repository": "github:owner/repo"` is the most common npm form and
+  // was not expanded, so repoSlug returned undefined and `milestone` could never read
+  // stars. Caught by running the CLI against a real project on 2026-09-11.
+  const cases: Array<[string, string | undefined]> = [
+    ["github:vercel/next.js", "vercel/next.js"],
+    ["vercel/next.js", "vercel/next.js"],
+    ["https://github.com/vercel/next.js", "vercel/next.js"],
+    ["git+https://github.com/vercel/next.js.git", "vercel/next.js"],
+    ["git@github.com:vercel/next.js.git", "vercel/next.js"],
+    ["https://gitlab.com/vercel/next.js", undefined],
+  ];
+
+  for (const [input, expected] of cases) {
+    it(`resolves ${input}`, async () => {
+      const dir = await mkdtemp(join(tmpdir(), "shipseal-repo-"));
+      await writeFile(join(dir, "package.json"), JSON.stringify({ name: "demo", repository: input }), "utf8");
+      const part = await collectPackageJson(dir);
+      expect(part.project?.repo?.value).toBe(expected);
+    });
+  }
+});
+
+describe("partial release facts", () => {
+  // Regression: `package.json#version` alone made the release block partial and
+  // mergeFacts threw, so `bench` and `milestone` failed on any versioned project
+  // without a git tag. Those events do not need release facts at all (§6.3).
+  const named = () => ({
+    name: fact("demo", { source: "package-json" as const, ref: "package.json#name", fetchedAt: NOW }),
+  });
+
+  it("drops an incomplete release instead of throwing", () => {
+    const facts = mergeFacts([
+      {
+        project: named(),
+        release: {
+          version: fact("0.0.1", { source: "package-json", ref: "package.json#version", fetchedAt: NOW }),
+        },
+      },
+    ]);
+    expect(facts.release).toBeUndefined();
+    expect(facts.project.name.value).toBe("demo");
+  });
+
+  it("keeps a complete release", () => {
+    const p = { source: "git" as const, ref: "git tag v1.0.0", fetchedAt: NOW };
+    const facts = mergeFacts([
+      {
+        project: named(),
+        release: { version: fact("1.0.0", p), tag: fact("v1.0.0", p), date: fact("2026-09-11", p) },
+      },
+    ]);
+    expect(facts.release?.version.value).toBe("1.0.0");
+  });
+});

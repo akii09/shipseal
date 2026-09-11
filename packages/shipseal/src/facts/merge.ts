@@ -52,14 +52,11 @@ export function mergeFacts(parts: PartialFacts[]): Facts {
     facts.project.license = project.license;
   }
 
-  if (hasRelease(release)) {
-    if (release.version === undefined || release.tag === undefined || release.date === undefined) {
-      throw new ShipsealError(
-        "facts.incomplete-release",
-        "Release facts are missing version, tag, or date.",
-        "Create an annotated git tag, pass --tag, or add a matching section to CHANGELOG.md.",
-      );
-    }
+  // A partial release block is dropped, not fatal. `package.json#version` alone makes
+  // `hasRelease` true on every project, so throwing here broke `bench` and `milestone`,
+  // which do not need release facts at all (§6.3). The release event still errors, in
+  // collectFacts, where the check knows the event kind.
+  if (isCompleteRelease(release)) {
     facts.release = {
       version: release.version,
       tag: release.tag,
@@ -131,6 +128,9 @@ function fillObject<T extends object>(target: T, overlay: T | undefined, skip: (
   }
 }
 
-function hasRelease(release: PartialRelease): boolean {
-  return release.version !== undefined || release.tag !== undefined || release.date !== undefined;
+function isCompleteRelease(
+  release: PartialRelease,
+): release is PartialRelease &
+  Required<Pick<PartialRelease, "version" | "tag" | "date">> {
+  return release.version !== undefined && release.tag !== undefined && release.date !== undefined;
 }

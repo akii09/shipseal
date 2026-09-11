@@ -125,7 +125,17 @@ function repoSlug(repository: z.infer<typeof pkgSchema>["repository"]): string |
   return match?.[1];
 }
 
+// npm allows shorthand repository strings: "owner/repo", "github:owner/repo",
+// and the other hosts' prefixes. Expand the GitHub ones so repoSlug and the
+// GitHub source see a real URL. Without this, `milestone` could not read stars
+// for any project using the shorthand, which is the most common form.
+const SHORTHAND = /^(?:github:)?([\w.-]+\/[\w.-]+)$/;
+
 function normalizeGitUrl(url: string): string {
+  const shorthand = SHORTHAND.exec(url);
+  if (shorthand?.[1] !== undefined) {
+    return `https://github.com/${shorthand[1].replace(/\.git$/, "")}`;
+  }
   const ssh = /^git@([^:]+):(.+)$/.exec(url);
   if (ssh !== null && ssh[1] !== undefined && ssh[2] !== undefined) {
     return `https://${ssh[1]}/${ssh[2].replace(/\.git$/, "")}`;
