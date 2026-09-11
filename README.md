@@ -1,6 +1,10 @@
-# Shipseal
+<p align="center">
+  <img src="./assets/brand/wordmark-800.png" alt="Shipseal" width="400">
+</p>
 
-**Every release, sealed and ready to share.**
+<p align="center">
+  <strong>Every release, sealed and ready to share.</strong>
+</p>
 
 Shipseal turns your repo's releases, milestones, and benchmarks into ready-to-post visuals: OG images, X and LinkedIn cards, GitHub social previews. On brand, at the right size, with **every number verified** from a real source.
 
@@ -51,6 +55,23 @@ jobs:
 
 Read [AGENTS.md](./AGENTS.md) and [docs/PROJECT_PLAN.md](./docs/PROJECT_PLAN.md) first. See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+## Brand assets
+
+Logo and icon files live in [`assets/brand/`](./assets/brand). Use the source files for
+print or large surfaces and the sized variants for the web:
+
+| File | Size | Use |
+|---|---|---|
+| `wordmark.png` | 2120x742 | source wordmark |
+| `wordmark-800.png` | 800 wide | README, docs headers |
+| `icon.png` | 1254x1254 | source icon |
+| `icon-512.png` | 512x512 | app icon, social profile |
+| `icon-180.png` | 180x180 | apple touch icon |
+| `icon-32.png` | 32x32 | favicon |
+
 ## License
 
 MIT. Rendering powered by [Takumi](https://takumi.kane.tw).
+
+The bundled Geist Mono font is licensed separately under the SIL Open Font License 1.1.
+See [`packages/shipseal/assets/fonts/`](./packages/shipseal/assets/fonts).

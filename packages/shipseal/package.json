@@ -8,7 +8,8 @@
     "shipseal": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "assets"
   ],
   "engines": {
     "node": ">=22"

@@ -259,8 +259,8 @@ Verify current versions and APIs before installing (Rule R5).
 | Runtime | Node.js 22 LTS minimum (`engines.node >= 22`) | Confirm the Node version GitHub Actions runners provide. |
 | Package manager | pnpm (workspaces) | Owner's standard. |
 | Build | tsdown or tsup | Pick one in Phase 1; record in Decisions log. |
-| Rendering | **Takumi** via `takumi-js` | Package names have changed historically (`@takumi-rs/core`, `@takumi-rs/image-response`, now `takumi-js` with subpaths like `takumi-js/response` and `takumi-js/helpers`). Confirm current package and API from takumi.kane.tw/docs. Wrapped by the renderer adapter only. |
-| Default fonts | Geist and Geist Mono | Bundled with Takumi per its docs (verify). OFL licensed. |
+| Rendering | **Takumi** via `takumi-js` | Confirmed 2026-09-11 at `takumi-js@2.13.7` (S1). `render`/`renderSvg` from `takumi-js`, `Renderer` from `takumi-js/node`, node and JSX helpers from `takumi-js/helpers`. Wrapped by the renderer adapter only. |
+| Default fonts | Geist (bundled by Takumi), Geist Mono (**vendored by Shipseal**) | S4 verified 2026-09-11: Takumi bundles only Geist, weights 300 to 800. Shipseal ships `packages/shipseal/assets/fonts/GeistMono[wght].ttf`, the variable face from upstream `v1.7.2`, OFL 1.1. |
 | Validation | zod | All facts, config, brand, and LLM output validated. |
 | CLI framework | cac or commander | Pick one in Phase 1. |
 | Interactive prompts | @clack/prompts | For `init` only. |
@@ -282,6 +282,8 @@ Verify current versions and APIs before installing (Rule R5).
 ```
 shipseal/
 ├── action.yml                      # Composite GitHub Action (root, so `uses: owner/shipseal@v1` works)
+├── assets/
+│   └── brand/                      # Shipseal's own logo and icon, source plus sized variants
 ├── package.json                    # Workspace root (private)
 ├── pnpm-workspace.yaml
 ├── AGENTS.md                       # Short pointer to Section 0 of this plan
@@ -290,6 +292,8 @@ shipseal/
 ├── packages/
 │   └── shipseal/                   # The single published npm package
 │       ├── package.json            # name: "shipseal", bin: { "shipseal": "./dist/cli.js" }
+│       ├── assets/
+│       │   └── fonts/              # vendored Geist Mono (variable) + OFL.txt; published in the tarball
 │       ├── src/
 │       │   ├── cli.ts              # CLI entry: parses args, calls commands
 │       │   ├── commands/
@@ -488,7 +492,7 @@ Resolution order (first wins, per field):
 Field rules:
 
 - `colors.*`: hex strings. `background` and `foreground` required; others optional with derived defaults.
-- `fonts.*.file`: optional path to a TTF/OTF/WOFF/WOFF2 file for custom fonts. If absent, use bundled Geist.
+- `fonts.*.file`: optional path to a TTF/OTF/WOFF/WOFF2 file for custom fonts. WOFF2 is confirmed working (S4). If absent, `heading` and `body` use the Geist bundled by Takumi, and `mono` uses the Geist Mono vendored at `packages/shipseal/assets/fonts/GeistMono[wght].ttf`.
 - `theme`: `"dark" | "light"`. Templates render both; this is the default.
 - `style`: `"minimal"` only in v1 (reserved for future styles).
 - `tokens`: optional path to a DTCG `.tokens.json` file. Do not invent a competing token standard; read DTCG where it exists.
@@ -756,10 +760,20 @@ For each text slot, per format:
 
 ### 15.3 Measurement
 
-Preferred: Takumi's own text measurement (the Rust crate exposes measured node and text-run types). **Spike required** (Section 24) to confirm whether `takumi-js` exposes measurement to JavaScript. Fallbacks, in order:
+**Resolved by spike S2 on 2026-09-11** (`docs/spikes/2026-09-11-takumi-s1-s2-s4.md`). Takumi exposes measurement to JavaScript, so no font-parsing library is needed and no fallback applies.
 
-1. Render the text node alone in Takumi and read its laid-out size, if the JS API returns layout info.
-2. Measure with font metrics via a small font-parsing library (decide during the spike; Rule R7 applies).
+```ts
+import { Renderer } from "takumi-js/node";
+renderer.measure(node, options): Promise<MeasuredNode>
+// MeasuredNode    { width, height, transform, children, runs }
+// MeasuredTextRun { text, x, y, width, height }
+```
+
+Three rules follow from the spike:
+
+1. `measure()` takes a Takumi `Node`, not JSX. Call `fromJsx()` from `@takumi-rs/helpers/jsx` first; it returns `{ node, css }`.
+2. There is no line-count field. Count **distinct rounded `run.y` values**, walking children. Do not use `runs.length`: it matches the line count only for single-style text, and a code card emits several colored runs per line.
+3. Measurement is cheap, roughly 0.14 ms per call, so the size loop needs no caching.
 
 Measurement must use the same font files as rendering, or results will drift.
 
@@ -1099,14 +1113,14 @@ Pick from Section 4.2 based on real user requests, not assumptions. Record each 
 
 ## 24. Known unknowns (spikes to run first)
 
-Each spike is time-boxed to half a day. Record results in Section 25.
+Each spike is time-boxed to half a day. Record results in Section 25, with the detailed evidence in `docs/spikes/<date>-<topic>.md`.
 
 | # | Question | How to answer | Decision it unblocks |
 |---|---|---|---|
-| S1 | What is the current Takumi JS package name and render API? Does it accept React JSX directly, and does that require React at runtime? | Read takumi.kane.tw/docs; render a card from JSX and from helpers | Template authoring approach, dependency list |
-| S2 | Does `takumi-js` expose text measurement or layout info to JavaScript? | Docs + experiment | Fitting implementation (Section 15.3) |
+| ~~S1~~ **DONE 2026-09-11** | What is the current Takumi JS package name and render API? Does it accept React JSX directly, and does that require React at runtime? | Answered: `takumi-js@2.13.7`; JSX works with no React runtime. See `docs/spikes/2026-09-11-takumi-s1-s2-s4.md` | Unblocked: templates are `.tsx` with a JSX shim (§25) |
+| ~~S2~~ **DONE 2026-09-11** | Does `takumi-js` expose text measurement or layout info to JavaScript? | Answered: yes, `Renderer.measure()` returns `MeasuredNode` with text runs. See the spike record | Unblocked: §15.3 rewritten, no font-parsing dependency |
 | S3 | Does the native binary run on `ubuntu-latest` GitHub runners, macOS arm64, and Windows? Is there a usable WASM fallback? | Minimal CI matrix | Action design, platform support statement |
-| S4 | Which fonts are bundled with Takumi, and how are custom fonts loaded? | Docs + experiment | Font handling in brand kit |
+| ~~S4~~ **DONE 2026-09-11** | Which fonts are bundled with Takumi, and how are custom fonts loaded? | Answered: only Geist (300 to 800) is bundled; custom fonts load as raw bytes, WOFF2 confirmed. See the spike record | Unblocked: §7 corrected; open decision on supplying Geist Mono |
 | S5 | Can Takumi render many colored inline spans (shiki tokens) fast enough for a 14-line code card? | Benchmark | Code card feasibility |
 | S6 | Output file sizes: PNG vs WebP for each format; do platforms accept WebP for uploads? | Render + check platform docs | Default `imageFormat` |
 | S7 | Tailwind v4 `@theme` parsing: how reliably can colors be extracted statically? | Test on PDFx docs site and 3 other repos | Brand detection scope |
@@ -1133,6 +1147,14 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | Test runner: **vitest** `^5.0.0` | Already assumed by Section 20. `vite` is an optional peer in v5, so the install stays small | node:test (no golden image tooling, weaker fixture ergonomics) |
 | 2026-09-11 | Linter: **oxlint** `^1.82.0`, single config at the repo root | Zero transitive dependencies and one binary, which matches the small-supply-chain rule. `tsc --strict` with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` already covers type-aware checks | eslint + typescript-eslint (roughly 100 transitive packages) |
 | 2026-09-11 | Phase 0 demand validation gate consciously skipped | Owner decision: build Phase 1 now, record signals in `docs/validation.md` later. Noted so the unmet gate is explicit, not silent | Blocking Phase 1 until validation.md has real signals |
+| 2026-09-11 | Takumi confirmed as `takumi-js@2.13.7` (S1). Render via `render()` from `takumi-js`, measure via `Renderer` from `takumi-js/node` | Spike record: `docs/spikes/2026-09-11-takumi-s1-s2-s4.md`. Determinism verified byte-identical within and across processes; 1200x630 card renders in 4.3 ms warm against a 500 ms budget | Older package names `@takumi-rs/core` and `@takumi-rs/image-response` |
+| 2026-09-11 | Templates authored as `.tsx` with a local four-line JSX runtime, **no React dependency** (S1) | `RenderInput` accepts `ReactElementLike`, so `jsxImportSource` can point at a shim emitting `{type, props, key}`. Verified: real `.tsx` compiled by `tsc` and rendered with zero react packages installed | React as a runtime dependency; hand-writing node trees with `container()`/`text()` (unreadable for real layouts); HTML strings (no type safety) |
+| 2026-09-11 | `skipLibCheck: true` stays on in `tsconfig.base.json` | Takumi's own `.d.ts` files import `react` and `csstype`. With `skipLibCheck: false` typecheck fails with 12 errors inside `node_modules`; with it true, typecheck is clean and no react types are needed | Installing `@types/react` and `csstype` purely to satisfy a vendor's type imports |
+| 2026-09-11 | Text fitting builds on `renderer.measure()`; line count derived from distinct `run.y` values (S2) | Measurement is exposed, accurate against known line breaks, and costs about 0.14 ms per call. Section 15.3 rewritten | The §15.3 fallback of measuring via a font-parsing library, which would have needed a new dependency under R7 |
+| 2026-09-11 | Template rule: **every text node sets `fontFamily` explicitly** (S4) | Registering any custom font silently changes the family used by text nodes that omit it. Verified by hash: bare text renders differently once a mono font is registered, pinned text does not | Relying on the default family and letting brand fonts cascade |
+| 2026-09-11 | Plan §7 corrected: Takumi bundles **only Geist**, weights 300 to 800 (S4) | Nine family names, including `Geist Mono` and `monospace`, all rendered byte-identical, proving a single bundled face. The earlier claim that Geist Mono ships with Takumi was wrong | Trusting the docs summary without testing |
+| 2026-09-11 | **Vendor Geist Mono into the package**: `assets/fonts/GeistMono[wght].ttf`, variable axis, upstream `vercel/geist-font` v1.7.2, OFL 1.1, shipped via `files: ["dist", "assets"]` | Works offline with no network at render time (§16.2) and no `init` step. One 171 KB variable file covers every weight: weights 300 to 900 rendered seven distinct outputs, so static instances are unnecessary | Fetching at `init` (needs network, adds a failure mode); requiring a user-supplied path (breaks the zero-config default); shipping static weight instances (larger, less flexible) |
+| _(open)_ | §16.1 `measureText?(text, opts)` signature does not match Takumi, which measures a node tree | _public interface change, needs approval_ | |
 | _(Phase 1)_ | CLI framework: cac or commander | _to decide when `src/cli.ts` is implemented_ | |
 | _(Phase 2)_ | LLM provider approach | _to decide_ | |
 
