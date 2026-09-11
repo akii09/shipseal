@@ -36,12 +36,41 @@ succeeds. A leaked long-lived token is the exact failure trusted publishing remo
 
 ## Publishing a version
 
-1. Bump the version in `packages/shipseal/package.json`.
-2. Merge to `main`.
-3. Create a GitHub release whose tag matches the version, with or without a leading `v`
-   (`v0.1.0` and `0.1.0` both work).
-4. The workflow runs lint, typecheck, tests and build, checks the tag against the manifest,
-   then publishes. Approve the environment gate when prompted.
+Version bumps and the changelog come from Changesets. Nothing is edited by hand.
+
+**1. Add a changeset in the pull request that makes the change.**
+
+```bash
+pnpm changeset
+```
+
+Pick `patch`, `minor` or `major`, then describe the change for someone reading release notes.
+That text goes into `CHANGELOG.md` verbatim. Changes with no user-visible effect need none.
+
+**2. Merge to `main`.** `version.yml` opens or updates a "chore: version packages" pull
+request that bumps `packages/shipseal/package.json`, writes `CHANGELOG.md`, and deletes the
+consumed changeset files.
+
+**3. Merge the version pull request** when you are ready to release.
+
+**4. Create a GitHub release** whose tag matches the new version, with or without a leading
+`v` (`v0.1.0` and `0.1.0` both work).
+
+`publish.yml` then runs lint, typecheck, tests and build, checks the tag against the manifest,
+and publishes over OIDC. Approve the environment gate when prompted.
+
+### Why versioning and publishing are separate workflows
+
+`version.yml` deliberately does not publish. npm binds the trusted publisher to a single
+workflow filename, so keeping every publish in `publish.yml` means one identity to configure
+and one place to audit. It also puts a human decision between "the version is prepared" and
+"the version is public".
+
+To see what would be released:
+
+```bash
+pnpm changeset:status
+```
 
 ## Dry run
 

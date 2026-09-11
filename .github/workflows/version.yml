@@ -1,0 +1,42 @@
+# Open a "Version Packages" pull request when changesets land on main.
+# This workflow does NOT publish. Publishing happens in publish.yml, triggered by a
+# GitHub release, so npm's trusted publisher stays bound to one workflow filename.
+# Docs checked 2026-09-11: changesets/action@v2
+name: Version
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # commit the version bump to the release branch
+  pull-requests: write # open and update the version PR
+
+concurrency:
+  group: version-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # changesets reads history to work out what changed
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - uses: changesets/action@v2
+        with:
+          version: pnpm changeset:version
+          commit: "chore: version packages"
+          title: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

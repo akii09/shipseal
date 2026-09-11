@@ -10,9 +10,13 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "lint": "oxlint"
+    "lint": "oxlint",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:status": "changeset status --since=origin/main"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.2",
     "oxlint": "^1.82.0"
   }
 }
