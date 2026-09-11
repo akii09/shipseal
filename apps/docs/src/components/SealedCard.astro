@@ -2,7 +2,11 @@
 /**
  * Hero animation: a release card being built from repository facts, then sealed.
  *
- * The layout mirrors the real `release-hero` template so the hero shows the actual product.
+ * The layout and the content both mirror the real `release-hero` template: every string below
+ * is what Shipseal rendered for its own v0.0.6 release, in `assets/examples/release-hero.png`.
+ * Nothing here is invented, because the card's whole claim is that nothing is invented. That
+ * includes the bottom right, which carries the attribution and never a metric.
+ *
  * Provenance is explained by a caption that cycles under the card rather than by labels
  * floating beside each fact, which overflowed the card on narrow screens.
  */
@@ -13,26 +17,26 @@
     <div class="top">
       <img class="logo" src="/icon-56.png" alt="" width="28" height="28" decoding="async" />
       <span class="name">Shipseal</span>
-      <span class="badge s s1">v2.0.0</span>
+      <span class="badge s s1">v0.0.6</span>
     </div>
 
     <div class="middle">
-      <p class="headline s s2">QR and barcode support</p>
-      <p class="sub s s3">Render scannable codes in any PDF component</p>
+      <p class="headline s s2">Never put a truncated headline on a card</p>
+      <p class="sub s s3">Every release, sealed and ready to share</p>
     </div>
 
     <div class="bottom">
-      <span class="cta s s4">npm i shipseal</span>
-      <span class="stars s s5">1,042 stars</span>
+      <span class="cta s s4">github.com/akii09/shipseal</span>
+      <span class="attribution s s5">made with shipseal.dev</span>
     </div>
 
     <img class="seal" src="/icon-96.png" alt="" width="48" height="48" decoding="async" />
   </div>
 
   <figcaption class="prov">
-    <span class="p p1"><b>v2.0.0</b> from the git tag</span>
+    <span class="p p1"><b>v0.0.6</b> from the git tag</span>
     <span class="p p2"><b>headline</b> from CHANGELOG.md</span>
-    <span class="p p3"><b>1,042</b> from the GitHub API</span>
+    <span class="p p3"><b>the link</b> from the git remote</span>
     <span class="p p4"><b>sealed.</b> every number has a source</span>
   </figcaption>
 </figure>
@@ -50,6 +54,9 @@
     padding: clamp(1.1rem, 3vw, 2rem);
     display: grid;
     grid-template-rows: auto 1fr auto;
+    /* minmax(0, 1fr) stops a wide row (the CTA plus the attribution) from widening the whole
+       card past its own box. Without it the headline spills over the rounded edge on a phone. */
+    grid-template-columns: minmax(0, 1fr);
     box-shadow: 0 40px 80px -50px rgb(0 0 0 / 1), inset 0 1px 0 rgb(255 255 255 / 0.03);
     overflow: hidden;
     animation: recoil 10s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
@@ -57,7 +64,7 @@
 
   .top { display: flex; align-items: center; gap: 0.6rem; }
   .middle { display: grid; align-content: center; gap: 0.5rem; }
-  .bottom { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .bottom { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-width: 0; }
 
   /* Width and height attributes on the element match this, so a stale or missing
      stylesheet cannot render the source image at its natural size. */
@@ -76,13 +83,29 @@
   }
   .sub { color: var(--muted); font-size: clamp(0.7rem, 1.8vw, 0.95rem); margin: 0; }
 
+  /* The CTA is the half that gives way when the card is narrow: the attribution stays whole. */
   .cta {
     font-family: var(--mono); font-weight: 700;
     font-size: clamp(0.6rem, 1.4vw, 0.78rem);
     background: var(--primary); color: #10100f;
     border-radius: 999px; padding: 0.38rem 0.85rem;
+    min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .stars { font-family: var(--mono); font-size: clamp(0.62rem, 1.5vw, 0.82rem); color: var(--accent); font-weight: 700; }
+
+  /* One line, muted, exactly where the real release-hero puts its attribution. */
+  .attribution {
+    font-family: var(--mono); font-size: clamp(0.55rem, 1.3vw, 0.78rem);
+    color: var(--muted); white-space: nowrap; flex: none;
+  }
+
+  /*
+   * On a phone the row cannot hold both without ellipsing the URL, and a truncated card under
+   * the words "never put a truncated headline on a card" is not the impression to give. The
+   * attribution is decoration; the link is the fact. Drop the decoration.
+   */
+  @media (max-width: 480px) {
+    .attribution { display: none; }
+  }
 
   /* Each element arrives in turn, in the order the pipeline produces it. */
   .s { opacity: 0; animation: arrive 10s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; }
@@ -109,7 +132,7 @@
   .p b { color: var(--fg); font-weight: 600; }
   .p1 { animation-delay: 0.3s; }
   .p2 { animation-delay: 1.2s; }
-  .p3 { animation-delay: 2.7s; }
+  .p3 { animation-delay: 2.4s; }
   .p4 { animation-delay: 3.9s; }
   .p4 b { color: var(--primary); }
 

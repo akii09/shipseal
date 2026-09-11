@@ -155,7 +155,7 @@ Shipseal is **a designer that lives inside your repo**. When you ship something 
 | Text fitting | Automatic font scaling, line limits, and warnings (Section 15). |
 | Manifest | `manifest.json` listing every file, template, fact, and source. |
 | CLI | `init`, `release`, `milestone`, `bench`, `doctor`. |
-| GitHub Action | `uses: <owner>/shipseal@v1` on `release: published`; uploads images as release assets. |
+| GitHub Action | `uses: <owner>/shipseal@<version>` on `release: published`; uploads images as release assets. |
 | Themes | Each template supports `dark` and `light`. |
 
 ### 4.2 Later (post-v1, only after v1 has real users)
@@ -287,7 +287,7 @@ Verify current versions and APIs before installing (Rule R5).
 
 ```
 shipseal/
-├── action.yml                      # Composite GitHub Action (root, so `uses: owner/shipseal@v1` works)
+├── action.yml                      # Composite GitHub Action (root, so `uses: owner/shipseal@<ref>` works)
 ├── assets/
 │   └── brand/                      # Shipseal's own logo and icon, source plus sized variants
 ├── package.json                    # Workspace root (private)
@@ -972,7 +972,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # required: full history and tags for release facts
-      - uses: akii09/shipseal@v1
+      - uses: akii09/shipseal@v0.0.6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```

@@ -65,8 +65,18 @@ asks you to type the version to confirm before creating the release.
 | CI green on this exact commit | not on some earlier one |
 | CHANGELOG has a section for this version | the version pull request was actually merged |
 | `lint`, `typecheck`, `test`, `build` pass locally | on the code that will ship |
+| Showcase images and doc versions match this release | the README must not show older cards, and the documented action reference must not name a tag nobody can resolve |
 
 Use `pnpm release:check` to run all of it and change nothing.
+
+### The documented action reference
+
+`uses: akii09/shipseal@<tag>` appears in the README, the npm page, the docs site and
+`llms.txt`. `scripts/refresh-showcase.mjs` rewrites all of them to the tag being released, so
+`pnpm release` stops and asks you to commit that diff before it creates the tag. CI runs
+`pnpm check:action-ref`, which fails when a documented reference names a git ref that does not
+exist. That is not theoretical: the docs said `@v1` for months while the newest tag was
+`v0.0.6`, and every workflow copied from the quick start failed on the first step.
 
 Creating the release is still the only thing that publishes, so a mistake before this point
 costs nothing.

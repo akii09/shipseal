@@ -108,13 +108,18 @@ const formats = [
           is estimated and nothing is invented.
         </p>
       </div>
-      <pre class="code"><code>{`"metrics.stars": {
-  "value": 1042,
-  "source": "github-api",
-  "ref": "GET /repos/akii09/pdfx
-          stargazers_count",
-  "fetchedAt": "2026-09-11T10:00:00Z"
+      <div>
+        <pre class="code"><code>{`"release.commitCount": {
+  "value": 7,
+  "source": "git",
+  "ref": "git rev-list --count
+          v0.0.5..v0.0.6",
+  "fetchedAt": "2026-09-11T18:38:21Z"
 }`}</code></pre>
+        <p class="smallprint muted">
+          From Shipseal's own <code>v0.0.6</code> manifest. Run the <code>ref</code> and you get 7.
+        </p>
+      </div>
     </div>
   </section>
 

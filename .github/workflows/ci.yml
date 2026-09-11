@@ -5,13 +5,16 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      # fetch-depth: 0 brings the tags, which check:action-ref resolves documented refs against.
       - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
       # No version pin needed: pnpm/action-setup reads `packageManager` from package.json.
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
+      - run: pnpm check:action-ref
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build

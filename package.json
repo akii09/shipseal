@@ -16,6 +16,7 @@
     "changeset:status": "changeset status --since=origin/main",
     "release": "bash scripts/release.sh",
     "release:check": "bash scripts/release.sh --check",
+    "check:action-ref": "node scripts/check-action-ref.mjs",
     "showcase": "node scripts/refresh-showcase.mjs",
     "showcase:check": "node scripts/refresh-showcase.mjs --check"
   },

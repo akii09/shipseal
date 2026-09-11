@@ -227,7 +227,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: akii09/shipseal@v1
+      - uses: akii09/shipseal@v0.0.6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 EOF
@@ -271,7 +271,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: akii09/shipseal@v1
+      - uses: akii09/shipseal@v0.0.6
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
 ```
 
