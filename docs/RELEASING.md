@@ -53,7 +53,25 @@ consumed changeset files.
 
 **3. Merge the version pull request** when you are ready to release.
 
-**4. Create a GitHub release** whose tag matches the new version, with or without a leading
+**4. Run `pnpm release`.** It checks everything below and refuses if any of it is wrong, then
+asks you to type the version to confirm before creating the release.
+
+| Check | Why it blocks |
+|---|---|
+| On `main`, clean tree, in sync with origin | a release must be reproducible from what is pushed |
+| No leftover changeset files | they would silently miss this release |
+| Tag and GitHub release do not exist | never release the same version twice |
+| Version is not already on npm | npm refuses to overwrite, so catch it before the tag exists |
+| CI green on this exact commit | not on some earlier one |
+| CHANGELOG has a section for this version | the version pull request was actually merged |
+| `lint`, `typecheck`, `test`, `build` pass locally | on the code that will ship |
+
+Use `pnpm release:check` to run all of it and change nothing.
+
+Creating the release is still the only thing that publishes, so a mistake before this point
+costs nothing.
+
+**Or create a GitHub release by hand** whose tag matches the new version, with or without a leading
 `v` (`v0.1.0` and `0.1.0` both work).
 
 `publish.yml` then runs lint, typecheck, tests and build, checks the tag against the manifest,

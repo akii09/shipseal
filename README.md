@@ -28,9 +28,13 @@ Every number on a card comes from git, the GitHub API, npm, or your CI, and is l
 ## Planned usage
 
 ```bash
-npx shipseal init       # detect your brand once
-npx shipseal release    # generate the release pack
+npx shipseal@latest init       # detect your brand once
+npx shipseal@latest release    # generate the release pack
 ```
+
+`npx` reuses a cached copy, so plain `npx shipseal` can keep running an old version for days.
+The `@latest` tag forces it to check the registry. Pin an exact version in CI instead, so a
+release never changes under you.
 
 ```yaml
 # .github/workflows/shipseal.yml

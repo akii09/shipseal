@@ -13,7 +13,9 @@
     "lint": "oxlint",
     "changeset": "changeset",
     "changeset:version": "changeset version",
-    "changeset:status": "changeset status --since=origin/main"
+    "changeset:status": "changeset status --since=origin/main",
+    "release": "bash scripts/release.sh",
+    "release:check": "bash scripts/release.sh --check"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.2",
