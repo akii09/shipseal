@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shipseal.dev/sitemap-index.xml

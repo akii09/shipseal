@@ -1,6 +1,10 @@
 ---
 import "../styles/global.css";
 import Connect from "../components/Connect.astro";
+// Vercel analytics. Both are cookieless and collect no personal data, which keeps the
+// "no telemetry" promise in the README true for the CLI and honest for the site.
+import Analytics from "@vercel/analytics/astro";
+import SpeedInsights from "@vercel/speed-insights/astro";
 
 interface Props {
   title: string;
@@ -57,6 +61,9 @@ const canonical = new URL(Astro.url.pathname, Astro.site).href;
     </header>
 
     <main><slot /></main>
+
+    <Analytics />
+    <SpeedInsights />
 
     <footer class="site">
       <div class="wrap foot">
