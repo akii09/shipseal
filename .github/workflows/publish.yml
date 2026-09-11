@@ -1,0 +1,74 @@
+# Publish `shipseal` to npm with trusted publishing (OIDC). No NPM_TOKEN exists.
+# Docs checked 2026-09-11: https://docs.npmjs.com/trusted-publishers/
+#
+# Before the first run, configure the trusted publisher on npmjs.com under the
+# package's Settings, using the values in docs/RELEASING.md.
+name: Publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Pack and verify without publishing
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write # required: lets the runner mint the OIDC token npm verifies
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    # Gate the publish behind an environment so required reviewers can be added.
+    # Provenance proves where a package was built, not that the source was reviewed.
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      # Node 22 ships npm 10.x. Trusted publishing needs npm 11.5.1 or later.
+      - name: Upgrade npm
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+
+      # A release tag that disagrees with the manifest would publish the wrong
+      # version under the right tag. Fail loudly instead.
+      - name: Check tag matches package version
+        if: github.event_name == 'release'
+        working-directory: packages/shipseal
+        run: |
+          set -euo pipefail
+          PKG="$(node -p "require('./package.json').version")"
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "package.json=$PKG  tag=$TAG"
+          if [[ "$PKG" != "$TAG" ]]; then
+            echo "::error::package.json version $PKG does not match release tag $TAG"
+            exit 1
+          fi
+
+      - name: Verify tarball contents
+        working-directory: packages/shipseal
+        run: npm pack --dry-run
+
+      - name: Publish
+        if: github.event_name == 'release' || inputs.dry-run == false
+        working-directory: packages/shipseal
+        run: npm publish

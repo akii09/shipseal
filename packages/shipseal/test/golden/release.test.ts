@@ -70,6 +70,60 @@ describe("golden images", () => {
     expect(result.files.length).toBe(1);
     await assertGolden("bench-x.png", result);
   });
+  // S5 found that code indentation collapses without `whiteSpace: "pre"`.
+  // This golden is the guard against that regression coming back silently.
+  it("matches code-card x within 0.1% of pixels", async () => {
+    const renderer = await createTakumiRenderer();
+    const result = await generate({
+      event: { kind: "release", tag: "v2.0.0", previousTag: "v1.9.0" },
+      facts: FIXTURE_FACTS,
+      brand: FIXTURE_BRAND,
+      config: { ...FIXTURE_CONFIG, formats: ["x"], release: { templates: ["code-card"] } },
+      copy: deterministicCopy(FIXTURE_FACTS),
+      copyMode: "deterministic",
+      renderer,
+      themes: ["dark"],
+      generatedAt: "2026-09-11T10:00:00.000Z",
+    });
+    expect(result.files.length).toBe(1);
+    await assertGolden("code-card-x.png", result);
+  });
+
+  it("matches release-highlights x within 0.1% of pixels", async () => {
+    const renderer = await createTakumiRenderer();
+    const result = await generate({
+      event: { kind: "release", tag: "v2.0.0", previousTag: "v1.9.0" },
+      facts: FIXTURE_FACTS,
+      brand: FIXTURE_BRAND,
+      config: { ...FIXTURE_CONFIG, formats: ["x"], release: { templates: ["release-highlights"] } },
+      copy: deterministicCopy(FIXTURE_FACTS),
+      copyMode: "deterministic",
+      renderer,
+      themes: ["dark"],
+      generatedAt: "2026-09-11T10:00:00.000Z",
+    });
+    expect(result.files.length).toBe(1);
+    await assertGolden("release-highlights-x.png", result);
+  });
+
+  // Every template renders both themes (§14.3). Dark alone would let a light-theme
+  // contrast or token regression ship unnoticed.
+  it("matches release-hero og in the light theme within 0.1% of pixels", async () => {
+    const renderer = await createTakumiRenderer();
+    const result = await generate({
+      event: { kind: "release", tag: "v2.0.0", previousTag: "v1.9.0" },
+      facts: FIXTURE_FACTS,
+      brand: FIXTURE_BRAND,
+      config: { ...FIXTURE_CONFIG, formats: ["og"], release: { templates: ["release-hero"] } },
+      copy: deterministicCopy(FIXTURE_FACTS),
+      copyMode: "deterministic",
+      renderer,
+      themes: ["light"],
+      generatedAt: "2026-09-11T10:00:00.000Z",
+    });
+    expect(result.files.length).toBe(1);
+    await assertGolden("release-hero-og-light.png", result);
+  });
 });
 
 async function assertGolden(name: string, result: GenerateResult): Promise<void> {
