@@ -32,16 +32,20 @@ const pending = `v${JSON.parse(readFileSync(join(root, "packages/shipseal/packag
 const isPlaceholder = (ref) => ref.startsWith("<");
 
 /**
- * The two scripts that rewrite and check these references are not documentation.
+ * Files that mention the reference without telling anyone to use it.
  *
- * Both carry the pattern in their own source: this file in the regex below, and the release
- * script in its replacement template. Searching them means the checker fails on itself, which
- * is exactly what happened the first time this ran in CI, where the file was tracked and so
- * visible to `git grep` for the first time.
+ * The two scripts carry the pattern in their own source: this file in the regex below, and the
+ * release script in its replacement template. Searching them made the checker fail on itself
+ * the first time it ran in CI, where the file was tracked and visible to `git grep`.
+ *
+ * Changelogs are history, not instructions. The 0.0.7 entry describes the `@v1` bug this check
+ * exists to prevent, and quoting it failed the version pull request. Rewriting a published
+ * changelog to satisfy a lint would be the wrong way round.
  */
 const excluded = [
   ":(exclude)scripts/check-action-ref.mjs",
   ":(exclude)scripts/refresh-showcase.mjs",
+  ":(exclude)**/CHANGELOG.md",
 ];
 
 /** `git grep` exits 1 when nothing matches, which is a real failure here rather than a pass. */

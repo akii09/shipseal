@@ -595,3 +595,46 @@ describe("release snippet priority", () => {
     expect(facts.release?.codeSnippet?.provenance.source).toBe("readme");
   });
 });
+
+describe("declared beats derived", () => {
+  it("prefers package.json homepage and repository over the git remote", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-remote-"));
+    await git(dir, ["init", "-b", "main"]);
+    await git(dir, ["remote", "add", "origin", "https://github.com/a-fork/wrong-name.git"]);
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({
+        name: "demo",
+        description: "A demo package used in remote ordering tests",
+        version: "2.0.0",
+        homepage: "https://demo.example",
+        repository: "https://github.com/declared/demo",
+      }),
+    );
+    await writeFile(join(dir, "CHANGELOG.md"), "## [2.0.0] - 2026-09-10\n\n### Added\n- A thing\n");
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "v2.0.0" },
+      skipNetwork: true,
+    });
+    expect(facts.project.url?.value).toBe("https://demo.example");
+    expect(facts.project.repo?.value).toBe("declared/demo");
+  });
+
+  it("still uses the git remote when package.json declares neither", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-remote-only-"));
+    await git(dir, ["init", "-b", "main"]);
+    await git(dir, ["remote", "add", "origin", "https://github.com/derived/demo.git"]);
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo", description: "A demo package used in remote ordering tests", version: "2.0.0" }),
+    );
+    await writeFile(join(dir, "CHANGELOG.md"), "## [2.0.0] - 2026-09-10\n\n### Added\n- A thing\n");
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "v2.0.0" },
+      skipNetwork: true,
+    });
+    expect(facts.project.repo?.value).toBe("derived/demo");
+  });
+});
