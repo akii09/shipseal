@@ -432,3 +432,35 @@ describe("npmPackage on a private root", () => {
     expect(part.project?.npmPackage?.value).toBe("demo");
   });
 });
+
+describe("changelog nested bullets", () => {
+  // Changesets writes sub-lists inside one entry. Treating those as separate entries put a
+  // sentence fragment on a card with no context.
+  it("folds an indented bullet into the entry above it", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-nested-"));
+    await writeFile(
+      join(dir, "CHANGELOG.md"),
+      [
+        "# pkg",
+        "",
+        "## 1.0.0",
+        "",
+        "### Patch Changes",
+        "",
+        "- Read theme colours properly. Several shapes returned nothing:",
+        "",
+        "  - The last declaration before a brace was dropped",
+        "  - Bare HSL channels were not understood",
+        "",
+        "- A second real entry",
+        "",
+      ].join("\n"),
+      "utf8",
+    );
+    const facts = await collectChangelog(dir, "1.0.0", "CHANGELOG.md");
+    const fixes = (facts.release?.fixes ?? []).map((f) => f.value);
+    expect(fixes).toHaveLength(2);
+    expect(fixes[1]).toBe("A second real entry");
+    expect(fixes[0]).toContain("Read theme colours properly");
+  });
+});

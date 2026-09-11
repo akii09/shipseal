@@ -29,6 +29,12 @@ the brand kit `shipseal init` detected. Every one of those is listed with its so
 `manifest.json`.
 
 <p align="center">
+  <img src="./assets/examples/release-highlights.png" alt="Highlights card: a What's new list with one line per change" width="700">
+</p>
+
+Highlights come from the changelog, one sentence each, sized to fit rather than truncated.
+
+<p align="center">
   <img src="./assets/examples/code-card.png" alt="Code card: a syntax highlighted TypeScript snippet on a branded background" width="700">
 </p>
 

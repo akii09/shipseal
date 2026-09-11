@@ -172,7 +172,11 @@ function listItems(block: string): string[] {
   let current: string | undefined;
   for (const raw of block.split("\n")) {
     const trimmed = raw.trim();
-    if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+    // Only an unindented bullet starts a new entry. A nested bullet belongs to the entry
+    // above it: Changesets writes sub-lists inside one entry, and treating those as separate
+    // highlights put a sentence fragment on a card with no context.
+    const indented = /^\s+/.test(raw);
+    if (!indented && (trimmed.startsWith("- ") || trimmed.startsWith("* "))) {
       if (current !== undefined) {
         items.push(current);
       }

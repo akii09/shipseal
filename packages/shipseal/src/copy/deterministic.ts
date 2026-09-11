@@ -28,24 +28,23 @@ export function deterministicCopy(facts: Facts, maxHighlights = MAX_HIGHLIGHTS):
       ? cleanLine(tagline)
       : cleanLine(features[1] ?? fixes[1] ?? fixes[0] ?? `What's new in ${version ?? name}`);
 
+  // One sentence per highlight, for the same reason the headline takes one: changelog entries
+  // are prose paragraphs, so whole entries could only be truncated mid-word on a card.
   const highlights: string[] = [];
-  for (const line of features) {
+  const addHighlight = (line: string, prefix = ""): void => {
     if (highlights.length >= maxHighlights) {
-      break;
+      return;
     }
-    highlights.push(cleanLine(line));
+    highlights.push(`${prefix}${cleanLine(firstSentence(line))}`);
+  };
+  for (const line of breaking) {
+    addHighlight(line, "Breaking: ");
+  }
+  for (const line of features) {
+    addHighlight(line);
   }
   for (const line of fixes) {
-    if (highlights.length >= maxHighlights) {
-      break;
-    }
-    highlights.push(cleanLine(line));
-  }
-  for (const line of breaking) {
-    if (highlights.length >= maxHighlights) {
-      break;
-    }
-    highlights.push(`Breaking: ${cleanLine(line)}`);
+    addHighlight(line);
   }
 
   return {

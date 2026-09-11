@@ -156,3 +156,38 @@ describe("cleanLine punctuation", () => {
     expect(cleanLine("Already: fine")).toBe("Already: fine");
   });
 });
+
+describe("highlights from changelog entries", () => {
+  // The v0.0.3 highlights card showed whole changelog paragraphs truncated mid-word, and one
+  // bullet was a nested sub-item lifted out of its parent entry.
+  const at = (v: string) => fact(v, { source: "changelog" as const, ref: "CHANGELOG.md", fetchedAt: NOW });
+  const withRelease = (o: Partial<Record<"features" | "fixes" | "breaking", string[]>>): Facts => ({
+    ...FIXTURE_FACTS,
+    release: {
+      ...FIXTURE_FACTS.release,
+      version: at("0.0.3"),
+      tag: at("v0.0.3"),
+      date: at("2026-09-11"),
+      features: (o.features ?? []).map(at),
+      fixes: (o.fixes ?? []).map(at),
+      breaking: (o.breaking ?? []).map(at),
+    },
+  });
+
+  it("takes one sentence per highlight", () => {
+    const copy = deterministicCopy(
+      withRelease({
+        fixes: ["Read theme colours from real stylesheets. Detection previously found nothing in several shapes."],
+      }),
+    );
+    expect(copy.highlights[0]).toBe("Read theme colours from real stylesheets");
+  });
+
+  it("puts breaking changes first and labels them", () => {
+    const copy = deterministicCopy(
+      withRelease({ breaking: ["Drop Node 20"], features: ["Add bench cards"] }),
+    );
+    expect(copy.highlights[0]).toBe("Breaking: Drop Node 20");
+    expect(copy.highlights[1]).toBe("Add bench cards");
+  });
+});
