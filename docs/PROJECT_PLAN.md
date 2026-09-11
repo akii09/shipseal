@@ -4,8 +4,11 @@
 >
 > Domain: `shipseal.dev` · npm: `shipseal` · Status: **Phase 3 complete, 0.0.3 published** · Owner: Akash (akii09)
 >
-> Last reviewed 2026-09-11. Phases 1 to 3 are built and verified end to end. Phase 0 was consciously
-> skipped (§25). Next is Phase 4 (launch). Read §21 for what each phase proved.
+> Last reviewed 2026-09-11. Phases 1 to 3 are built and verified end to end. Next is Phase 4
+> (launch). Read §21 for what each phase proved.
+>
+> This project ships first and learns from real users afterwards. There is no validation gate to
+> pass before building (§25).
 >
 > This document is the single source of truth for the project. It is written so that a human or an AI coding agent with **zero prior context** can understand what Shipseal is, why it exists, what has already been decided, and exactly how to build it without repeating past research or reintroducing rejected ideas. Read Section 0 before doing anything.
 
@@ -1007,26 +1010,6 @@ Determinism test: render the same card twice in one process and in two processes
 
 Durations are rough estimates for one part-time developer and will change. A phase is done only when every acceptance criterion passes.
 
-### Phase 0: Validate demand ~~(before writing product code)~~ SKIPPED
-
-> Skipped by owner decision on 2026-09-11 (§25). `docs/validation.md` is still empty. The demand
-> question is unanswered, which makes Phase 4 the moment to answer it.
-
-Goal: prove people want this before building it.
-
-Tasks:
-1. Hand-build a release pack for the next PDFx release using Takumi and a throwaway script: hero (og, x, linkedin), highlights card, one milestone card.
-2. Post them on X and LinkedIn as part of the normal release announcement. In replies or a follow-up post, ask: "Would you want this generated for your repo automatically?"
-3. Share in 2 to 3 developer communities where self-promotion is allowed.
-4. Collect signals in `docs/validation.md`.
-
-Acceptance criteria (proceed to Phase 1 if at least two are true):
-- At least 10 people ask for it or ask how it was made.
-- At least 3 maintainers offer their repo as a test case.
-- The hand-built visuals clearly outperform the owner's previous text-only release posts (impressions or engagement).
-
-If signals are weak: stop, record learnings, and reassess before investing further.
-
 ### Phase 1: Foundations and spikes DONE 2026-09-11
 
 > All 7 spikes closed (§24), records in `docs/spikes/`. Toolchain, facts, renderer adapter,
@@ -1087,7 +1070,7 @@ Acceptance criteria:
 Tasks:
 1. README with generated visuals of Shipseal itself, a 30-second GIF of the flow, and the two-line install.
 2. Minimal docs site at shipseal.dev: what it is, quick start, config reference, templates gallery, FAQ.
-3. Onboard the 3+ maintainers from Phase 0 before the public launch.
+3. Onboard 3 or more maintainers privately before the public launch.
 4. Launch sequence (Section 22).
 
 Acceptance criteria:
@@ -1107,7 +1090,7 @@ Pick from Section 4.2 based on real user requests, not assumptions. Record each 
 **Dogfooding:** Shipseal announces its own releases with Shipseal-generated visuals. PDFx does the same.
 
 **Launch sequence:**
-1. Soft launch: onboard Phase 0 maintainers; fix their issues.
+1. Soft launch: onboard a handful of maintainers privately; fix what they hit.
 2. Show HN post focused on the verified-numbers angle and the manifest.
 3. X thread by the owner: the problem, a before/after of release posts, the one-line YAML.
 4. Product Hunt launch (owner has prior PH launch experience with PDFx Builder).
@@ -1127,7 +1110,7 @@ Pick from Section 4.2 based on real user requests, not assumptions. Record each 
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| Weak demand | Medium | High | Phase 0 validation before building. Stop early if signals are weak. |
+| Weak demand | Medium | High | Ship, then read the response. The tool is small enough that building it was cheaper than researching whether to. Decide what to do next from real usage, not from a gate. |
 | Takumi API churn or breaking changes | High | Medium | Adapter isolation (R4), exact version pin, golden tests on upgrade. |
 | Takumi native binary fails on some platform | Medium | Medium | `doctor` detects it; investigate Takumi's WASM build as fallback (Section 24). |
 | Output looks "template-y" | Medium | High | Few templates, high design bar (14.4), owner review gate. |
@@ -1174,7 +1157,7 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | Build tool: **tsdown** `^0.23.0` | Rolldown-based, actively released, 0.17 MB, handles shebang bin entries and `.d.ts`. Accepted risk: still 0.x, so minor bumps can break | tsup 8.5.1 (stable API but last published 2025-11-12, roughly 10 months stale) |
 | 2026-09-11 | Test runner: **vitest** `^5.0.0` | Already assumed by Section 20. `vite` is an optional peer in v5, so the install stays small | node:test (no golden image tooling, weaker fixture ergonomics) |
 | 2026-09-11 | Linter: **oxlint** `^1.82.0`, single config at the repo root | Zero transitive dependencies and one binary, which matches the small-supply-chain rule. `tsc --strict` with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` already covers type-aware checks | eslint + typescript-eslint (roughly 100 transitive packages) |
-| 2026-09-11 | Phase 0 demand validation gate consciously skipped | Owner decision: build Phase 1 now, record signals in `docs/validation.md` later. Noted so the unmet gate is explicit, not silent | Blocking Phase 1 until validation.md has real signals |
+| 2026-09-11 | **No demand validation gate.** Build the thing, release it, then learn from users | The owner has the problem first-hand, and the v1 scope is small enough that building it cost less than researching whether to build it. A gate would have delayed a working tool to collect opinions about a description of it | Phase 0 validation before writing product code, which the original plan required |
 | 2026-09-11 | Takumi confirmed as `takumi-js@2.13.7` (S1). Render via `render()` from `takumi-js`, measure via `Renderer` from `takumi-js/node` | Spike record: `docs/spikes/2026-09-11-takumi-s1-s2-s4.md`. Determinism verified byte-identical within and across processes; 1200x630 card renders in 4.3 ms warm against a 500 ms budget | Older package names `@takumi-rs/core` and `@takumi-rs/image-response` |
 | 2026-09-11 | Templates authored as `.tsx` with a local four-line JSX runtime, **no React dependency** (S1) | `RenderInput` accepts `ReactElementLike`, so `jsxImportSource` can point at a shim emitting `{type, props, key}`. Verified: real `.tsx` compiled by `tsc` and rendered with zero react packages installed | React as a runtime dependency; hand-writing node trees with `container()`/`text()` (unreadable for real layouts); HTML strings (no type safety) |
 | 2026-09-11 | `skipLibCheck: true` stays on in `tsconfig.base.json` | Takumi's own `.d.ts` files import `react` and `csstype`. With `skipLibCheck: false` typecheck fails with 12 errors inside `node_modules`; with it true, typecheck is clean and no react types are needed | Installing `@types/react` and `csstype` purely to satisfy a vendor's type imports |
@@ -1283,5 +1266,4 @@ Read `docs/PROJECT_PLAN.md` Section 0 before any task. Summary of hard rules:
 - `CLAUDE.md` imports `AGENTS.md` and adds Claude Code specifics.
 - `.claude/skills/` holds task playbooks: add-template, add-source, takumi-renderer, golden-images, run-spike, log-decision.
 - `spikes/` is for throwaway §24 experiments; never shipped.
-- `docs/validation.md` tracks Phase 0 signals.
 - `scripts/scaffold.sh` regenerates this structure (skips existing files; `FORCE=1` overwrites).

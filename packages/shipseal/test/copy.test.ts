@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { deterministicCopy, milestoneCopy } from "../src/copy/deterministic.js";
+import { cleanLine, deterministicCopy, milestoneCopy } from "../src/copy/deterministic.js";
 import { llmCopy } from "../src/copy/llm.js";
 import { allowedNumbers, guardCopy, unsourcedDigits } from "../src/copy/number-guard.js";
 import { FIXTURE_FACTS, MILESTONE_FACTS } from "./helpers/facts.js";
@@ -132,5 +132,27 @@ describe("headline from changelog entries", () => {
 
   it("falls back to name and version when nothing is listed", () => {
     expect(deterministicCopy(withRelease({})).headline).toContain("0.0.2");
+  });
+});
+
+describe("cleanLine punctuation", () => {
+  // Caught on a real card: a README em dash became "shops : mobile" with a space before the
+  // colon, because the replacement did not swallow the surrounding whitespace.
+  it("turns an em dash into a colon with no space in front", () => {
+    expect(cleanLine("AI marketing designer for small shops — mobile PWA")).toBe(
+      "AI marketing designer for small shops: mobile PWA",
+    );
+  });
+
+  it("turns a spaced en dash into a comma", () => {
+    expect(cleanLine("Fast – and safe")).toBe("Fast, and safe");
+  });
+
+  it("keeps a hyphen inside a word", () => {
+    expect(cleanLine("WhatsApp-first delivery")).toBe("WhatsApp-first delivery");
+  });
+
+  it("leaves an existing colon alone", () => {
+    expect(cleanLine("Already: fine")).toBe("Already: fine");
   });
 });

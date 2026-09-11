@@ -108,7 +108,16 @@ export function firstSentence(text: string): string {
 }
 
 export function cleanLine(text: string): string {
-  const stripped = text.replaceAll("\u2014", ":").replaceAll("\u2013", "-").replaceAll("!", ".").trim();
+  // Replace an em dash with a colon and swallow the space in front of it, so "shops \u2014 mobile"
+  // becomes "shops: mobile" rather than "shops : mobile". Spaced en dashes become a comma for
+  // the same reason: a bare hyphen with spaces reads like a stray dash on a card.
+  const stripped = text
+    .replace(/\s*\u2014\s*/g, ": ")
+    .replace(/\s+\u2013\s+/g, ", ")
+    .replaceAll("\u2013", "-")
+    .replaceAll("!", ".")
+    .replace(/\s+/g, " ")
+    .trim();
   const noTrail = stripped.endsWith(".") ? stripped.slice(0, -1) : stripped;
   const first = noTrail.at(0);
   if (first === undefined) {
