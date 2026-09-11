@@ -26,7 +26,7 @@ jobs:
     # Provenance proves where a package was built, not that the source was reviewed.
     environment: npm-publish
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
 
