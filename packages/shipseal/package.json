@@ -1,6 +1,6 @@
 {
   "name": "shipseal",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Every release, sealed and ready to share. Verified release visuals from your repo.",
   "license": "MIT",
   "type": "module",
