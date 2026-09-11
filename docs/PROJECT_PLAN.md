@@ -262,7 +262,7 @@ Verify current versions and APIs before installing (Rule R5).
 | Rendering | **Takumi** via `takumi-js` | Confirmed 2026-09-11 at `takumi-js@2.13.7` (S1). `render`/`renderSvg` from `takumi-js`, `Renderer` from `takumi-js/node`, node and JSX helpers from `takumi-js/helpers`. Wrapped by the renderer adapter only. |
 | Default fonts | Geist (bundled by Takumi), Geist Mono (**vendored by Shipseal**) | S4 verified 2026-09-11: Takumi bundles only Geist, weights 300 to 800. Shipseal ships `packages/shipseal/assets/fonts/GeistMono[wght].ttf`, the variable face from upstream `v1.7.2`, OFL 1.1. |
 | Validation | zod | All facts, config, brand, and LLM output validated. |
-| CLI framework | cac or commander | Pick one in Phase 1. |
+| CLI framework | **cac** `7.0.0` | Decided 2026-09-11. Zero dependencies, 41 KB unpacked. |
 | Interactive prompts | @clack/prompts | For `init` only. |
 | Terminal colors | picocolors | |
 | Git access | `node:child_process` running `git` | No git library dependency. |
@@ -783,23 +783,35 @@ Measurement must use the same font files as rendering, or results will drift.
 
 ### 16.1 Interface
 
+Takumi measures a node tree (`Renderer.measure(node)`), not a string plus a font (S2). The adapter keeps a string helper and exposes the node primitive.
+
+`LayoutNode` is opaque outside `src/render/takumi.ts`. Line count is derived inside the adapter by counting distinct rounded `run.y` values, never `runs.length`.
+
 ```ts
 interface RendererAdapter {
-  render(element: JSX.Element, opts: {
+  render(node: LayoutNode, opts: {
     width: number;
     height: number;
     format: "png" | "webp" | "jpeg";
-    fonts: FontAsset[];
   }): Promise<Uint8Array>;
 
-  measureText?(text: string, opts: {
-    font: FontAsset;
+  measure(node: LayoutNode, opts?: {
+    width?: number;
+    height?: number;
+  }): Promise<{ lines: number; width: number; height: number }>;
+
+  measureText(text: string, opts: {
+    fontFamily: string;
     fontSize: number;
     maxWidth: number;
     lineHeight: number;
+    fontWeight?: number;
+    whiteSpace?: "normal" | "pre";
   }): Promise<{ lines: number; width: number; height: number }>;
 }
 ```
+
+`measureText` builds a text node (with `fontFamily` set) and calls `measure`. Fonts are registered once on the reused `Renderer`, so the helper takes a family name rather than raw font bytes.
 
 ### 16.2 Rules
 
@@ -807,7 +819,7 @@ interface RendererAdapter {
 - Pin the Takumi version exactly in `package.json`. Upgrade deliberately, with golden-image tests passing.
 - Load fonts once per process and reuse (Takumi recommends reusing its context for performance).
 - Images (logos) are read from disk and passed as data or buffers; no network fetches during render.
-- Confirm how `takumi-js` accepts JSX (React elements vs its own helpers like `container()`/`text()`). If JSX requires React at runtime, record the decision and its dependency cost.
+- Templates will use a local four-line JSX runtime (no React). Phase 1 builds node trees with `container()`/`text()` from `takumi-js/helpers` inside `takumi.ts` only.
 
 ---
 
@@ -1158,8 +1170,11 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | `output.imageFormat` defaults to **PNG** (S6) | GitHub social previews accept PNG, JPG and GIF only, not WebP. WebP would save 58% but every PNG is already under 49 KB against a 1 MB cap, so the saving buys nothing | WebP by default (rejected on platform acceptance); JPEG (lossy artifacts on flat brand color) |
 | 2026-09-11 | Brand detection ships its own **oklch to sRGB hex converter**, about 30 lines, no dependency (S7) | oklch is 51.6% of colors in 44 real Tailwind v4 `@theme` files, so detection is useless without it. A hand-written converter matched `culori` exactly on 9 of 9 cases | Adding `culori` as a dependency (R7); ignoring oklch (loses half of all real brand colors) |
 | 2026-09-11 | WASM is an acceptable fallback backend (S3) | `takumi-js/wasm` renders **byte-identical** output to native at 2.3x the time (7.0 ms vs 3.1 ms warm), so a fallback does not break determinism or golden tests | Failing hard when the native binary is missing |
-| _(open)_ | §16.1 `measureText?(text, opts)` signature does not match Takumi, which measures a node tree | _public interface change, needs approval_ | |
-| _(Phase 1)_ | CLI framework: cac or commander | _to decide when `src/cli.ts` is implemented_ | |
+| 2026-09-11 | Renderer adapter: `measure(node)` is the primitive; `measureText` is a convenience that builds a text node and calls `measure`. Line count is distinct rounded `run.y` values | Takumi measures a node tree, not a string plus a font (S2). A string-only API would hide styled spans on the code card. Fonts are registered once on the reused `Renderer`, so `measureText` takes `fontFamily` rather than raw bytes | Keeping §16.1's original `measureText?(text, opts)` as the only method; wrapping a font-parsing library |
+| 2026-09-11 | CLI framework: **cac** `^7.0.0` | 41 KB unpacked, MIT, zero dependencies, subcommands map to `init`/`release`/`doctor`. Published 2026-02-27 so it is still maintained | commander 15 (207 KB unpacked, same job) |
+| 2026-09-11 | Phase 1 CLI uses **node:util.parseArgs**, not cac | Init and doctor do not justify a new dependency under R7. parseArgs is built into Node 22. Revisit cac when release/milestone/bench land | Installing cac or commander now |
+| 2026-09-11 | CLI uses **cac** `7.0.0` (supersedes parseArgs row) | Owner approved the install. Matches the cac vs commander decision | node:util.parseArgs (works, but we already paid for cac) |
+| 2026-09-11 | First runtime dependency: **zod** `^4.6.2` (MIT) | Plan §7 already chose zod for facts, config, brand, and LLM output. 4.6.2 is current `latest` | Hand-rolled parsers; ajv (JSON-schema only, weaker TS inference) |
 | _(Phase 2)_ | LLM provider approach | _to decide_ | |
 
 ---
