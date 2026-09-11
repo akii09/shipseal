@@ -1,0 +1,20 @@
+{
+  "name": "shipseal",
+  "version": "0.0.0",
+  "description": "Every release, sealed and ready to share. Verified release visuals from your repo.",
+  "license": "MIT",
+  "type": "module",
+  "bin": { "shipseal": "./dist/cli.js" },
+  "files": ["dist"],
+  "engines": { "node": ">=22" },
+  "homepage": "https://shipseal.dev",
+  "repository": { "type": "git", "url": "git+https://github.com/akii09/shipseal.git", "directory": "packages/shipseal" },
+  "keywords": ["release", "og-image", "social-cards", "changelog", "github-action", "takumi"],
+  "scripts": {
+    "build": "echo 'TODO: choose tsdown or tsup (PROJECT_PLAN §25)'",
+    "test": "vitest run",
+    "test:update-golden": "UPDATE_GOLDEN=1 vitest run test/golden",
+    "typecheck": "tsc --noEmit",
+    "lint": "echo 'TODO: add linter'"
+  }
+}

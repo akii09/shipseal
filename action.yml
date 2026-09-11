@@ -1,0 +1,14 @@
+# Composite action (PROJECT_PLAN §19). Placeholder until Phase 3.
+name: Shipseal
+description: Every release, sealed and ready to share. Verified release visuals from your repo.
+branding: { icon: award, color: red }
+inputs:
+  command: { description: "release | milestone | bench", default: release }
+  upload-assets: { description: "Upload images to the GitHub release", default: "true" }
+  strict: { description: "Fail on fit warnings", default: "false" }
+  version: { description: "Shipseal version to run", default: "latest" }
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: echo "TODO(Phase 3): setup-node, run npx shipseal@${{ inputs.version }} ${{ inputs.command }} --json, upload assets, write job summary"
