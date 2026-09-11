@@ -59,6 +59,20 @@ echo "Running lint, typecheck, tests and build..."
 pnpm lint >/dev/null && pnpm typecheck >/dev/null && pnpm test >/dev/null && pnpm build >/dev/null \
   || die "local checks failed" "run pnpm lint, pnpm typecheck, pnpm test and see what breaks"
 
+# 10. The images Shipseal shows of itself must match the release being cut.
+echo "Refreshing showcase images..."
+set +e
+node scripts/refresh-showcase.mjs
+SHOWCASE=$?
+set -e
+if [[ "$SHOWCASE" == "2" ]]; then
+  red "BLOCKED: showcase images changed"
+  echo "  Fix: review the diff, commit and push it, then run pnpm release again."
+  exit 1
+elif [[ "$SHOWCASE" != "0" ]]; then
+  die "could not refresh showcase images" "run node scripts/refresh-showcase.mjs and see what breaks"
+fi
+
 green "All checks passed."
 echo
 echo "  version    $VERSION  (npm currently has $PUBLISHED)"

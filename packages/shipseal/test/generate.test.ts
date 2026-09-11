@@ -116,3 +116,31 @@ describe("generate", () => {
     });
   });
 });
+
+describe("highlights card with few entries", () => {
+  // A release with one changeset left most of the card empty, which reads as a broken render
+  // rather than a small release. Caught when README images were automated.
+  it("centres a short list and top-aligns a long one", async () => {
+    const { releaseHighlights } = await import("../src/templates/release-highlights.js");
+    const { FORMATS } = await import("../src/formats.js");
+    const build = (n: number) =>
+      releaseHighlights.render(
+        {
+          name: "Demo",
+          version: "1.0.0",
+          highlights: Array.from({ length: n }, (_, i) => `Highlight number ${i + 1}`),
+          headingFamily: "Geist",
+          headingWeight: 700,
+          bodyFamily: "Geist",
+          bodyWeight: 400,
+          radius: 16,
+        } as never,
+        { format: FORMATS.x, theme: "dark", brand: FIXTURE_BRAND, fitted: {} } as never,
+      );
+    const short = JSON.stringify(build(1));
+    const long = JSON.stringify(build(4));
+    expect(short).toContain('"justifyContent":"center"');
+    expect(long).toContain('"justifyContent":"flex-start"');
+    expect(short).toContain('"flexGrow":1');
+  });
+});

@@ -154,7 +154,7 @@ const formats = [
     <div class="wrap center">
       <h2>Your next release deserves better than a text post.</h2>
       <div class="cmd"><span class="dollar">$</span> npx shipseal@latest init</div>
-      <p class="muted smallprint">MIT licensed. Node 22 or newer. No account, no server, no telemetry.</p>
+      <p class="muted smallprint">MIT licensed. Node 22 or newer. No account, no server, and the CLI sends no telemetry. <a href="/docs/faq">What this site measures</a>.</p>
     </div>
   </section>
 
@@ -196,6 +196,8 @@ const formats = [
     .agentbox { border: 1px dashed #3a3a40; border-radius: var(--radius); padding: clamp(1.8rem, 5vw, 3rem); background: radial-gradient(120% 140% at 0% 0%, #17141a 0%, #0f0f11 60%); }
     .agentbox .btn { margin-top: 1.7rem; }
     .smallprint { font-size: 0.85rem; margin-top: 1rem; }
+    .smallprint a { color: var(--muted); }
+    .smallprint a:hover { color: var(--fg); }
 
     .final .center { display: grid; justify-items: center; gap: 1.5rem; text-align: center; }
     .final h2 { max-width: 22ch; }

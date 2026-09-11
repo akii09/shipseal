@@ -111,7 +111,20 @@ export const releaseHighlights: TemplateDefinition = {
             {title}
           </div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/*
+          Grow the list to fill the card and centre it. A release with one or two highlights
+          used to leave most of the card empty, which reads as a broken render rather than a
+          small release.
+        */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: 1,
+            justifyContent: props.highlights.length > 2 ? "flex-start" : "center",
+            gap: props.highlights.length > 2 ? 16 : 20,
+          }}
+        >
           {props.highlights.map((line, index) => {
             const fitted = ctx.fitted[`highlight-${String(index)}`];
             const breaking = line.startsWith("Breaking:");
