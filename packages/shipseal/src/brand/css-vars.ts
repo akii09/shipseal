@@ -4,16 +4,90 @@
 import { parseCssColor } from "./color.js";
 import type { ExtractedColors } from "./tailwind.js";
 
+// The trailing semicolon is optional: the last declaration before `}` usually has none,
+// which silently dropped one colour from almost every real stylesheet.
 const PROP =
-  /--(primary|brand|accent|background|foreground|muted-foreground|muted)\s*:\s*([^;]+);/g;
+  /--(primary|brand|accent|background|foreground|muted-foreground|muted)\s*:\s*([^;}]+)[;}]?/g;
+
+/** Any declaration, used to resolve `var(--brand-500)` style indirection. */
+const ANY_PROP = /(--[\w-]+)\s*:\s*([^;}]+)[;}]?/g;
+
+/**
+ * Selectors that carry theme tokens in real projects. `:root` alone missed shadcn's
+ * `[data-theme]` blocks, plain `html {}`, and `.light`.
+ */
+const SELECTORS = [
+  /:root\s*\{/g,
+  /(?:^|[\s,}])html\s*\{/g,
+  /\.light\b[^{]*\{/g,
+  /\[data-theme=["']?light["']?\][^{]*\{/g,
+  /\.dark\b[^{]*\{/g,
+  /\[data-theme=["']?dark["']?\][^{]*\{/g,
+];
 
 export function extractCssRootColors(css: string): ExtractedColors {
-  const fromRoot = extractBlockColors(css, /:root\s*\{/g);
-  const fromDark = extractBlockColors(css, /\.dark\s*\{/g);
-  return mapFoundColors({ ...fromRoot, ...fromDark });
+  const vars = allVariables(css);
+  const found: Record<string, string> = {};
+  // Later selectors win, so a dark block overrides a light one, as it does in a browser.
+  for (const selector of SELECTORS) {
+    Object.assign(found, extractBlockColors(css, selector, vars));
+  }
+  return mapFoundColors(found);
 }
 
-function extractBlockColors(css: string, blockRe: RegExp): Record<string, string> {
+function allVariables(css: string): Record<string, string> {
+  const vars: Record<string, string> = {};
+  ANY_PROP.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = ANY_PROP.exec(css)) !== null) {
+    const name = match[1];
+    const value = match[2];
+    if (name !== undefined && value !== undefined) {
+      vars[name] = value.trim();
+    }
+  }
+  return vars;
+}
+
+/**
+ * Resolve a declaration to a hex colour.
+ *
+ * Handles two things a plain colour parser does not. First, `var(--brand-500)` indirection,
+ * up to three hops within the same file. Second, bare channel lists: shadcn writes
+ * `--background: 0 0% 100%` and applies it as `hsl(var(--background))`, so the value is only
+ * a colour once wrapped. Percent signs on the last two channels mean HSL, three plain
+ * numbers mean RGB.
+ */
+function resolveColor(raw: string, vars: Record<string, string>, depth = 0): string | undefined {
+  const value = raw.trim();
+  if (depth < 3) {
+    const ref = /^var\(\s*(--[\w-]+)\s*(?:,[^)]*)?\)$/.exec(value);
+    const target = ref?.[1] === undefined ? undefined : vars[ref[1]];
+    if (target !== undefined) {
+      return resolveColor(target, vars, depth + 1);
+    }
+  }
+  const direct = parseCssColor(value);
+  if (direct !== undefined) {
+    return direct;
+  }
+  const parts = value.split(/[\s/]+/).filter((p) => p.length > 0);
+  if (parts.length === 3) {
+    if (parts[1]?.endsWith("%") === true && parts[2]?.endsWith("%") === true) {
+      return parseCssColor(`hsl(${parts[0]} ${parts[1]} ${parts[2]})`);
+    }
+    if (parts.every((p) => /^\d+(\.\d+)?$/.test(p))) {
+      return parseCssColor(`rgb(${parts[0]} ${parts[1]} ${parts[2]})`);
+    }
+  }
+  return undefined;
+}
+
+function extractBlockColors(
+  css: string,
+  blockRe: RegExp,
+  vars: Record<string, string>,
+): Record<string, string> {
   const found: Record<string, string> = {};
   blockRe.lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -35,7 +109,7 @@ function extractBlockColors(css: string, blockRe: RegExp): Record<string, string
       if (name === undefined || raw === undefined) {
         continue;
       }
-      const hex = parseCssColor(raw.trim());
+      const hex = resolveColor(raw, vars);
       if (hex !== undefined) {
         found[name] = hex;
       }
