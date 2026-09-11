@@ -4,17 +4,39 @@
   "description": "Every release, sealed and ready to share. Verified release visuals from your repo.",
   "license": "MIT",
   "type": "module",
-  "bin": { "shipseal": "./dist/cli.js" },
-  "files": ["dist"],
-  "engines": { "node": ">=22" },
+  "bin": {
+    "shipseal": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "homepage": "https://shipseal.dev",
-  "repository": { "type": "git", "url": "git+https://github.com/akii09/shipseal.git", "directory": "packages/shipseal" },
-  "keywords": ["release", "og-image", "social-cards", "changelog", "github-action", "takumi"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/akii09/shipseal.git",
+    "directory": "packages/shipseal"
+  },
+  "keywords": [
+    "release",
+    "og-image",
+    "social-cards",
+    "changelog",
+    "github-action",
+    "takumi"
+  ],
   "scripts": {
-    "build": "echo 'TODO: choose tsdown or tsup (PROJECT_PLAN §25)'",
+    "build": "tsdown",
     "test": "vitest run",
     "test:update-golden": "UPDATE_GOLDEN=1 vitest run test/golden",
-    "typecheck": "tsc --noEmit",
-    "lint": "echo 'TODO: add linter'"
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsdown": "^0.23.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.0"
   }
 }

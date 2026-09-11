@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "oxc", "import", "promise", "node", "unicorn", "vitest"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "perf": "error",
+    "pedantic": "off",
+    "style": "off",
+    "restriction": "off",
+    "nursery": "off"
+  },
+  "rules": {
+    // AGENTS.md: no `any`, no casts that silence the compiler.
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "error",
+    // AGENTS.md security rules: no eval, no dynamic code execution.
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "unicorn/prefer-node-protocol": "error",
+    // `export {}` is the ESM empty-module marker the scaffold stubs need under
+    // `verbatimModuleSyntax`. Re-enable once every stub in src/ is implemented.
+    "unicorn/require-module-specifiers": "off",
+    "unicorn/no-empty-file": "off"
+  },
+  "ignorePatterns": ["**/dist/**", "**/coverage/**", "**/node_modules/**", "spikes/**"]
+}

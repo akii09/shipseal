@@ -1127,8 +1127,13 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09 | Composite GitHub Action running `npx shipseal` | Avoid bundling native binaries into a JS action | JavaScript action with bundled dist; Docker action |
 | 2026-09 | Brand kit compatible with W3C Design Tokens | Adopt an existing standard instead of inventing one | Proposing `brand.json` as a new standard |
 | 2026-09 | v1 scope: release pack, milestones, benchmarks, CLI, Action | Smallest set that proves the value | Visual PRs, scheduling, hosted tier, template marketplace |
-| _(Phase 1)_ | Build tool: tsdown or tsup | _to decide after spike_ | |
-| _(Phase 1)_ | CLI framework: cac or commander | _to decide_ | |
+| 2026-09-11 | Pin `packageManager` to `pnpm@10.34.5` with its corepack integrity hash | Corepack rejects a range like `pnpm@10`, so `pnpm i` failed outright. An exact pin plus hash gives the same verified binary locally and in CI | Floating range (does not work); pnpm 12 (stay on the 10 line already targeted) |
+| 2026-09-11 | TypeScript 7.0.2, pinned `^7.0.2` | Current `latest` tag, native compiler, much faster typecheck in CI. tsdown declares `typescript ^7` as a supported peer | TypeScript 5.9.3 (last 5.x, published 2025-09-30, a year behind) |
+| 2026-09-11 | Build tool: **tsdown** `^0.23.0` | Rolldown-based, actively released, 0.17 MB, handles shebang bin entries and `.d.ts`. Accepted risk: still 0.x, so minor bumps can break | tsup 8.5.1 (stable API but last published 2025-11-12, roughly 10 months stale) |
+| 2026-09-11 | Test runner: **vitest** `^5.0.0` | Already assumed by Section 20. `vite` is an optional peer in v5, so the install stays small | node:test (no golden image tooling, weaker fixture ergonomics) |
+| 2026-09-11 | Linter: **oxlint** `^1.82.0`, single config at the repo root | Zero transitive dependencies and one binary, which matches the small-supply-chain rule. `tsc --strict` with `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes` already covers type-aware checks | eslint + typescript-eslint (roughly 100 transitive packages) |
+| 2026-09-11 | Phase 0 demand validation gate consciously skipped | Owner decision: build Phase 1 now, record signals in `docs/validation.md` later. Noted so the unmet gate is explicit, not silent | Blocking Phase 1 until validation.md has real signals |
+| _(Phase 1)_ | CLI framework: cac or commander | _to decide when `src/cli.ts` is implemented_ | |
 | _(Phase 2)_ | LLM provider approach | _to decide_ | |
 
 ---
