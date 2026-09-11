@@ -1,11 +1,18 @@
 ---
 /**
+ * shipseal:pinned start
+ *
  * Hero animation: a release card being built from repository facts, then sealed.
  *
- * The layout and the content both mirror the real `release-hero` template: every string below
- * is what Shipseal rendered for its own v0.0.6 release, in `assets/examples/release-hero.png`.
- * Nothing here is invented, because the card's whole claim is that nothing is invented. That
- * includes the bottom right, which carries the attribution and never a metric.
+ * The layout and the content both mirror the real `release-hero` template. Every string below
+ * was rendered by Shipseal for its own v0.0.6 release. Nothing here is invented, because the
+ * card's whole claim is that nothing is invented. That includes the bottom right, which carries
+ * the attribution and never a metric.
+ *
+ * shipseal:pinned v0.0.6. Deliberately not bumped with each release. These are the real strings
+ * from that release, and changing the version without re-rendering would invent the rest. Do not
+ * point this at `assets/examples/release-hero.png` either: that file is regenerated every
+ * release, so the claim went stale the moment 0.0.7 shipped.
  *
  * Provenance is explained by a caption that cycles under the card rather than by labels
  * floating beside each fact, which overflowed the card on narrow screens.
@@ -39,6 +46,7 @@
     <span class="p p3"><b>the link</b> from the git remote</span>
     <span class="p p4"><b>sealed.</b> every number has a source</span>
   </figcaption>
+  {/* shipseal:pinned end */}
 </figure>
 
 <style>

@@ -196,7 +196,11 @@ function syncVersionStrings() {
   for (const relative of versionedFiles) {
     const path = join(root, relative);
     const before = readFileSync(path, "utf8");
-    let after = before.replace(/akii09\/shipseal@v\d+\.\d+\.\d+/g, `akii09/shipseal@${tag}`);
+    let after = before
+      .replace(/akii09\/shipseal@v\d+\.\d+\.\d+/g, `akii09/shipseal@${tag}`)
+      // The Action's `version` input pins the CLI. It sat at 0.0.5 for three releases because
+      // nothing synced it, which is the same drift the action reference had.
+      .replace(/version: "\d+\.\d+\.\d+"/g, `version: "${version}"`);
     if (relative === "README.md") {
       after = after
         .replace(/for its own `v\d+\.\d+\.\d+` release/, `for its own \`${tag}\` release`)
