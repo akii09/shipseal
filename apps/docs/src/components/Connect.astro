@@ -31,7 +31,12 @@ const links = [
   .trigger:hover, .connect:focus-within .trigger { color: var(--fg); }
 
   .pop {
-    position: absolute; bottom: calc(100% + 0.65rem); left: 0;
+    /*
+     * Anchored to the trigger's right edge, because the trigger is the right-hand item of a
+     * space-between footer. Anchoring left instead let the nowrap row run past the viewport:
+     * 37px of horizontal page scroll at 768px, and only 9px of clearance left at 1280px.
+     */
+    position: absolute; bottom: calc(100% + 0.65rem); right: 0;
     display: flex; gap: 0.15rem; padding: 0.35rem;
     background: var(--surface-2); border: 1px solid var(--line);
     border-radius: 12px; box-shadow: 0 18px 40px -24px rgb(0 0 0 / 1);
@@ -48,5 +53,11 @@ const links = [
   }
   .pop a:hover { background: #26262b; color: var(--fg); }
 
-  @media (max-width: 560px) { .pop { left: auto; right: 0; } }
+  /*
+   * Below the width where the footer wraps (measured at 425px), the trigger is
+   * no longer right-aligned: it starts a line of its own at the left margin, and the popover is
+   * wider than the trigger, so anchoring right would push it off the left edge. Anchor left
+   * there instead. If the trigger's label changes length, re-measure this breakpoint.
+   */
+  @media (max-width: 425px) { .pop { left: 0; right: auto; } }
 </style>
