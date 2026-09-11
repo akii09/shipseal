@@ -1,5 +1,33 @@
 # shipseal
 
+## 0.0.8
+
+### Patch Changes
+
+- 6d1ee89: Correct what the documentation claims Shipseal produces. The output listing on the website was
+  written by hand and had drifted: it showed six files under names the CLI never writes, and
+  advertised square, portrait, Product Hunt and README banner sizes that no template can render.
+  The listing is now generated from a real pack, and tests fail if either claim stops matching the
+  code.
+- 6d1ee89: Find the published package in a workspace. On a monorepo whose root package is private, the call
+  to action fell back to the repository URL even when the repo publishes to npm, because nothing
+  looked in `packages` or `apps`. Shipseal now uses the single publishable package it finds there,
+  and checks the registry knows the name before putting an install command on a card. When more
+  than one package is publishable the choice would be a guess, so pass `--package` to settle it.
+  
+  Prefer what a project declares over what is derived from its checkout. A `homepage` or
+  `repository` in package.json now wins over the origin remote, which may point at a fork, a mirror
+  or an SSH alias.
+- 6d1ee89: Title the code card for what it shows. A release whose snippet is only install commands now
+  reads "Get started" instead of repeating the release headline, which made a bug-fix release look
+  as though it were about installing. When the release notes contain a code block, that block is
+  used for the card rather than the first fence in the README, so the snippet is about what
+  actually changed.
+  
+  Fixes a related bug: a snippet configured as `release.snippet` was silently ignored on any
+  project whose README contained a code block, because the configured value was consulted last.
+  Configured snippets now win, then release notes, then the README.
+
 ## 0.0.7
 
 ### Patch Changes
