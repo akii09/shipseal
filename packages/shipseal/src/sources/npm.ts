@@ -11,6 +11,7 @@ import { fact } from "../facts/fact.js";
 import type { PartialFacts } from "../facts/partial.js";
 
 const API_ROOT = "https://api.npmjs.org/downloads/point/last-week";
+const REGISTRY_ROOT = "https://registry.npmjs.org";
 
 const pointSchema = z.object({
   downloads: z.number().int().nonnegative(),
@@ -85,4 +86,37 @@ async function npmGet(
   const json: unknown = await response.json();
   cache.set(url, json);
   return json;
+}
+
+/**
+ * Is this name actually published?
+ *
+ * The downloads endpoint cannot answer this: it 404s for a package published minutes ago that
+ * has no download data yet, which is exactly the case a first release is in. The registry
+ * document is the authority.
+ *
+ * Only a definitive 404 counts as "no". A network error, a rate limit or anything else returns
+ * undefined, so an unreachable registry never removes a call to action that was probably right.
+ */
+export async function npmPackageExists(
+  name: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<boolean | undefined> {
+  const trimmed = name.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+  let response: Response;
+  try {
+    response = await fetchImpl(`${REGISTRY_ROOT}/${encodeURIComponent(trimmed)}`, {
+      method: "HEAD",
+      headers: { accept: "application/json" },
+    });
+  } catch {
+    return undefined;
+  }
+  if (response.status === 404) {
+    return false;
+  }
+  return response.ok ? true : undefined;
 }

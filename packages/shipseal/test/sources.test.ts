@@ -201,6 +201,34 @@ describe("mergeFacts", () => {
   });
 });
 
+async function workspace(packages: Record<string, unknown>): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), "shipseal-ws-npm-"));
+  await writeFile(
+    join(dir, "package.json"),
+    JSON.stringify({ name: "demo-monorepo", private: true, version: "1.0.0" }),
+  );
+  await writeFile(join(dir, "README.md"), "# Demo\n\nA workspace used in npmPackage tests.\n");
+  await writeFile(
+    join(dir, "CHANGELOG.md"),
+    "## [1.0.0] - 2026-09-10\n\n### Added\n- A first release\n",
+  );
+  await Promise.all(
+    Object.entries(packages).map(async ([name, manifest]) => {
+      await mkdir(join(dir, "packages", name), { recursive: true });
+      await writeFile(join(dir, "packages", name, "package.json"), JSON.stringify(manifest));
+    }),
+  );
+  return dir;
+}
+
+const collect = async (dir: string, fetchImpl?: typeof fetch) =>
+  collectFacts({
+    cwd: dir,
+    event: { kind: "release", tag: "v1.0.0" },
+    skipNetwork: fetchImpl === undefined,
+    ...(fetchImpl === undefined ? {} : { fetchImpl }),
+  });
+
 describe("collectFacts", () => {
   it("builds Facts from package.json, changelog, and readme without network", async () => {
     const dir = await mkdtemp(join(tmpdir(), "shipseal-collect-"));
@@ -480,5 +508,45 @@ describe("project name on a private root", () => {
     await writeFile(join(dir, "package.json"), JSON.stringify({ name: "@scope/demo" }), "utf8");
     const part = await collectPackageJson(dir);
     expect(part.project?.name?.value).toBe("demo");
+  });
+  /**
+   * G9: a private workspace root has no npm name, so the call to action fell back to the
+   * GitHub URL even though the repo publishes a package one directory down.
+   */
+  describe("npmPackage in a workspace", () => {
+    it("uses the one publishable package under a private root", async () => {
+      const dir = await workspace({
+        cli: { name: "demo-cli", version: "1.0.0" },
+        internal: { name: "demo-internal", version: "1.0.0", private: true },
+      });
+      const facts = await collect(dir);
+      expect(facts.project.npmPackage?.value).toBe("demo-cli");
+      expect(facts.project.npmPackage?.provenance.ref).toBe("packages/cli/package.json#name");
+    });
+
+    it("stays unset when two packages are publishable, because the choice would be a guess", async () => {
+      const dir = await workspace({
+        cli: { name: "demo-cli", version: "1.0.0" },
+        core: { name: "demo-core", version: "1.0.0" },
+      });
+      const facts = await collect(dir);
+      expect(facts.project.npmPackage).toBeUndefined();
+    });
+
+    it("drops an inferred name the registry does not know", async () => {
+      const dir = await workspace({ cli: { name: "demo-cli", version: "1.0.0" } });
+      const notFound = (async () => new Response(null, { status: 404 })) as unknown as typeof fetch;
+      const facts = await collect(dir, notFound);
+      expect(facts.project.npmPackage).toBeUndefined();
+    });
+
+    it("keeps the name when the registry is unreachable", async () => {
+      const dir = await workspace({ cli: { name: "demo-cli", version: "1.0.0" } });
+      const offline = (async () => {
+        throw new Error("network down");
+      }) as unknown as typeof fetch;
+      const facts = await collect(dir, offline);
+      expect(facts.project.npmPackage?.value).toBe("demo-cli");
+    });
   });
 });

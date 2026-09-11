@@ -6,6 +6,7 @@ import type { Dirent } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ShipsealEvent } from "../core/events.js";
 import { ShipsealError } from "../core/errors.js";
+import { fact } from "../facts/fact.js";
 import { mergeFacts } from "../facts/merge.js";
 import type { Facts } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
@@ -13,7 +14,7 @@ import { collectBenchFile } from "./bench-file.js";
 import { collectChangelog } from "./changelog.js";
 import { collectGit, collectGitRemote, versionFromTag } from "./git.js";
 import { collectGithub } from "./github.js";
-import { collectNpm } from "./npm.js";
+import { collectNpm, npmPackageExists } from "./npm.js";
 import { collectPackageJson } from "./package-json.js";
 import { collectConfiguredSnippet, collectReadme } from "./readme.js";
 
@@ -58,8 +59,23 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
       ? await collectConfiguredSnippet(options.cwd, options.snippet)
       : {};
 
+  // A private workspace root has no npm name, so the CTA fell back to the GitHub URL even
+  // when the repo publishes a package one directory down. Sits before `pkg` so an explicit
+  // root name, or one from --package, still wins.
+  const workspacePkg =
+    pkg.project?.npmPackage === undefined
+      ? // Verify what was inferred, trust what was declared. A root name, or one from
+        // --package, is the user saying so; this one is a guess worth checking.
+        await collectWorkspaceNpmPackage(
+          options.cwd,
+          options.skipNetwork === true
+            ? {}
+            : { verify: async (name) => npmPackageExists(name, options.fetchImpl ?? fetch) },
+        )
+      : {};
+
   // The remote goes first so an explicit package.json homepage or repository still wins.
-  const parts: PartialFacts[] = [remote, pkg, git, readme, changelog, snippet];
+  const parts: PartialFacts[] = [remote, workspacePkg, pkg, git, readme, changelog, snippet];
 
   if (options.event.kind === "bench") {
     parts.push(await collectBenchFile(options.cwd, options.benchFile ?? ".shipseal/bench.json"));
@@ -146,6 +162,48 @@ async function collectBestChangelog(
     candidates.map((candidate) => collectChangelog(cwd, version, candidate)),
   );
   return fromWorkspace.find((facts) => changelogHasNotes(facts)) ?? {};
+}
+
+/**
+ * Find the one publishable package in a workspace.
+ *
+ * Only when there is exactly one candidate: two publishable packages make the CTA a guess, and
+ * guessing which one to tell people to install is worse than falling back to the repository
+ * URL. `--package` resolves the ambiguity explicitly.
+ */
+async function collectWorkspaceNpmPackage(
+  cwd: string,
+  options: { verify?: (name: string) => Promise<boolean | undefined> } = {},
+): Promise<PartialFacts> {
+  const paths = await workspaceManifests(cwd);
+  const manifests = await Promise.all(paths.map((path) => collectPackageJson(cwd, path)));
+  const found = manifests
+    .map((facts, index) => ({ name: facts.project?.npmPackage?.value, path: paths[index] ?? "" }))
+    .filter((entry): entry is { name: string; path: string } => entry.name !== undefined);
+  const only = found.length === 1 ? found[0] : undefined;
+  if (only === undefined) {
+    return {};
+  }
+  if (options.verify !== undefined && (await options.verify(only.name)) === false) {
+    // Declared public but never published. "npm i <name>" would fail for every reader, so
+    // leave npmPackage unset and let the call to action fall back to the repository URL.
+    return {};
+  }
+  return {
+    project: {
+      npmPackage: fact(only.name, {
+        source: "package-json",
+        ref: `${only.path}#name`,
+        fetchedAt: new Date().toISOString(),
+      }),
+    },
+  };
+}
+
+async function workspaceManifests(cwd: string): Promise<string[]> {
+  return (await workspaceChangelogs(cwd)).map((path) =>
+    path.replace(/CHANGELOG\.md$/, "package.json"),
+  );
 }
 
 async function workspaceChangelogs(cwd: string): Promise<string[]> {
