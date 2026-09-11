@@ -7,7 +7,7 @@ const inputs = [
   ["artifact", "true", "Also upload the folder as a workflow artifact"],
   ["strict", "false", "Fail the job on any fit warning"],
   ["llm", "false", "Enable LLM copy, needs a secret"],
-  ["version", "latest", "Shipseal version to run"],
+  ["version", "0.0.8", "Shipseal version to run"],
 ];
 ---
 <Docs title="GitHub Action: Shipseal" description="Run Shipseal on release, attach images automatically, and see what it did in the job summary." heading="GitHub Action">
@@ -49,14 +49,21 @@ jobs:
     <li><code>skipped</code>: <code>true</code> when a milestone run found no crossed threshold.</li>
   </ul>
 
-  <h2>Pin the version</h2>
+  <h2>Version pinning</h2>
   <p>
-    <code>version</code> defaults to <code>latest</code>, which is convenient but means a release can change
-    under you. Pin an exact version for anything you care about being reproducible.
+    The <code>version</code> input defaults to match the Action tag (<code>0.0.8</code> for <code>@v0.0.8</code>),
+    so your workflow is reproducible without extra configuration. Override it only if you need a different CLI
+    version than the Action tag.
   </p>
-  <pre><code>{`- uses: akii09/shipseal@v0.0.8
+  {/* shipseal:pinned start. Example shows overriding to a hypothetical older version. */}
+  <pre><code>{`# Uses CLI 0.0.8 by default when action tag is v0.0.8
+- uses: akii09/shipseal@v0.0.8
+
+# Override to use a specific CLI version (example)
+- uses: akii09/shipseal@v0.0.8
   with:
-    version: "0.0.8"`}</code></pre>
+    version: "<version>"`}</code></pre>
+  {/* shipseal:pinned end */}
 
   <h2>Milestones on a schedule</h2>
   <p>

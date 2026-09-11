@@ -24,7 +24,7 @@ inputs:
     default: "false"
   version:
     description: "Shipseal version to run, or workspace to use the checked-out package"
-    default: latest
+    default: "0.0.8"
 outputs:
   dir:
     description: Directory containing the generated pack
