@@ -1,5 +1,13 @@
 # shipseal
 
+## 0.0.4
+
+### Patch Changes
+
+- d0db8e4: Swallow the space before a replaced em dash, so a tagline reading "shops — mobile PWA" becomes
+  "shops: mobile PWA" rather than "shops : mobile PWA". A spaced en dash becomes a comma for the
+  same reason.
+
 ## 0.0.3
 
 ### Patch Changes
