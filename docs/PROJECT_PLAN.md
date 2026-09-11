@@ -715,7 +715,7 @@ Safe zones: keep critical text at least 64px from edges on landscape formats (pl
 |---|---|---|---|
 | `release-hero` | release | Logo, project name, version badge, headline, subheadline, CTA | og, github-social, x, linkedin |
 | `release-highlights` | release | "What's new in vX", up to 4 highlights, breaking-change label | x, linkedin |
-| `code-card` | release | Headline + syntax-highlighted snippet (max ~14 lines) | x, linkedin |
+| `code-card` | release | Headline + syntax-highlighted snippet (max ~14 lines). Text nodes **must** set `whiteSpace: "pre"` or indentation collapses (S5) | x, linkedin |
 | `milestone` | milestone | Big number, metric label, thank-you line, logo | og, x, linkedin |
 | `bench` | bench | Title, up to 3 metrics as before → after with percent change | x, linkedin |
 
@@ -1119,11 +1119,11 @@ Each spike is time-boxed to half a day. Record results in Section 25, with the d
 |---|---|---|---|
 | ~~S1~~ **DONE 2026-09-11** | What is the current Takumi JS package name and render API? Does it accept React JSX directly, and does that require React at runtime? | Answered: `takumi-js@2.13.7`; JSX works with no React runtime. See `docs/spikes/2026-09-11-takumi-s1-s2-s4.md` | Unblocked: templates are `.tsx` with a JSX shim (§25) |
 | ~~S2~~ **DONE 2026-09-11** | Does `takumi-js` expose text measurement or layout info to JavaScript? | Answered: yes, `Renderer.measure()` returns `MeasuredNode` with text runs. See the spike record | Unblocked: §15.3 rewritten, no font-parsing dependency |
-| S3 | Does the native binary run on `ubuntu-latest` GitHub runners, macOS arm64, and Windows? Is there a usable WASM fallback? | Minimal CI matrix | Action design, platform support statement |
+| ~~S3~~ **PARTIAL 2026-09-11** | Does the native binary run on the runners? Is there a usable WASM fallback? | Eight prebuilt binaries cover every runner target; the WASM fallback works and is byte-identical to native. **A real runner has not been exercised yet.** See `docs/spikes/2026-09-11-takumi-s3-s5-s6-s7.md` | Action design unblocked; platform statement stays "published for" until a render runs in CI |
 | ~~S4~~ **DONE 2026-09-11** | Which fonts are bundled with Takumi, and how are custom fonts loaded? | Answered: only Geist (300 to 800) is bundled; custom fonts load as raw bytes, WOFF2 confirmed. See the spike record | Unblocked: §7 corrected; open decision on supplying Geist Mono |
-| S5 | Can Takumi render many colored inline spans (shiki tokens) fast enough for a 14-line code card? | Benchmark | Code card feasibility |
-| S6 | Output file sizes: PNG vs WebP for each format; do platforms accept WebP for uploads? | Render + check platform docs | Default `imageFormat` |
-| S7 | Tailwind v4 `@theme` parsing: how reliably can colors be extracted statically? | Test on PDFx docs site and 3 other repos | Brand detection scope |
+| ~~S5~~ **DONE 2026-09-11** | Can Takumi render many colored inline spans fast enough for a 14-line code card? | Yes: 80 spans in 7.5 ms, linear at ~0.08 ms per span. Found that indentation collapses without `whiteSpace: "pre"`. See `docs/spikes/2026-09-11-takumi-s3-s5-s6-s7.md` | Code card is feasible; §14.3 gains a whitespace rule |
+| ~~S6~~ **DONE 2026-09-11** | PNG vs WebP sizes; do platforms accept WebP? | WebP is 58% smaller but GitHub social previews accept PNG, JPG and GIF only. Every PNG is under 49 KB against a 1 MB cap. See `docs/spikes/2026-09-11-takumi-s3-s5-s6-s7.md` | `imageFormat` defaults to PNG |
+| ~~S7~~ **DONE 2026-09-11** | Tailwind v4 `@theme` parsing: how reliable is static extraction? | 44 real files: 100% parsable, 95% yield colors, 82% have a brand color. oklch is 52% of values and converts exactly in 30 lines. See `docs/spikes/2026-09-11-takumi-s3-s5-s6-s7.md` | Brand detection scope confirmed; oklch converter needed, no dependency |
 
 ---
 
@@ -1154,6 +1154,10 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | Template rule: **every text node sets `fontFamily` explicitly** (S4) | Registering any custom font silently changes the family used by text nodes that omit it. Verified by hash: bare text renders differently once a mono font is registered, pinned text does not | Relying on the default family and letting brand fonts cascade |
 | 2026-09-11 | Plan §7 corrected: Takumi bundles **only Geist**, weights 300 to 800 (S4) | Nine family names, including `Geist Mono` and `monospace`, all rendered byte-identical, proving a single bundled face. The earlier claim that Geist Mono ships with Takumi was wrong | Trusting the docs summary without testing |
 | 2026-09-11 | **Vendor Geist Mono into the package**: `assets/fonts/GeistMono[wght].ttf`, variable axis, upstream `vercel/geist-font` v1.7.2, OFL 1.1, shipped via `files: ["dist", "assets"]` | Works offline with no network at render time (§16.2) and no `init` step. One 171 KB variable file covers every weight: weights 300 to 900 rendered seven distinct outputs, so static instances are unnecessary | Fetching at `init` (needs network, adds a failure mode); requiring a user-supplied path (breaks the zero-config default); shipping static weight instances (larger, less flexible) |
+| 2026-09-11 | Code card text nodes set `whiteSpace: "pre"` (S5) | Without it leading whitespace collapses and code indentation is lost: a character behind 0/2/4/6 spaces measured 13/26/26/26 px, versus 13/40/66/92 px with `pre`. Rendering cost is a non-issue at ~0.08 ms per span | Non-breaking spaces (untested and fragile); rendering indentation as padding (breaks copy fidelity) |
+| 2026-09-11 | `output.imageFormat` defaults to **PNG** (S6) | GitHub social previews accept PNG, JPG and GIF only, not WebP. WebP would save 58% but every PNG is already under 49 KB against a 1 MB cap, so the saving buys nothing | WebP by default (rejected on platform acceptance); JPEG (lossy artifacts on flat brand color) |
+| 2026-09-11 | Brand detection ships its own **oklch to sRGB hex converter**, about 30 lines, no dependency (S7) | oklch is 51.6% of colors in 44 real Tailwind v4 `@theme` files, so detection is useless without it. A hand-written converter matched `culori` exactly on 9 of 9 cases | Adding `culori` as a dependency (R7); ignoring oklch (loses half of all real brand colors) |
+| 2026-09-11 | WASM is an acceptable fallback backend (S3) | `takumi-js/wasm` renders **byte-identical** output to native at 2.3x the time (7.0 ms vs 3.1 ms warm), so a fallback does not break determinism or golden tests | Failing hard when the native binary is missing |
 | _(open)_ | §16.1 `measureText?(text, opts)` signature does not match Takumi, which measures a node tree | _public interface change, needs approval_ | |
 | _(Phase 1)_ | CLI framework: cac or commander | _to decide when `src/cli.ts` is implemented_ | |
 | _(Phase 2)_ | LLM provider approach | _to decide_ | |
