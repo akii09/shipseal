@@ -10,6 +10,7 @@ import type { PartialFacts, PartialProject } from "../facts/partial.js";
 const pkgSchema = z.object({
   private: z.boolean().optional(),
   name: z.string().optional(),
+  bin: z.union([z.string(), z.record(z.string(), z.string())]).optional(),
   description: z.string().optional(),
   version: z.string().optional(),
   homepage: z.string().optional(),
@@ -79,6 +80,15 @@ export async function collectPackageJson(
     project.npmPackage = fact(pkg.data.name, {
       source: "package-json",
       ref: `${packagePath}#name`,
+      fetchedAt,
+    });
+  }
+  // A package with a bin is run, not imported. "npm i shipseal" told people to install a CLI
+  // as a dependency, which is not how any of the docs say to use it.
+  if (pkg.data.bin !== undefined && pkg.data.private !== true) {
+    project.cli = fact(true, {
+      source: "package-json",
+      ref: `${packagePath}#bin`,
       fetchedAt,
     });
   }

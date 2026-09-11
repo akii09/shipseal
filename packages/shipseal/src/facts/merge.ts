@@ -48,6 +48,9 @@ export function mergeFacts(parts: PartialFacts[]): Facts {
   if (project.npmPackage !== undefined) {
     facts.project.npmPackage = project.npmPackage;
   }
+  if (project.cli !== undefined) {
+    facts.project.cli = project.cli;
+  }
   if (project.license !== undefined) {
     facts.project.license = project.license;
   }

@@ -171,7 +171,9 @@ export function cleanLine(text: string): string {
 function ctaFor(facts: Facts): string {
   const npm = facts.project.npmPackage?.value;
   if (npm !== undefined && npm.length > 0) {
-    return `npm i ${npm}`;
+    // A package with a bin is run, not installed as a dependency. `@latest` because npx reuses
+    // a cached copy otherwise, which is the footgun the README already warns about.
+    return facts.project.cli?.value === true ? `npx ${npm}@latest` : `npm i ${npm}`;
   }
   const url = facts.project.url?.value ?? facts.project.repo?.value;
   if (url === undefined) {

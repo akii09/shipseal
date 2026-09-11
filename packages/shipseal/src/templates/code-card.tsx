@@ -9,6 +9,9 @@ import type { Format } from "../formats.js";
 import type { TemplateDefinition } from "./contract.js";
 import { themeColors } from "./theme.js";
 
+/** Advance width of a monospace glyph as a fraction of the font size. */
+const MONO_ADVANCE = 0.6;
+
 const propsSchema = z.object({
   headline: z.string(),
   headingFamily: z.string(),
@@ -67,6 +70,28 @@ export const codeCard: TemplateDefinition = {
     const colors = themeColors(ctx.brand, ctx.theme);
     const pad = ctx.format.safeZone;
     const headline = ctx.fitted.headline;
+
+    // Size the type to the snippet rather than the card. A fixed 22px in a box with flexGrow
+    // drew a 14-line frame around a 2-line snippet, leaving most of the card empty with small
+    // text on it. Mono glyphs are a constant fraction of the em, so the widest line and the
+    // line count give a size directly, with no measurement pass.
+    const boxPad = 28;
+    const lineHeight = 1.35;
+    const lines = props.lines.length === 0 ? 1 : props.lines.length;
+    const longest = Math.max(
+      1,
+      ...props.lines.map((line) => line.reduce((total, token) => total + token.text.length, 0)),
+    );
+    const headlineHeight = (headline?.fontSize ?? 36) * 1.25;
+    const attributionHeight = ctx.attribution ? 18 * 1.4 + 24 : 0;
+    const innerWidth = ctx.format.width - 2 * pad - 2 * boxPad;
+    const innerHeight =
+      ctx.format.height - 2 * pad - headlineHeight - 24 - attributionHeight - 2 * boxPad;
+    const codeSize = Math.max(
+      18,
+      Math.min(44, Math.floor(Math.min(innerWidth / (longest * MONO_ADVANCE), innerHeight / (lines * lineHeight)))),
+    );
+
     return (
       <div
         style={{
@@ -94,9 +119,16 @@ export const codeCard: TemplateDefinition = {
             display: "flex",
             flexDirection: "column",
             flexGrow: 1,
+            justifyContent: "center",
+          }}
+        >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
             backgroundColor: colors.card,
             borderRadius: props.radius,
-            padding: 28,
+            padding: boxPad,
             gap: 0,
           }}
         >
@@ -115,10 +147,10 @@ export const codeCard: TemplateDefinition = {
                   style={{
                     fontFamily: props.monoFamily,
                     fontWeight: props.monoWeight,
-                    fontSize: 22,
+                    fontSize: codeSize,
                     color: token.color,
                     whiteSpace: "pre",
-                    lineHeight: 1.35,
+                    lineHeight,
                   }}
                 >
                   {token.text}
@@ -126,6 +158,7 @@ export const codeCard: TemplateDefinition = {
               ))}
             </div>
           ))}
+        </div>
         </div>
         {ctx.attribution ? (
           <div

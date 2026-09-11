@@ -60,6 +60,15 @@ function readmeCards() {
   for (const [src, dest] of pairs) {
     copyFileSync(join(from, src), join(root, "assets/examples", dest));
   }
+  // The site claims every template renders in dark and light but only ever showed dark.
+  const lightOut = mkdtempSync(join(tmpdir(), "shipseal-light-"));
+  run("node", [cli, "release", "--tag", tag, "--formats", "og", "--templates", "release-hero", "--themes", "light", "--out", lightOut], root);
+  copyFileSync(
+    join(lightOut, tag, "release-hero-og.png"),
+    join(root, "apps/docs/public/examples/release-hero-light.png"),
+  );
+  rmSync(lightOut, { recursive: true, force: true });
+
   outputTree(join(from, "manifest.json"));
   rmSync(out, { recursive: true, force: true });
   return pairs.length;
@@ -223,7 +232,7 @@ if (!checkOnly) {
   console.log(`Refreshed ${n} README cards and og.png for ${tag}.`);
 }
 
-const watched = ["assets/examples", "apps/docs/public/og.png", "apps/docs/src/pages/index.astro", ...versionedFiles];
+const watched = ["assets/examples", "apps/docs/public/og.png", "apps/docs/public/examples", "apps/docs/src/pages/index.astro", ...versionedFiles];
 const dirty = run("git", ["status", "--porcelain", ...watched], root).trim();
 if (dirty.length > 0) {
   console.log("\nShowcase files changed:");

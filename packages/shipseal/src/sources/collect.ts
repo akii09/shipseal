@@ -8,8 +8,8 @@ import type { ShipsealEvent } from "../core/events.js";
 import { ShipsealError } from "../core/errors.js";
 import { fact } from "../facts/fact.js";
 import { mergeFacts } from "../facts/merge.js";
-import type { Facts } from "../facts/schema.js";
-import type { PartialFacts } from "../facts/partial.js";
+import type { Fact, Facts } from "../facts/schema.js";
+import type { PartialFacts, PartialProject } from "../facts/partial.js";
 import { collectBenchFile } from "./bench-file.js";
 import { collectChangelog } from "./changelog.js";
 import { collectGit, collectGitRemote, versionFromTag } from "./git.js";
@@ -208,8 +208,15 @@ async function collectWorkspaceNpmPackage(
   const paths = await workspaceManifests(cwd);
   const manifests = await Promise.all(paths.map((path) => collectPackageJson(cwd, path)));
   const found = manifests
-    .map((facts, index) => ({ name: facts.project?.npmPackage?.value, path: paths[index] ?? "" }))
-    .filter((entry): entry is { name: string; path: string } => entry.name !== undefined);
+    .map((facts, index) => ({
+      name: facts.project?.npmPackage?.value,
+      cli: facts.project?.cli,
+      path: paths[index] ?? "",
+    }))
+    .filter(
+      (entry): entry is { name: string; cli: Fact<boolean> | undefined; path: string } =>
+        entry.name !== undefined,
+    );
   const only = found.length === 1 ? found[0] : undefined;
   if (only === undefined) {
     return {};
@@ -219,15 +226,17 @@ async function collectWorkspaceNpmPackage(
     // leave npmPackage unset and let the call to action fall back to the repository URL.
     return {};
   }
-  return {
-    project: {
-      npmPackage: fact(only.name, {
-        source: "package-json",
-        ref: `${only.path}#name`,
-        fetchedAt: new Date().toISOString(),
-      }),
-    },
+  const project: PartialProject = {
+    npmPackage: fact(only.name, {
+      source: "package-json",
+      ref: `${only.path}#name`,
+      fetchedAt: new Date().toISOString(),
+    }),
   };
+  if (only.cli !== undefined) {
+    project.cli = only.cli;
+  }
+  return { project };
 }
 
 async function workspaceManifests(cwd: string): Promise<string[]> {

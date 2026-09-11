@@ -304,3 +304,23 @@ describe("releaseKind", () => {
     expect(releaseKind("nightly", "v0.0.8")).toBeUndefined();
   });
 });
+
+/** A package with a bin is run, not installed as a dependency. */
+const withProject = (project: Partial<Facts["project"]>): Facts => ({
+  ...FIXTURE_FACTS,
+  project: { ...FIXTURE_FACTS.project, ...project },
+});
+
+describe("call to action", () => {
+  const at = <T,>(v: T) => fact(v, { source: "package-json" as const, ref: "package.json", fetchedAt: NOW });
+
+  it("uses npx for a CLI", () => {
+    const copy = deterministicCopy(withProject({ npmPackage: at("demo"), cli: at(true) }));
+    expect(copy.cta).toBe("npx demo@latest");
+  });
+
+  it("uses npm i for a library", () => {
+    const copy = deterministicCopy(withProject({ npmPackage: at("demo") }));
+    expect(copy.cta).toBe("npm i demo");
+  });
+});

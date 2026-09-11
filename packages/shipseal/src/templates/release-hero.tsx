@@ -8,6 +8,7 @@ import type { Facts } from "../facts/schema.js";
 import type { Format } from "../formats.js";
 import type { TemplateDefinition } from "./contract.js";
 import { themeColors } from "./theme.js";
+import { sealStamp } from "./primitives/seal.js";
 
 const propsSchema = z.object({
   name: z.string(),
@@ -22,6 +23,7 @@ const propsSchema = z.object({
   radius: z.number(),
   showCta: z.boolean(),
   showLogo: z.boolean(),
+  seal: z.array(z.string()),
 });
 
 export type ReleaseHeroProps = z.infer<typeof propsSchema>;
@@ -63,6 +65,8 @@ export const releaseHero: TemplateDefinition = {
     if (!showLogo) {
       missing.push({ fact: "brand.logo", effect: "logo hidden" });
     }
+    const seal = sealStamp(facts);
+    missing.push(...seal.missing);
     const version = facts.release?.version.value ?? "";
     return {
       props: {
@@ -77,6 +81,7 @@ export const releaseHero: TemplateDefinition = {
         bodyWeight: brand.fonts.body.weight,
         radius: brand.radius,
         showCta: copy.cta.length > 0,
+        seal: seal.segments,
         showLogo,
       },
       missing,
@@ -100,8 +105,28 @@ export const releaseHero: TemplateDefinition = {
           height: "100%",
           backgroundColor: colors.background,
           padding: pad,
+          position: "relative",
         }}
       >
+        {/* The right half was empty on every hero. A large, faint mark fills it without
+            competing with the headline, and reads as the seal rather than as decoration. */}
+        {props.showLogo && ctx.logoSrc !== undefined ? (
+          <div
+            style={{
+              display: "flex",
+              position: "absolute",
+              right: -Math.round(ctx.format.height * 0.12),
+              top: Math.round(ctx.format.height * 0.18),
+              opacity: 0.06,
+            }}
+          >
+            <img
+              src={ctx.logoSrc}
+              width={Math.round(ctx.format.height * 0.72)}
+              height={Math.round(ctx.format.height * 0.72)}
+            />
+          </div>
+        ) : undefined}
         <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: 20 }}>
           {props.showLogo && ctx.logoSrc !== undefined ? (
             <img src={ctx.logoSrc} width={compact ? 56 : 72} height={compact ? 56 : 72} />
@@ -135,7 +160,7 @@ export const releaseHero: TemplateDefinition = {
                     fontFamily: props.bodyFamily,
                     fontWeight: props.bodyWeight,
                     fontSize: 22,
-                    color: colors.primary,
+                    color: colors.foreground,
                   }}
                 >
                   {`v${props.version}`}
@@ -195,18 +220,37 @@ export const releaseHero: TemplateDefinition = {
           ) : (
             <div />
           )}
-          {ctx.attribution ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 6,
+            }}
+          >
             <div
               style={{
                 fontFamily: props.bodyFamily,
-                fontWeight: props.bodyWeight,
-                fontSize: 18,
-                color: colors.muted,
+                fontWeight: props.headingWeight,
+                fontSize: 20,
+                color: colors.primary,
               }}
             >
-              made with shipseal.dev
+              {props.seal.join("  \u00b7  ")}
             </div>
-          ) : undefined}
+            {ctx.attribution ? (
+              <div
+                style={{
+                  fontFamily: props.bodyFamily,
+                  fontWeight: props.bodyWeight,
+                  fontSize: 18,
+                  color: colors.muted,
+                }}
+              >
+                made with shipseal.dev
+              </div>
+            ) : undefined}
+          </div>
         </div>
       </div>
     );

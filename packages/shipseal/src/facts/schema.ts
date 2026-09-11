@@ -55,6 +55,7 @@ export const factsSchema = z.object({
     url: stringFact.optional(),
     repo: stringFact.optional(),
     npmPackage: stringFact.optional(),
+    cli: factSchema(z.boolean()).optional(),
     license: stringFact.optional(),
   }),
   release: z

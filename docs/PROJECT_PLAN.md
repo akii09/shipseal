@@ -186,18 +186,19 @@ In rough priority order:
 
 ## 5. Competitive landscape
 
-Researched September 2026. Re-check before launch.
+Researched September 2026. Re-check before launch. Described by category rather than by name:
+this file is public, and a plan is not the place to rank other people's projects.
 
 | Product | What it does | Why Shipseal is different |
 |---|---|---|
-| **shipshot** (github.com/web3wikis/shipshot) | Agent Skill (Python, Pillow) that generates a GitHub social preview, README hero, and terminal demo GIF from real command output. No browser. | **Closest competitor.** Watch closely. Shipseal adds: persistent brand kit, event triggers (release/milestone), multi-platform pack, benchmark cards, verified-facts manifest, GitHub Action. |
-| OG image agent skills (many, e.g. stevysmith/og-image-skill, social-preview skills) | Prompt files that read the design system and screenshot a page with Playwright to make one OG image. | Regenerate from scratch each run (inconsistent), use browsers, produce one image, no automation. |
-| og-image-generator (npm) | CLI: SVG template to PNG via resvg + sharp, presets. | Single OG image, no repo awareness, no events. |
-| html2img GitHub Action | Hosted API that renders HTML to images from workflows. | Paid and metered (50 free credits), you write the HTML yourself. |
-| Pixelixe | Template SaaS for changelog/social cards via API. | Hosted, paid, not repo-aware. |
-| Google Pomelli | Scans a website for "Business DNA" and generates social campaigns. | For small businesses, not developers. Not code-aware, no CI, limited regions. |
-| Shipmate, LaunchKit | Generate launch copy (tweets, PH comments, landing pages) from a repo or URL. | Text only, no visuals. |
-| Vercel json-render | Generative UI framework with an image renderer (Satori). | Adjacent infrastructure, not a product for release visuals. Could be complementary. |
+| Agent skills that render repo images | Agent Skill (Python) generating a social preview, README hero and terminal demo GIF from real command output. No browser, no image model. | **The closest category.** Describes a repository as it stands, on request. Shipseal adds event triggers, a persistent brand kit, a multi-platform pack, benchmark cards, a verified-facts manifest and an Action. |
+| OG image agent skills | Prompt files that read the design system and screenshot a page with Playwright to make one OG image. | Regenerate from scratch each run (inconsistent), use browsers, produce one image, no automation. |
+| OG image CLIs | CLI: SVG template to PNG via resvg + sharp, presets. | Single OG image, no repo awareness, no events. |
+| Hosted render-to-image Actions | Hosted API that renders HTML to images from workflows. | Paid and metered (50 free credits), you write the HTML yourself. |
+| Template SaaS | Template SaaS for changelog/social cards via API. | Hosted, paid, not repo-aware. |
+| Website-scanning campaign generators | Scan a website for "Business DNA" and generates social campaigns. | For small businesses, not developers. Not code-aware, no CI, limited regions. |
+| Launch-copy generators | Generate launch copy (tweets, PH comments, landing pages) from a repo or URL. | Text only, no visuals. |
+| Generative UI frameworks | Framework with an image renderer (Satori). | Adjacent infrastructure, not a product for release visuals. Could be complementary. |
 | Takumi | Rendering engine (JSX/HTML/CSS to PNG/WebP/GIF/PDF, no browser). | **Shipseal's dependency, not a competitor.** |
 
 **Shipseal's wedge is the combination nobody offers:** persistent brand kit + event triggers + code-aware cards + deterministic engine + full multi-platform pack + verified numbers.
@@ -1127,7 +1128,7 @@ Pick from Section 4.2 based on real user requests, not assumptions. Record each 
 | Takumi API churn or breaking changes | High | Medium | Adapter isolation (R4), exact version pin, golden tests on upgrade. |
 | Takumi native binary fails on some platform | Medium | Medium | `doctor` detects it; investigate Takumi's WASM build as fallback (Section 24). |
 | Output looks "template-y" | Medium | High | Few templates, high design bar (14.4), owner review gate. |
-| Close competitor (shipshot) expands into the same space | Medium | Medium | Move faster on the differentiators: events, brand kit, manifest, Action. |
+| The closest category expands into the same space | Medium | Medium | Move faster on the differentiators: events, brand kit, manifest, Action. |
 | Brand detection picks wrong colors | High | Low | Show detections with sources in `init`; easy override; contrast guard. |
 | LLM invents numbers or claims | Medium | High | Placeholders + number guard + deterministic fallback (Section 13.3). |
 | Platform image sizes change | Low | Low | Sizes centralized in `formats.ts`. |
@@ -1157,7 +1158,7 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 
 | Date | Decision | Reason | Alternatives rejected |
 |---|---|---|---|
-| 2026-09 | Project name **Shipseal**, domain `shipseal.dev`, npm `shipseal` | Short, "seal" implies verified; .dev and npm available | Shipstamp (.dev taken), Shipshot (existing competitor), Shipmark (existing release CLI) |
+| 2026-09 | Project name **Shipseal**, domain `shipseal.dev`, npm `shipseal` | Short, "seal" implies verified; .dev and npm available | Other candidate names, each already taken by an existing project or an unavailable domain |
 | 2026-09 | Standalone project, separate from PDFx | Different user and job (marketing releases vs generating documents in apps) | Building under the PDFx brand |
 | 2026-09 | Use Takumi for rendering; do not build a renderer | Takumi already supports grid, z-index, calc, WOFF2, RTL, animation, PDF, WASM | Own engine; Satori (flexbox only, no WOFF2/RTL); headless browser |
 | 2026-09 | LLM optional and words-only; numbers only from sources | "Verified visuals" is the core differentiator | LLM-designed images; LLM-written stats |
@@ -1217,11 +1218,11 @@ These were researched in depth and rejected. Do not propose them again without n
 
 | Idea | Why rejected |
 |---|---|
-| "Remotion for images" / general image-as-code framework | Takumi and Satori already exist; Vercel json-render covers the AI-spec-to-render layer (including an image renderer). |
-| Agent layer over Satori/Takumi (catalog, guardrails) | Vercel json-render already does this with many renderers. |
+| "Remotion for images" / general image-as-code framework | Rendering engines already exist, and the spec-to-render layer above them is covered by existing frameworks. |
+| Agent layer over a rendering engine (catalog, guardrails) | Existing frameworks already do this across many renderers. |
 | Visual PR summaries / diagrams from diffs | CodeRabbit already generates PR sequence diagrams; diffs lack the data (e.g. cache hit rates), so an LLM would invent numbers, violating R1; different buyer. |
 | Self-healing UI loop with a browser-free renderer | Browser-free renderers cannot run real app components (hooks, state, CSS files); Chrome DevTools MCP already gives agents real browser access. |
-| Edge-native AI video framework | Takumi already renders keyframe animations; Remotion (with a hugely popular agent skill), Revideo, and json-render's Remotion renderer cover it. |
+| Edge-native AI video framework | Takumi already renders keyframe animations, and the video-from-code space is well served. |
 | Generative UI to image fallback for chat platforms | Vercel Chat SDK renders JSX cards natively on Slack, Teams, Discord, WhatsApp, etc. Possible small plugin idea only. |
 | Agent observability / session replay ("AgentLens") | Entire (ex-GitHub CEO, $60M seed) ships Checkpoints doing exactly this. |
 | Agent firewall | Hundreds of repos; HOL Guard, pipelock, Belay; built-in hooks and sandboxes in agents. |

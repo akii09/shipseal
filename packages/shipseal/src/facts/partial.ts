@@ -9,6 +9,7 @@ export type PartialProject = {
   url?: Fact<string>;
   repo?: Fact<string>;
   npmPackage?: Fact<string>;
+  cli?: Fact<boolean>;
   license?: Fact<string>;
 };
 
