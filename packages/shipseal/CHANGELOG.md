@@ -1,5 +1,37 @@
 # shipseal
 
+## 0.0.3
+
+### Patch Changes
+
+- e0995ba: Render the sample card in `init` from the brand it just detected. It was a fixed card showing
+  Shipseal's own name and tagline in every project, which made the tool look like it had ignored
+  the repository it ran in.
+- 81a19d9: Never present a private package as an npm package. A workspace root's name leaked into the
+  call to action, so a real release card read `npm i shipseal-monorepo`, a package that does not
+  exist. Projects with a private root now fall back to the repository URL.
+- 955f01c: Read theme colours from the stylesheets real projects actually write. Detection previously
+  found nothing in several common shapes and silently fell back to built-in defaults:
+  
+  - The last declaration before `}` was dropped when it had no trailing semicolon, which is most
+    stylesheets.
+  - shadcn writes `--background: 0 0% 100%` and applies it as `hsl(var(--background))`. Bare HSL
+    and RGB channel lists are now understood.
+  - `var(--brand-500)` indirection is now followed within the same file.
+  - Tokens on `html`, `.light`, and `[data-theme]` blocks are now read, not only `:root`.
+- a2011c8: Write headlines from changelog entries instead of raw commit subjects. A release whose
+  changelog holds only patch entries fell through to a git commit message, because the headline
+  rule looked at features alone. It now prefers a breaking change, then a feature, then a fix,
+  and takes only the first sentence, since changeset entries are prose paragraphs rather than
+  headlines.
+  
+  Find a changelog inside `packages/*` and `apps/*` when the repository root has none, which is
+  where Changesets writes it in a monorepo.
+  
+  Read the repository from `git remote get-url origin`. A monorepo root often has no `homepage`
+  or `repository` in its private package.json, which left the call to action showing the
+  workspace name.
+
 ## 0.0.2
 
 ### Patch Changes
