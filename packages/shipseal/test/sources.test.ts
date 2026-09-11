@@ -410,3 +410,25 @@ describe("workspace root name", () => {
     expect(detection.brand.name).toBe("Demo");
   });
 });
+
+describe("npmPackage on a private root", () => {
+  // Regression, caught on the real v0.0.2 release card: the CTA read
+  // "npm i shipseal-monorepo", a package that does not exist on npm.
+  it("does not claim a private package is on npm", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-privpkg-"));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo-monorepo", private: true }),
+      "utf8",
+    );
+    const part = await collectPackageJson(dir);
+    expect(part.project?.npmPackage).toBeUndefined();
+  });
+
+  it("still reports a publishable package", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-pubpkg-"));
+    await writeFile(join(dir, "package.json"), JSON.stringify({ name: "demo" }), "utf8");
+    const part = await collectPackageJson(dir);
+    expect(part.project?.npmPackage?.value).toBe("demo");
+  });
+});

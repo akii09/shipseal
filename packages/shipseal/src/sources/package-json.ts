@@ -8,6 +8,7 @@ import { fact } from "../facts/fact.js";
 import type { PartialFacts, PartialProject } from "../facts/partial.js";
 
 const pkgSchema = z.object({
+  private: z.boolean().optional(),
   name: z.string().optional(),
   description: z.string().optional(),
   version: z.string().optional(),
@@ -68,7 +69,9 @@ export async function collectPackageJson(
       fetchedAt,
     });
   }
-  if (pkg.data.name !== undefined) {
+  // A private package is never on npm. Taking its name put "npm i shipseal-monorepo" on a
+  // real release card, telling people to install a package that does not exist.
+  if (pkg.data.name !== undefined && pkg.data.private !== true) {
     project.npmPackage = fact(pkg.data.name, {
       source: "package-json",
       ref: `${packagePath}#name`,
