@@ -1,6 +1,8 @@
 // Orchestrate collectors into one Facts object
 // Spec: docs/PROJECT_PLAN.md §12
 
+import { readdir } from "node:fs/promises";
+import type { Dirent } from "node:fs";
 import { dirname, join } from "node:path";
 import type { ShipsealEvent } from "../core/events.js";
 import { ShipsealError } from "../core/errors.js";
@@ -9,7 +11,7 @@ import type { Facts } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
 import { collectBenchFile } from "./bench-file.js";
 import { collectChangelog } from "./changelog.js";
-import { collectGit, versionFromTag } from "./git.js";
+import { collectGit, collectGitRemote, versionFromTag } from "./git.js";
 import { collectGithub } from "./github.js";
 import { collectNpm } from "./npm.js";
 import { collectPackageJson } from "./package-json.js";
@@ -43,6 +45,7 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
     git.release?.version?.value ??
     pkg.release?.version?.value ??
     (tag === undefined ? undefined : versionFromTag(tag));
+  const remote = await collectGitRemote(options.cwd);
   const changelog = await collectBestChangelog(
     options.cwd,
     version,
@@ -55,7 +58,8 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
       ? await collectConfiguredSnippet(options.cwd, options.snippet)
       : {};
 
-  const parts: PartialFacts[] = [pkg, git, readme, changelog, snippet];
+  // The remote goes first so an explicit package.json homepage or repository still wins.
+  const parts: PartialFacts[] = [remote, pkg, git, readme, changelog, snippet];
 
   if (options.event.kind === "bench") {
     parts.push(await collectBenchFile(options.cwd, options.benchFile ?? ".shipseal/bench.json"));
@@ -129,7 +133,37 @@ async function collectBestChangelog(
     }
   }
   const collected = await Promise.all(paths.map((path) => collectChangelog(cwd, version, path)));
-  return collected.find((facts) => changelogHasNotes(facts)) ?? {};
+  const found = collected.find((facts) => changelogHasNotes(facts));
+  if (found !== undefined) {
+    return found;
+  }
+
+  // Monorepos keep the changelog beside the package, not at the repo root, and Changesets
+  // writes it there. Without this, `release` on a workspace root silently fell back to raw
+  // commit subjects even though a perfectly good changelog existed one directory down.
+  const candidates = await workspaceChangelogs(cwd);
+  const fromWorkspace = await Promise.all(
+    candidates.map((candidate) => collectChangelog(cwd, version, candidate)),
+  );
+  return fromWorkspace.find((facts) => changelogHasNotes(facts)) ?? {};
+}
+
+async function workspaceChangelogs(cwd: string): Promise<string[]> {
+  const roots = ["packages", "apps"];
+  const listings = await Promise.all(
+    roots.map(async (root) => {
+      let entries: Dirent[];
+      try {
+        entries = await readdir(join(cwd, root), { withFileTypes: true });
+      } catch {
+        return [];
+      }
+      return entries
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => join(root, entry.name, "CHANGELOG.md"));
+    }),
+  );
+  return listings.flat().toSorted();
 }
 
 function changelogHasNotes(facts: PartialFacts): boolean {

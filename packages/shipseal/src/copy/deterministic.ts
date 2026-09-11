@@ -11,10 +11,13 @@ export function deterministicCopy(facts: Facts, maxHighlights = MAX_HIGHLIGHTS):
   const fixes = (facts.release?.fixes ?? []).map((item) => item.value);
   const breaking = (facts.release?.breaking ?? []).map((item) => item.value);
 
-  const headlineSource = features[0];
+  // Breaking changes lead, then features, then fixes. Looking only at features meant a
+  // patch release (every Changesets "Patch Changes" entry maps to a fix) fell through to
+  // "{name} {version}", or worse, to a raw commit subject when git was the only source.
+  const headlineSource = breaking[0] ?? features[0] ?? fixes[0];
   const headline =
     headlineSource !== undefined
-      ? cleanLine(headlineSource)
+      ? cleanLine(firstSentence(headlineSource))
       : version === undefined
         ? name
         : `${name} ${version}`;
@@ -23,7 +26,7 @@ export function deterministicCopy(facts: Facts, maxHighlights = MAX_HIGHLIGHTS):
   const subheadline =
     tagline !== undefined && tagline.length > 0
       ? cleanLine(tagline)
-      : cleanLine(features[1] ?? fixes[0] ?? `What's new in ${version ?? name}`);
+      : cleanLine(features[1] ?? fixes[1] ?? fixes[0] ?? `What's new in ${version ?? name}`);
 
   const highlights: string[] = [];
   for (const line of features) {
@@ -88,6 +91,20 @@ export function benchCopy(facts: Facts): Copy {
     highlights: [],
     cta: ctaFor(facts),
   };
+}
+
+/**
+ * First sentence of an entry, for use as a headline.
+ *
+ * Changesets entries are prose paragraphs written for a changelog, so using one whole made a
+ * headline that could only be truncated mid-word. The first sentence is the part a person
+ * actually wrote as the summary. Abbreviations are not special-cased: a sentence ending is a
+ * period followed by a space and a capital, which leaves "e.g. foo" and version numbers alone.
+ */
+export function firstSentence(text: string): string {
+  const collapsed = text.replace(/\s+/g, " ").trim();
+  const match = /^(.+?[.?!])\s+[A-Z]/.exec(collapsed);
+  return match?.[1] ?? collapsed;
 }
 
 export function cleanLine(text: string): string {

@@ -3,6 +3,10 @@ import { deterministicCopy, milestoneCopy } from "../src/copy/deterministic.js";
 import { llmCopy } from "../src/copy/llm.js";
 import { allowedNumbers, guardCopy, unsourcedDigits } from "../src/copy/number-guard.js";
 import { FIXTURE_FACTS, MILESTONE_FACTS } from "./helpers/facts.js";
+import { fact } from "../src/facts/fact.js";
+import type { Facts } from "../src/facts/schema.js";
+
+const NOW = "2026-09-11T00:00:00.000Z";
 
 describe("deterministic copy", () => {
   it("uses the first feature as the headline and interpolates npm cta", () => {
@@ -82,3 +86,51 @@ function jsonCompletion(copy: {
     { status: 200, headers: { "Content-Type": "application/json" } },
   );
 }
+
+describe("headline from changelog entries", () => {
+  // Regression, caught on the real v0.0.2 card. Every Changesets "Patch Changes" entry maps
+  // to a fix, and the headline only looked at features, so a patch release fell through to a
+  // raw git commit subject. Changeset entries are also prose paragraphs, not headlines.
+  const at = (value: string) =>
+    fact(value, { source: "changelog" as const, ref: "CHANGELOG.md", fetchedAt: NOW });
+
+  const withRelease = (over: Partial<Record<"features" | "fixes" | "breaking", string[]>>): Facts => ({
+    ...FIXTURE_FACTS,
+    release: {
+      ...FIXTURE_FACTS.release,
+      version: at("0.0.2"),
+      tag: at("v0.0.2"),
+      date: at("2026-09-11"),
+      features: (over.features ?? []).map(at),
+      fixes: (over.fixes ?? []).map(at),
+      breaking: (over.breaking ?? []).map(at),
+    },
+  });
+
+  it("uses a fix when there are no features", () => {
+    const copy = deterministicCopy(withRelease({ fixes: ["Fix brand detection on PNG logos"] }));
+    expect(copy.headline).toBe("Fix brand detection on PNG logos");
+  });
+
+  it("prefers a breaking change over a feature or fix", () => {
+    const copy = deterministicCopy(
+      withRelease({ breaking: ["Drop Node 20"], features: ["Add bench cards"], fixes: ["Fix a typo"] }),
+    );
+    expect(copy.headline).toBe("Drop Node 20");
+  });
+
+  it("takes only the first sentence of a prose entry", () => {
+    const copy = deterministicCopy(
+      withRelease({
+        fixes: [
+          "Fix brand detection reading the wrong values out of a README. A `#` comment inside a code fence was read as the project name.",
+        ],
+      }),
+    );
+    expect(copy.headline).toBe("Fix brand detection reading the wrong values out of a README");
+  });
+
+  it("falls back to name and version when nothing is listed", () => {
+    expect(deterministicCopy(withRelease({})).headline).toContain("0.0.2");
+  });
+});

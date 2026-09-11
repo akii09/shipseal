@@ -155,3 +155,34 @@ function displaySubject(text: string): string {
   }
   return first.toUpperCase() + cleaned.slice(1);
 }
+
+/**
+ * Repository slug and URL from `git remote get-url origin`.
+ *
+ * Kept separate from `collectGit`, which returns nothing without a tag. A monorepo root
+ * often has no `homepage` or `repository` in its private package.json, which left the call
+ * to action falling back to the workspace name. The remote is always there.
+ */
+export async function collectGitRemote(cwd: string): Promise<PartialFacts> {
+  const remote = await git(cwd, ["remote", "get-url", "origin"]);
+  if (remote === undefined) {
+    return {};
+  }
+  const slug = githubSlug(remote.trim());
+  if (slug === undefined) {
+    return {};
+  }
+  const fetchedAt = new Date().toISOString();
+  const provenance = { source: "git" as const, ref: "git remote get-url origin", fetchedAt };
+  return {
+    project: {
+      repo: fact(slug, provenance),
+      url: fact(`https://github.com/${slug}`, provenance),
+    },
+  };
+}
+
+function githubSlug(url: string): string | undefined {
+  const cleaned = url.replace(/^git\+/, "").replace(/\.git$/, "");
+  return /github\.com[/:]([^/]+\/[^/]+)$/.exec(cleaned)?.[1];
+}
