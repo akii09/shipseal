@@ -49,12 +49,35 @@ export function deterministicCopy(facts: Facts, maxHighlights = MAX_HIGHLIGHTS):
     addHighlight(line);
   }
 
-  return {
+  const copy: Copy = {
     headline,
     subheadline,
     highlights,
     cta: ctaFor(facts),
   };
+  const snippet = facts.release?.codeSnippet?.value.code;
+  if (snippet !== undefined && isInstallOnly(snippet)) {
+    copy.codeTitle = "Get started";
+  }
+  return copy;
+}
+
+/**
+ * Is this snippet nothing but install commands?
+ *
+ * Pairing "npm i thing" with a release headline reads as though the release was about
+ * installing, which is how v0.0.6 shipped a bug-fix headline over the README's install block.
+ * Install commands are still worth showing, they just need their own title.
+ */
+const INSTALL_COMMAND =
+  /^\s*(?:\$\s*)?(?:npm\s+(?:i|install|add)|pnpm\s+(?:i|install|add|dlx)|yarn\s+(?:add|install)|bun\s+(?:a|add|install)|npx|deno\s+add|pip\s+install|cargo\s+add|go\s+get|gem\s+install|brew\s+install)\b/;
+
+export function isInstallOnly(code: string): boolean {
+  const lines = code
+    .split("\n")
+    .map((line) => line.replace(/\s+#.*$/, "").trim())
+    .filter((line) => line.length > 0 && !line.startsWith("#"));
+  return lines.length > 0 && lines.every((line) => INSTALL_COMMAND.test(line));
 }
 
 export function formatCount(value: number): string {

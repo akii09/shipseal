@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { fact } from "../facts/fact.js";
 import type { Fact } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
+import { extractFirstCodeFence } from "./readme.js";
 
 export async function collectChangelog(
   cwd: string,
@@ -72,6 +73,20 @@ export async function collectChangelog(
       breaking,
     },
   };
+  // A snippet from the release notes is about this release. The README's first fence is
+  // usually the install command, which says nothing about what changed. Sits above the README
+  // in the merge order and below an explicit `release.snippet`.
+  const snippet = extractFirstCodeFence(section.body);
+  if (snippet !== undefined) {
+    out.release = {
+      ...out.release,
+      codeSnippet: fact(snippet, {
+        source: "changelog",
+        ref: `${changelogPath} ${section.heading} first fenced code block`,
+        fetchedAt,
+      }),
+    };
+  }
   if (section.date !== undefined) {
     out.release = {
       ...out.release,

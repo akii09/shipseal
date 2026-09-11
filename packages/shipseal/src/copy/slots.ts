@@ -18,6 +18,8 @@ export interface Copy {
   cta: string;
   milestoneLine?: string;
   codeLines?: CodeLine[];
+  /** Title for the code card, when reusing the release headline would not make sense. */
+  codeTitle?: string;
 }
 
 export type CodeLine = Array<{ text: string; color: string }>;

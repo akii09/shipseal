@@ -550,3 +550,48 @@ describe("project name on a private root", () => {
     });
   });
 });
+
+describe("release snippet priority", () => {
+  it("prefers a code block in the release notes over the README's install block", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-snippet-"));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo", description: "A demo package used in snippet tests", version: "2.0.0" }),
+    );
+    await writeFile(
+      join(dir, "README.md"),
+      "# Demo\n\nA demo package used in snippet priority tests.\n\n```bash\nnpm i demo\n```\n",
+    );
+    await writeFile(
+      join(dir, "CHANGELOG.md"),
+      "## [2.0.0] - 2026-09-10\n\n### Added\n- Scannable codes\n\n```ts\nrender({ qr: true });\n```\n",
+    );
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "v2.0.0" },
+      skipNetwork: true,
+    });
+    expect(facts.release?.codeSnippet?.value.code).toBe("render({ qr: true });");
+    expect(facts.release?.codeSnippet?.provenance.source).toBe("changelog");
+  });
+
+  it("falls back to the README when the release notes have no code block", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-snippet-readme-"));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo", description: "A demo package used in snippet tests", version: "2.0.0" }),
+    );
+    await writeFile(
+      join(dir, "README.md"),
+      "# Demo\n\nA demo package used in snippet priority tests.\n\n```bash\nnpm i demo\n```\n",
+    );
+    await writeFile(join(dir, "CHANGELOG.md"), "## [2.0.0] - 2026-09-10\n\n### Added\n- Scannable codes\n");
+    const facts = await collectFacts({
+      cwd: dir,
+      event: { kind: "release", tag: "v2.0.0" },
+      skipNetwork: true,
+    });
+    expect(facts.release?.codeSnippet?.value.code).toBe("npm i demo");
+    expect(facts.release?.codeSnippet?.provenance.source).toBe("readme");
+  });
+});

@@ -74,8 +74,13 @@ export async function collectFacts(options: CollectOptions): Promise<Facts> {
         )
       : {};
 
-  // The remote goes first so an explicit package.json homepage or repository still wins.
-  const parts: PartialFacts[] = [remote, workspacePkg, pkg, git, readme, changelog, snippet];
+  // mergeFacts fills holes, so the first source to supply a fact wins.
+  //
+  // Snippet order is explicit, then release notes, then README: a configured `release.snippet`
+  // is the user saying so, a fence in the release notes is about this release, and the README's
+  // first fence is usually just the install command. `snippet` used to sit last, which meant a
+  // configured snippet was silently ignored whenever the README had any code block at all.
+  const parts: PartialFacts[] = [remote, workspacePkg, pkg, git, snippet, changelog, readme];
 
   if (options.event.kind === "bench") {
     parts.push(await collectBenchFile(options.cwd, options.benchFile ?? ".shipseal/bench.json"));

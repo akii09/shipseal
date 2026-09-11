@@ -51,7 +51,7 @@ export const codeCard: TemplateDefinition = {
     }
     return {
       props: {
-        headline: copy.headline,
+        headline: copy.codeTitle ?? copy.headline,
         headingFamily: brand.fonts.heading.family,
         monoFamily: brand.fonts.mono.family,
         headingWeight: brand.fonts.heading.weight,

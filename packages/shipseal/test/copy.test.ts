@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { cleanLine, deterministicCopy, milestoneCopy } from "../src/copy/deterministic.js";
+import {
+  cleanLine,
+  deterministicCopy,
+  isInstallOnly,
+  milestoneCopy,
+} from "../src/copy/deterministic.js";
 import { llmCopy } from "../src/copy/llm.js";
 import { allowedNumbers, guardCopy, unsourcedDigits } from "../src/copy/number-guard.js";
 import { FIXTURE_FACTS, MILESTONE_FACTS } from "./helpers/facts.js";
@@ -230,5 +235,53 @@ describe("headline length budget", () => {
     expect(deterministicCopy(withFixes(["Fix brand detection on PNG logos"])).headline).toBe(
       "Fix brand detection on PNG logos",
     );
+  });
+});
+
+/**
+ * G8: v0.0.6 shipped a code card pairing a bug-fix headline with the README's install block,
+ * which read as though the release was about installing.
+ */
+describe("code card title", () => {
+  it("recognises install commands, with prompts and trailing comments", () => {
+    expect(isInstallOnly("npm i shipseal")).toBe(true);
+    expect(isInstallOnly("$ pnpm add shipseal\nyarn add shipseal")).toBe(true);
+    expect(isInstallOnly("npx shipseal@latest init  # detect your brand\nnpx shipseal release")).toBe(
+      true,
+    );
+  });
+
+  it("does not treat real code as an install command", () => {
+    expect(isInstallOnly("const seal = await render(facts);")).toBe(false);
+    expect(isInstallOnly("npm i shipseal\nseal.render();")).toBe(false);
+    expect(isInstallOnly("")).toBe(false);
+  });
+
+  it("titles an install-only snippet Get started instead of reusing the headline", () => {
+    const facts = {
+      ...FIXTURE_FACTS,
+      release: {
+        ...FIXTURE_FACTS.release,
+        codeSnippet: fact(
+          { lang: "bash", code: "npm i demo" },
+          { source: "readme", ref: "README.md first fenced code block", fetchedAt: "2026-09-11T00:00:00Z" },
+        ),
+      },
+    };
+    expect(deterministicCopy(facts, { kind: "release", tag: "v2.0.0" }).codeTitle).toBe("Get started");
+  });
+
+  it("leaves the headline in place when the snippet is real code", () => {
+    const facts = {
+      ...FIXTURE_FACTS,
+      release: {
+        ...FIXTURE_FACTS.release,
+        codeSnippet: fact(
+          { lang: "ts", code: "render({ facts });" },
+          { source: "changelog", ref: "CHANGELOG.md ## 2.0.0 first fenced code block", fetchedAt: "2026-09-11T00:00:00Z" },
+        ),
+      },
+    };
+    expect(deterministicCopy(facts, { kind: "release", tag: "v2.0.0" }).codeTitle).toBeUndefined();
   });
 });
