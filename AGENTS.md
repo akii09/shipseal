@@ -42,3 +42,25 @@ Write the code an experienced maintainer would sign off on. Concretely:
 - **No dead code, no placeholder comments, no `TODO` without an owner and a plan reference.** Do not leave commented-out code behind.
 - **No new dependency without asking** (rule 6). State the package, size, license, and why nothing already present does the job.
 - **Verify before asserting.** Check the docs or run the command. Do not answer from memory about an external API.
+
+## Releasing (hard)
+
+- **Never run `npm publish`.** Publishing happens only in CI, over OIDC, from `publish.yml`.
+  There is no npm token in this repository and none should be added.
+- **Never create a tag, a GitHub release, or a version bump by hand.** Versions come from
+  Changesets. Releases come from `pnpm release`, which refuses on any bad state.
+- Add a changeset (`pnpm changeset`) in the same change as anything a user would notice. A
+  refactor or a test-only change needs none.
+- `pnpm release:check` is always safe: it verifies and changes nothing.
+- The full flow is in `docs/RELEASING.md`. Read it before touching anything under
+  `.github/workflows/`.
+
+## Where the project actually is
+
+`docs/PROJECT_PLAN.md` §21 is the source of truth and carries a `Last reviewed` date. As of
+2026-09-11: Phases 1 to 3 are done and verified, Phase 0 was skipped, Phase 4 (launch) is next,
+and `shipseal@0.0.3` is published. If that date is stale, trust the repository over the plan and
+say so.
+
+Dogfooding found 8 bugs the test suite did not. Before claiming a user-facing change works, run
+the CLI against a real project, look at the image, and read the manifest.

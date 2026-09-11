@@ -2,7 +2,10 @@
 
 > **Every release, sealed and ready to share.**
 >
-> Domain: `shipseal.dev` · npm: `shipseal` · Status: pre-build (Phase 0) · Owner: Akash (akii09)
+> Domain: `shipseal.dev` · npm: `shipseal` · Status: **Phase 3 complete, 0.0.3 published** · Owner: Akash (akii09)
+>
+> Last reviewed 2026-09-11. Phases 1 to 3 are built and verified end to end. Phase 0 was consciously
+> skipped (§25). Next is Phase 4 (launch). Read §21 for what each phase proved.
 >
 > This document is the single source of truth for the project. It is written so that a human or an AI coding agent with **zero prior context** can understand what Shipseal is, why it exists, what has already been decided, and exactly how to build it without repeating past research or reintroducing rejected ideas. Read Section 0 before doing anything.
 
@@ -1004,7 +1007,10 @@ Determinism test: render the same card twice in one process and in two processes
 
 Durations are rough estimates for one part-time developer and will change. A phase is done only when every acceptance criterion passes.
 
-### Phase 0: Validate demand (before writing product code)
+### Phase 0: Validate demand ~~(before writing product code)~~ SKIPPED
+
+> Skipped by owner decision on 2026-09-11 (§25). `docs/validation.md` is still empty. The demand
+> question is unanswered, which makes Phase 4 the moment to answer it.
 
 Goal: prove people want this before building it.
 
@@ -1021,7 +1027,10 @@ Acceptance criteria (proceed to Phase 1 if at least two are true):
 
 If signals are weak: stop, record learnings, and reassess before investing further.
 
-### Phase 1: Foundations and spikes (about 1 to 2 weeks)
+### Phase 1: Foundations and spikes DONE 2026-09-11
+
+> All 7 spikes closed (§24), records in `docs/spikes/`. Toolchain, facts, renderer adapter,
+> brand detection, `init` and `doctor` all shipped.
 
 Tasks:
 1. Run all spikes in Section 24 and record results in Section 25.
@@ -1035,7 +1044,10 @@ Acceptance criteria:
 - `shipseal doctor` passes on the owner's machines (Mac Mini M4, MacBook Air M5) and on `ubuntu-latest` in CI.
 - Rendering a 1200×630 card takes under 500ms on the owner's machine (excluding first-run font load).
 
-### Phase 2: Release pack (about 2 to 3 weeks)
+### Phase 2: Release pack DONE 2026-09-11
+
+> Sources, deterministic copy, number guard, fitting, the three release templates, manifest and
+> `shipseal release` all shipped. Golden images cover 6 template and format combinations.
 
 Tasks:
 1. Sources: git, package-json, readme, changelog, github-api.
@@ -1053,7 +1065,11 @@ Acceptance criteria:
 - A deliberately long headline fixture produces a truncation warning, never overflow.
 - The owner rates each template as "would post this without edits."
 
-### Phase 3: Milestones, benchmarks, GitHub Action (about 1 to 2 weeks)
+### Phase 3: Milestones, benchmarks, GitHub Action DONE 2026-09-11
+
+> Verified on the real v0.0.2 and v0.0.3 releases: the Action attached 8 cards automatically,
+> `milestone` produced a card with provenance, and a bench regression rendered honestly as a
+> regression. Dogfooding found 8 bugs that the test suite had not.
 
 Tasks:
 1. npm source; `milestone` template and command.
@@ -1066,7 +1082,7 @@ Acceptance criteria:
 - `shipseal milestone` on PDFx produces a correct 1,000-stars card with provenance.
 - A bench fixture showing a regression is rendered honestly as a regression.
 
-### Phase 4: Launch (about 1 week)
+### Phase 4: Launch NEXT
 
 Tasks:
 1. README with generated visuals of Shipseal itself, a 30-second GIF of the flow, and the two-line install.
@@ -1185,6 +1201,11 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 | 2026-09-11 | Prefer `--muted-foreground` and drop muted/accent that fail 3:1 against background | shadcn `--muted` is a surface, so cards rendered unreadable secondary text. Do not invent a chroma the repo does not have | Treating `--muted` as text; falling back to default red/amber when the site is zinc/white |
 | 2026-09-11 | `package-json` does not invent `v{version}` as `release.tag`; namespaced tags yield the semver after `@` | First-wins merge let a fake `v0.6.2` hide `pdfx-cli@0.6.2`, and previousVersion showed the full tag | Keeping the invented tag; stripping only a leading `v` |
 | 2026-09-11 | Pack `outputDir` resolves against `--cwd` | A relative `.shipseal/output` followed `process.cwd()`, so `shipseal release --cwd /other/repo` wrote into the Shipseal checkout | Resolving against the process working directory |
+| 2026-09-11 | Publish unscoped as `shipseal`; hold the npm org `shipseal` in reserve for `@shipseal/*` | `npx shipseal` is the product pitch, and `action.yml` plus the domain already assume the bare name. The org costs nothing and stops someone else taking the namespace | Publishing as `@shipseal/cli` (worse UX, pushes toward the package split §6.2 rejects) |
+| 2026-09-11 | Publish over npm trusted publishing (OIDC), no npm token anywhere | Provenance attestations are generated automatically and there is no long-lived credential to leak. Verified on 0.0.2 and 0.0.3 | A classic `NPM_TOKEN` repository secret |
+| 2026-09-11 | Versioning and publishing are separate workflows: `version.yml` only opens the version pull request, `publish.yml` publishes on a GitHub release | npm binds a trusted publisher to one workflow filename, so one identity to configure and one place to audit. It also puts a human decision between "version prepared" and "version public" | `changesets/action` publishing directly; auto-creating tags and releases |
+| 2026-09-11 | `main` requires CI and blocks force pushes and deletions, but does not require pull request reviews or enforce on admins | A solo maintainer requiring reviews blocks their own release flow, and outside contributors already cannot push without write access. Revisit when a second maintainer joins | Full protection including `enforce_admins` |
+| 2026-09-11 | Releases go through `pnpm release`, which refuses on any bad state and requires typing the version | Eight preflight checks catch the mistakes that matter: unpushed code, leftover changesets, CI green on a different commit, a version already on npm. Typing the version beats a y/n prompt | Creating releases by hand; a y/n confirmation |
 
 ---
 

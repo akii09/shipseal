@@ -11,7 +11,9 @@
 
 Shipseal turns your repo's releases, milestones, and benchmarks into ready-to-post visuals: OG images, X and LinkedIn cards, GitHub social previews. On brand, at the right size, with **every number verified** from a real source.
 
-> Status: **pre-alpha**. Not usable yet. Follow progress at [shipseal.dev](https://shipseal.dev).
+> Status: **early alpha**, published as `shipseal` on npm. The CLI and the GitHub Action both
+> work end to end and Shipseal generates its own release cards. Interfaces may still change
+> before 1.0. Follow progress at [shipseal.dev](https://shipseal.dev).
 
 ## Why
 
