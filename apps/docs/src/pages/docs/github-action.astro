@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: akii09/shipseal@v0.0.7
+      - uses: akii09/shipseal@v0.0.8
         env:
           GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}`}</code></pre>
   <div class="callout">
@@ -54,7 +54,7 @@ jobs:
     <code>version</code> defaults to <code>latest</code>, which is convenient but means a release can change
     under you. Pin an exact version for anything you care about being reproducible.
   </p>
-  <pre><code>{`- uses: akii09/shipseal@v0.0.7
+  <pre><code>{`- uses: akii09/shipseal@v0.0.8
   with:
     version: "0.0.5"`}</code></pre>
 
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: akii09/shipseal@v0.0.7
+      - uses: akii09/shipseal@v0.0.8
         with:
           command: milestone`}</code></pre>
 

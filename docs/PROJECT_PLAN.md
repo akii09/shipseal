@@ -972,7 +972,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # required: full history and tags for release facts
-      - uses: akii09/shipseal@v0.0.7
+      - uses: akii09/shipseal@v0.0.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
