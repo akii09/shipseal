@@ -67,15 +67,26 @@ jobs:
             echo "No version branch, nothing to verify."
             exit 0
           fi
-          # Reset to the pushed branch. A local branch of this name already exists from the
-          # changesets step, so a plain `git checkout` keeps the stale commit and the status
-          # lands on main instead of the pull request head, leaving the PR blocked forever.
           git fetch origin changeset-release/main
-          git checkout -B changeset-release/main origin/changeset-release/main
+          # Verify in a linked worktree, not in this one.
+          #
+          # `changeset version` leaves packages/shipseal/package.json and CHANGELOG.md modified
+          # here, so checking the pushed branch out in place fails with "your local changes would
+          # be overwritten by checkout", and forcing it would mean a destructive git command in a
+          # shared step. A worktree gives a clean checkout of exactly what was pushed, shares the
+          # objects and tags this clone already fetched (check:action-ref needs those tags), and
+          # leaves this tree alone.
+          #
+          # It also fixes what the old `checkout -B` was working around: the status is reported
+          # for the worktree's HEAD, which is the commit that was actually verified, so it lands
+          # on the pull request head rather than on main.
+          VERIFY="$RUNNER_TEMP/verify"
+          git worktree add --detach "$VERIFY" origin/changeset-release/main
+          cd "$VERIFY"
           pnpm install --frozen-lockfile
           STATE=success
           pnpm lint && pnpm check:action-ref && pnpm typecheck && pnpm test && pnpm build || STATE=failure
-          SHA="$(git rev-parse origin/changeset-release/main)"
+          SHA="$(git rev-parse HEAD)"
           echo "Reporting check for $SHA"
           gh api "repos/$GITHUB_REPOSITORY/statuses/$SHA" \
             -f state="$STATE" -f context=check \
