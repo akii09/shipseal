@@ -12,3 +12,5 @@
 7. Do not bump versions, create tags, or publish. `docs/RELEASING.md` covers how that works.
 
 Security issues go through the Security tab, not a public issue. See `SECURITY.md`.
+
+Behavior in issues, pull requests, and review is covered by `CODE_OF_CONDUCT.md`.
