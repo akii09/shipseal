@@ -48,7 +48,17 @@ const codeSnippetFact = factSchema(
 );
 const betterFact = factSchema(z.enum(["lower", "higher"]));
 
+export const storyPageSchema = z.object({
+  kind: z.enum(["cover", "change", "code", "comparison", "upgrade"]),
+  title: stringFact,
+  body: stringFact,
+  before: stringFact.optional(),
+  after: stringFact.optional(),
+});
+export type StoryPage = z.infer<typeof storyPageSchema>;
+
 export const factsSchema = z.object({
+  story: z.array(storyPageSchema).optional(),
   project: z.object({
     name: stringFact,
     tagline: stringFact.optional(),

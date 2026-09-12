@@ -34,24 +34,40 @@ describe("renderable formats", () => {
   ];
   const declared = new Set(all.flatMap((template) => template.formats));
 
-  it("no template declares a format that is not shipped in v1", () => {
-    const shipped = new Set<string>(V1_FORMAT_IDS);
-    expect([...declared].filter((id) => !shipped.has(id))).toEqual([]);
-  });
-
   it("every v1 format is reachable from at least one template", () => {
     expect(V1_FORMAT_IDS.filter((id) => !declared.has(id))).toEqual([]);
   });
 
   /**
-   * shipseal.dev used to advertise these as available sizes. They are defined in the table but
-   * no template can render them, so the claim was false. If a template ever declares one, this
-   * fails and the docs wording needs to change with it.
+   * shipseal.dev must never advertise a size no template can render. Until the story pack
+   * landed, that meant nothing outside v1 was declared at all. `story-page` is now the single
+   * exception, so the rule is narrower rather than gone: it is the only template allowed to
+   * declare a non-v1 format, and the set it declares is pinned here.
+   *
+   * If another template declares one, or `story-page` gains a size, this fails and the wording
+   * on the homepage, the templates page and PROJECT_PLAN §14.2 has to change with it.
    */
-  it("square, portrait, producthunt and readme-banner are still unrendered", () => {
+  it("only story-page declares a format outside v1", () => {
     const shipped = new Set<string>(V1_FORMAT_IDS);
-    const defined = FORMAT_IDS.filter((id) => !shipped.has(id));
-    expect(defined).toEqual(["square", "portrait", "producthunt", "readme-banner"]);
-    expect(defined.filter((id) => declared.has(id))).toEqual([]);
+    const extra = all
+      .filter((template) => template.formats.some((id) => !shipped.has(id)))
+      .map((template) => template.id);
+    expect(extra).toEqual(["story-page"]);
+
+    const storyPage = all.find((template) => template.id === "story-page");
+    expect(storyPage?.formats.filter((id) => !shipped.has(id))).toEqual([
+      "square",
+      "portrait",
+      "producthunt",
+    ]);
+  });
+
+  /**
+   * The README banner is still defined in the table and rendered by nothing, so the "not yet
+   * rendered" claim on the site remains true for this one size only.
+   */
+  it("readme-banner is still unrendered", () => {
+    expect(FORMAT_IDS).toContain("readme-banner");
+    expect(declared.has("readme-banner")).toBe(false);
   });
 });

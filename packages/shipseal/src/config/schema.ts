@@ -18,6 +18,13 @@ export const configSchema = z.object({
       announce: z.enum(["major", "minor", "patch"]).optional(),
       headline: z.string().nullable().optional(),
       subheadline: z.string().nullable().optional(),
+      story: z.object({
+        upgrade: z.string().max(4000).optional(),
+        before: z.string().optional(),
+        after: z.string().optional(),
+      }).refine((value) => Boolean(value.before) === Boolean(value.after), {
+        message: "Supply both story.before and story.after screenshot paths, or neither.",
+      }).optional(),
     })
     .optional(),
   milestones: z

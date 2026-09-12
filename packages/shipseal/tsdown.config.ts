@@ -3,10 +3,10 @@ import { defineConfig } from "tsdown";
 // Build config for the published `shipseal` CLI.
 // Spec: docs/PROJECT_PLAN.md 25 (build tool decision).
 //
-// `src/cli.ts` is the only entry: package.json exposes `bin` and nothing else,
-// so there is no library surface and no .d.ts to emit.
+// The second entry is the dependency-free browser client served by `preview`.
+// Neither entry is a public library surface.
 export default defineConfig({
-  entry: "src/cli.ts",
+  entry: { cli: "src/cli.ts", "studio-client": "src/studio/client.ts" },
   outDir: "dist",
   format: "esm",
   platform: "node",

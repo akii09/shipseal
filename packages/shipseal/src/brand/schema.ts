@@ -39,7 +39,7 @@ export const brandSchema = z.object({
   }),
   radius: z.number().nonnegative(),
   theme: z.enum(["dark", "light"]),
-  style: z.literal("minimal"),
+  style: z.enum(["minimal", "editorial", "terminal"]),
   tokens: z.string().nullable(),
 });
 

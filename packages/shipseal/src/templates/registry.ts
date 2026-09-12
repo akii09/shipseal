@@ -8,8 +8,9 @@ import { codeCard } from "./code-card.js";
 import { milestone } from "./milestone.js";
 import { releaseHero } from "./release-hero.js";
 import { releaseHighlights } from "./release-highlights.js";
+import { storyPage } from "./story-page.js";
 
-const templates = [releaseHero, releaseHighlights, codeCard, milestone, bench] as const;
+const templates = [releaseHero, releaseHighlights, codeCard, milestone, bench, storyPage] as const;
 
 export function getTemplate(id: string): TemplateDefinition {
   const found = templates.find((template) => template.id === id);

@@ -1,0 +1,11 @@
+---
+import Base from "../layouts/Base.astro";
+---
+<Base title="Try your repository | Shipseal" description="Preview release images and story carousels from a public GitHub repository. No account or API key.">
+  <main class="wrap" style="padding-top:32px;padding-bottom:48px"><div id="shipseal-studio"></div><noscript>This demo requires JavaScript. Use the local Shipseal CLI if JavaScript is unavailable.</noscript></main>
+</Base>
+<script>
+  import { startDemo } from "../scripts/demo";
+  const root = document.getElementById("shipseal-studio");
+  if (root) startDemo(root);
+</script>

@@ -6,5 +6,9 @@ export default defineConfig({
   site: "https://shipseal.dev",
   output: "static",
   integrations: [sitemap()],
+  vite: {
+    resolve: { alias: { "takumi-js/node": "takumi-js/wasm/no-init" } },
+    build: { target: "es2022" },
+  },
   build: { inlineStylesheets: "always" },
 });

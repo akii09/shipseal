@@ -10,6 +10,8 @@ import { runDoctor } from "./commands/doctor.js";
 import { runInit } from "./commands/init.js";
 import { runMilestone, type MilestoneFlags } from "./commands/milestone.js";
 import { runRelease, type ReleaseFlags } from "./commands/release.js";
+import { runStory } from "./commands/story.js";
+import { runPreview } from "./commands/preview.js";
 import { ShipsealError, formatError } from "./core/errors.js";
 import { resolvePackageRoot } from "./render/takumi.js";
 
@@ -49,6 +51,42 @@ export async function runCli(argv = process.argv): Promise<number> {
           process.stdout.write(`  note: ${note}\n`);
         }
       }
+    });
+
+  cli.command("story", "Generate an ordered release story, PDF carousel and ZIP")
+    .option("--tag <tag>", "Release tag")
+    .option("--format <format>", "portrait, square, og, github-social, x, linkedin, producthunt, or all")
+    .option("--style <style>", "minimal, editorial, or terminal")
+    .option("--theme <theme>", "dark or light")
+    .option("--headline <text>", "Override the cover headline")
+    .option("--out <dir>", "Output directory")
+    .option("--package <path>", "package.json path for monorepos")
+    .option("--strict", "Fit warnings exit with code 2")
+    .option("--no-copy", "Use source text only (stories always use deterministic copy)")
+    .action(async (flags: Record<string, unknown>) => {
+      const options: Parameters<typeof runStory>[0] = { cwd: stringFlag(flags.cwd, process.cwd()), strict: flags.strict === true };
+      for (const key of ["tag", "format", "style", "theme", "headline", "out", "package"] as const) {
+        const value = optionalString(flags[key]); if (value !== undefined) options[key] = value;
+      }
+      const result = await runStory(options);
+      process.exitCode = result.exitCode;
+      if (flags.json === true) writeJson(result);
+      else if (flags.quiet !== true) writeHumanResult({ ...result, dryRun: false, facts: result.manifest.facts, warnings: result.manifest.warnings });
+    });
+
+  cli.command("preview", "Preview release and story packs locally, then save your choices")
+    .option("--tag <tag>", "Release tag")
+    .option("--port <port>", "Localhost port (default: 4175)")
+    .option("--package <path>", "package.json path for monorepos")
+    .action(async (flags: Record<string, unknown>) => {
+      const options: Parameters<typeof runPreview>[0] = { cwd: stringFlag(flags.cwd, process.cwd()) };
+      for (const key of ["tag", "package"] as const) { const value = optionalString(flags[key]); if (value !== undefined) options[key] = value; }
+      if (flags.port !== undefined) {
+        const port = Number(flags.port);
+        if (!Number.isInteger(port) || port < 0 || port > 65535) throw new ShipsealError("preview.port", "The preview port is invalid.", "Pass an integer from 0 through 65535.");
+        options.port = port;
+      }
+      await runPreview(options);
     });
 
   cli.command("doctor", "Check Node, git, brand, fonts, and Takumi").action(async (flags: Record<string, unknown>) => {

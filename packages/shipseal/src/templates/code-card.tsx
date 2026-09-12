@@ -10,7 +10,7 @@ import type { TemplateDefinition } from "./contract.js";
 import { themeColors } from "./theme.js";
 
 /** Advance width of a monospace glyph as a fraction of the font size. */
-const MONO_ADVANCE = 0.6;
+export const MONO_ADVANCE = 0.6;
 
 const propsSchema = z.object({
   headline: z.string(),

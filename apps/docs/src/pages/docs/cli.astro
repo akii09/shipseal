@@ -18,8 +18,18 @@ const release = [
   ["--dry-run", "off", "Print facts, render nothing"],
   ["--package <path>", "repo root", "Pick a workspace package"],
 ];
+const story = [
+  ["--tag <tag>", "latest tag", "Which release to build"],
+  ["--format <format>", "portrait", "One size, or all for every supported size"],
+  ["--style <style>", "from brand", "minimal, editorial or terminal"],
+  ["--theme <dark|light>", "brand theme", "Which theme to render"],
+  ["--headline <text>", "from notes", "Override the cover headline"],
+  ["--out <dir>", "from config", "Output directory"],
+  ["--strict", "off", "Exit 2 on any fit warning"],
+  ["--package <path>", "repo root", "Pick a workspace package"],
+];
 ---
-<Docs title="CLI reference: Shipseal" description="Every Shipseal command and flag: init, release, milestone, bench and doctor." heading="CLI commands">
+<Docs title="CLI reference: Shipseal" description="Every Shipseal command and flag: init, release, story, preview, milestone, bench and doctor." heading="CLI commands">
   <p>Binary: <code>shipseal</code>. Every command accepts the shared flags below.</p>
   <table>
     <thead><tr><th>Flag</th><th>Meaning</th></tr></thead>
@@ -39,6 +49,42 @@ const release = [
     <thead><tr><th>Flag</th><th>Default</th><th>Meaning</th></tr></thead>
     <tbody>{release.map(([f, d, m]) => <tr><td><code>{f}</code></td><td>{d}</td><td>{m}</td></tr>)}</tbody>
   </table>
+
+  <h2>shipseal story</h2>
+  <p>
+    Renders a release as an ordered set of pages instead of a single card: a cover, one page per
+    change, a code page when the notes contain a snippet, a before and after page when you supply
+    two screenshots, and a closing page. The same pages are written as PNGs, as a PDF carousel and
+    as a ZIP that also contains the brand file, the config and the manifest.
+  </p>
+  <p>
+    Pages come from the release notes, the same facts the release pack uses. The closing page links
+    your release notes rather than printing an install command, because the command depends on your
+    package manager and the release may be breaking. Set <code>release.story.upgrade</code> in
+    <code>config.json</code> to supply the real instructions, and they are rendered verbatim.
+  </p>
+  <table>
+    <thead><tr><th>Flag</th><th>Default</th><th>Meaning</th></tr></thead>
+    <tbody>{story.map(([f, d, m]) => <tr><td><code>{f}</code></td><td>{d}</td><td>{m}</td></tr>)}</tbody>
+  </table>
+  <p>
+    Screenshots are files you already have. Shipseal never captures or generates one: set
+    <code>release.story.before</code> and <code>release.story.after</code> to PNG or JPEG paths, or
+    leave both unset and the comparison page is skipped.
+  </p>
+
+  <h2>shipseal preview</h2>
+  <p>
+    Starts a local server on 127.0.0.1 so you can try styles, themes, accents, formats and
+    headlines against your real release before committing to them. Nothing leaves the machine and
+    nothing is posted. The URL carries a one-time token; requests without it are refused.
+  </p>
+  <p>
+    Save writes only your choices, to <code>.shipseal/brand.json</code> and
+    <code>.shipseal/config.json</code>. Preview-only choices stay behind: picking a portrait size to
+    look at a carousel does not change the formats your release pack renders.
+  </p>
+  <p>Flags: <code>--tag &lt;tag&gt;</code>, <code>--port &lt;port&gt;</code> (default 4175), <code>--package &lt;path&gt;</code>.</p>
 
   <h2>shipseal milestone</h2>
   <p>

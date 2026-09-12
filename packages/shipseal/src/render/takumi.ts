@@ -20,7 +20,7 @@ import type {
 } from "./adapter.js";
 
 export const GEIST_MONO_FAMILY = "Geist Mono";
-const FONT_REL = join("assets", "fonts", "GeistMono[wght].ttf");
+const FONT_REL = "assets/fonts/GeistMono[wght].ttf";
 
 let shared: Promise<RendererAdapter> | undefined;
 
@@ -38,6 +38,16 @@ export async function createTakumiRenderer(): Promise<RendererAdapter> {
     data,
     generic: "monospace",
   });
+  return new TakumiRenderer(renderer);
+}
+
+/** The docs build aliases takumi-js/node to the WASM binding, keeping one adapter. */
+export async function createBrowserTakumiRenderer(font: Uint8Array): Promise<RendererAdapter> {
+  const { init } = await import("takumi-js/wasm/no-init");
+  const { default: wasmUrl } = await import("takumi-js/wasm-url");
+  await init({ module_or_path: wasmUrl });
+  const renderer = new Renderer();
+  await renderer.registerFont({ name: GEIST_MONO_FAMILY, data: font, generic: "monospace" });
   return new TakumiRenderer(renderer);
 }
 

@@ -162,6 +162,9 @@ export function cleanChangelogItem(item: string): string {
     .replace(/@[\w-]+/g, "")
     .replace(/^Thanks\s*!?\s*-?\s*/i, "")
     .replace(/^\s*[-*]\s*/, "")
+    // Unwrap inline code: a card is not markdown, so `--package` must read as --package.
+    .replaceAll(/`([^`]+)`/g, "$1")
+    .replaceAll("`", "")
     .replace(/\s+/g, " ")
     .trim()
     .replace(/\.$/, "");

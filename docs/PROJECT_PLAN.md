@@ -163,8 +163,11 @@ Shipseal is **a designer that lives inside your repo**. When you ship something 
 
 In rough priority order:
 
-1. `shipseal preview`: local dev server with live-reloading template preview.
-2. LinkedIn carousel (multi-page PDF, 1080×1350 pages).
+1. ~~`shipseal preview`: local dev server with live-reloading template preview.~~ **DONE
+   2026-09-13** as `shipseal preview`: a localhost studio that renders on demand and saves the
+   choices back to `.shipseal`. It re-renders on request rather than live-reloading on file change.
+2. ~~LinkedIn carousel (multi-page PDF, 1080×1350 pages).~~ **DONE 2026-09-13** as
+   `shipseal story`, which also exports the pages as PNGs and a ZIP.
 3. README banner that auto-updates (version, stars).
 4. Animated output (WebP/GIF) for hero cards.
 5. Contributor thank-you card when a first-time contributor's PR merges.
@@ -723,9 +726,9 @@ All sizes live in `src/formats.ts` in one table. Verify each against the platfor
 | `github-social` | 1280×640 | GitHub repository social preview |
 | `x` | 1200×675 | X post image (16:9) |
 | `linkedin` | 1200×627 | LinkedIn post image |
-| `square` | 1080×1080 | Instagram / generic square (later) |
-| `portrait` | 1080×1350 | LinkedIn carousel page (later) |
-| `producthunt` | 1270×760 | Product Hunt gallery (later) |
+| `square` | 1080×1080 | Instagram / generic square (story packs) |
+| `portrait` | 1080×1350 | LinkedIn carousel page (story packs) |
+| `producthunt` | 1270×760 | Product Hunt gallery (story packs) |
 | `readme-banner` | 1280×400 | README header (later) |
 
 Safe zones: keep critical text at least 64px from edges on landscape formats (platform UIs crop and overlay).
@@ -1164,6 +1167,9 @@ Append-only. Format: date, decision, reason, alternatives rejected.
 
 | Date | Decision | Reason | Alternatives rejected |
 |---|---|---|---|
+| 2026-09-13 | Owner approved implementation of the next cycle: public repository demo, release story packs, local preview and design choices, plus showcase and provenance wording | Visitors should get useful output before installing, then reproduce it locally. The demo uses the existing Takumi WASM dependency in the browser; the static site remains static. No signup, hosted rendering service, or new dependency. The CLI gains `story` and `preview`; existing `release` defaults remain unchanged | Adding a hosted render API, a visual editor, or building all later roadmap items at once |
+| 2026-09-13 | Story packs have ordered cover, change, optional code, optional supplied screenshot comparison, and upgrade pages; styles are minimal, editorial and terminal | Explain actual release changes and export the same pages as images and a PDF carousel. Text fits through the existing renderer and warnings remain visible. Screenshots are supplied assets, never generated or captured by a headless browser | Inferring application screenshots or upgrade code from diffs |
+| 2026-09-13 | Public wording uses traceable numbers rather than independently verified claims | Provenance records where a value came from; a user benchmark file does not independently establish its truth. AI copy must use code-bound values, not freely reuse numeric tokens | Treating a digit allowlist as semantic verification |
 | 2026-09 | Project name **Shipseal**, domain `shipseal.dev`, npm `shipseal` | Short, "seal" implies verified; .dev and npm available | Other candidate names, each already taken by an existing project or an unavailable domain |
 | 2026-09 | Standalone project, separate from PDFx | Different user and job (marketing releases vs generating documents in apps) | Building under the PDFx brand |
 | 2026-09 | Use Takumi for rendering; do not build a renderer | Takumi already supports grid, z-index, calc, WOFF2, RTL, animation, PDF, WASM | Own engine; Satori (flexbox only, no WOFF2/RTL); headless browser |

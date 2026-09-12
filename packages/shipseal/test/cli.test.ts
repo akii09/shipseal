@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { runDoctor } from "../src/commands/doctor.js";
 import { runInit } from "../src/commands/init.js";
+import { runStory } from "../src/commands/story.js";
 import { runCli } from "../src/cli.js";
 
 describe("init and doctor", () => {
@@ -55,6 +56,56 @@ describe("cli", () => {
     await runInit({ cwd: dir, yes: true, force: false });
     const code = await runCli(["node", "shipseal", "milestone", "--cwd", dir, "--quiet", "--dry-run"]);
     expect(code).toBe(0);
+  });
+});
+
+describe("story and preview", () => {
+  it("reports a missing tag rather than rendering an empty story", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-story-"));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo-app", description: "Demo application used in story tests" }),
+    );
+    await runInit({ cwd: dir, yes: true, force: false });
+    // No git tag and no --tag: the command has nothing to build a story from.
+    expect(await runCli(["node", "shipseal", "story", "--cwd", dir, "--quiet"])).toBe(1);
+  });
+
+  it("errors before binding a port when --port is out of range", async () => {
+    const dir = await emptyDir();
+    const codes = await Promise.all(
+      ["70000", "-1", "abc", "80.5"].map((port) =>
+        runCli(["node", "shipseal", "preview", "--cwd", dir, "--port", port]),
+      ),
+    );
+    expect(codes).toEqual([1, 1, 1, 1]);
+  });
+
+  it("reports a bad --format or --style as a typed error, not a zod dump", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "shipseal-story-opts-"));
+    await writeFile(
+      join(dir, "package.json"),
+      JSON.stringify({ name: "demo-app", description: "Demo application used in story tests" }),
+    );
+    await runInit({ cwd: dir, yes: true, force: false });
+
+    await expect(
+      runStory({ cwd: dir, tag: "v1.0.0", format: "readme-banner" }),
+    ).rejects.toMatchObject({
+      code: "story.bad-options",
+      message: expect.stringContaining("format"),
+      fix: expect.stringContaining("--format portrait"),
+    });
+    await expect(runStory({ cwd: dir, tag: "v1.0.0", style: "neon" })).rejects.toMatchObject({
+      code: "story.bad-options",
+      message: expect.stringContaining("style"),
+    });
+  });
+
+  it("errors when preview has no brand.json", async () => {
+    expect(
+      await runCli(["node", "shipseal", "preview", "--cwd", await emptyDir(), "--tag", "v1.0.0"]),
+    ).toBe(1);
   });
 });
 

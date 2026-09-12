@@ -1,7 +1,6 @@
 // The pure pipeline: facts + copy + brand + templates -> rendered files (no network I/O)
 // Spec: docs/PROJECT_PLAN.md §6.1
 
-import { createHash } from "node:crypto";
 import { percentChange } from "../bench/percent.js";
 import type { Brand } from "../brand/schema.js";
 import type { Config } from "../config/schema.js";
@@ -16,6 +15,17 @@ import type { ManifestMissing, RenderContext, TemplateDefinition } from "../temp
 import { highlightCode } from "../templates/highlight.js";
 import { getTemplate } from "../templates/registry.js";
 
+/**
+ * Digest via WebCrypto, not `node:crypto`. The browser demo imports `generate()`, so nothing
+ * in the pure core may reach for a Node builtin. Do not "simplify" this back to createHash.
+ */
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", Uint8Array.from(bytes));
+  return Array.from(new Uint8Array(digest))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 export interface GenerateInput {
   event: ShipsealEvent;
   facts: Facts;
@@ -27,6 +37,7 @@ export interface GenerateInput {
   themes: Array<"dark" | "light">;
   generatedAt: string;
   logos?: { light?: Uint8Array; dark?: Uint8Array };
+  images?: Array<{ src: string; data: Uint8Array }>;
 }
 
 export interface GeneratedFile {
@@ -125,9 +136,14 @@ export async function generate(input: GenerateInput): Promise<GenerateResult> {
         if (logo !== undefined) {
           renderOpts.images = [{ src: "shipseal-logo", data: logo }];
         }
+        if (input.images !== undefined) {
+          renderOpts.images = [...(renderOpts.images ?? []), ...input.images];
+        }
         // eslint-disable-next-line no-await-in-loop
         const bytes = await input.renderer.render(node, renderOpts);
         const fileName = outputName(template.id, formatId, theme, omitThemeSuffix, imageFormat);
+        // eslint-disable-next-line no-await-in-loop -- one digest per rendered file
+        const sha256 = await sha256Hex(bytes);
         files.push({
           fileName,
           template: template.id,
@@ -136,7 +152,7 @@ export async function generate(input: GenerateInput): Promise<GenerateResult> {
           width: format.width,
           height: format.height,
           bytes,
-          sha256: createHash("sha256").update(bytes).digest("hex"),
+          sha256,
         });
       }
     }

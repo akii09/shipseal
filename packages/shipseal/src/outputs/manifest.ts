@@ -88,6 +88,9 @@ export function flattenFacts(
     }
   };
   walk("project", facts.project);
+  if (facts.story !== undefined) {
+    walk("story", facts.story);
+  }
   if (facts.release !== undefined) {
     walk("release", facts.release);
   }

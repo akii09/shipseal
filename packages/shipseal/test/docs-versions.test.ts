@@ -32,6 +32,15 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
+/**
+ * An IPv4 literal is four dotted numbers, so `127.0.0.1` contains `127.0.0` and reads as a
+ * version to the scanner below. The CLI docs name the preview host, so exclude the address
+ * itself rather than reword around it.
+ */
+function withoutIpv4(line: string): string {
+  return line.replaceAll(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g, " ");
+}
+
 /** Lines inside a `shipseal:pinned` region, which are archival and exempt. */
 function pinnedLines(lines: string[]): Set<number> {
   const pinned = new Set<number>();
@@ -60,7 +69,7 @@ describe("versions shown on the docs site", () => {
         if (exempt.has(index)) {
           return;
         }
-        for (const [match] of line.matchAll(/\bv?\d+\.\d+\.\d+\b/g)) {
+        for (const [match] of withoutIpv4(line).matchAll(/\bv?\d+\.\d+\.\d+\b/g)) {
           if (match.replace(/^v/, "") !== version) {
             stale.push(`${relative(repoRoot, file)}:${String(index + 1)}  ${match}`);
           }
@@ -70,5 +79,10 @@ describe("versions shown on the docs site", () => {
     expect(stale, `not the released version (${version}), and not in a shipseal:pinned region`).toEqual(
       [],
     );
+  });
+
+  it("skips an IP address but still catches a stale version on the same line", () => {
+    expect(withoutIpv4("Serves on 127.0.0.1 only")).not.toMatch(/\d+\.\d+\.\d+/);
+    expect(withoutIpv4("127.0.0.1 and v0.0.6")).toContain("v0.0.6");
   });
 });

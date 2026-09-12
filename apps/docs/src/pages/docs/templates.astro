@@ -6,19 +6,20 @@ const tpl = [
   ["code-card", "release", "Headline plus a syntax highlighted snippet, sized to the snippet", "x, linkedin"],
   ["milestone", "milestone", "One large number, the metric, a thank-you line", "og, x, linkedin"],
   ["bench", "bench", "Up to three metrics as before to after with percent change", "x, linkedin"],
+  ["story-page", "release", "One page of a release story: cover, change, code, comparison or upgrade", "og, github-social, x, linkedin, square, portrait, producthunt"],
 ];
 const fmt = [
   ["og", "1200x630", "Open Graph link previews"],
   ["github-social", "1280x640", "GitHub repository preview"],
   ["x", "1200x675", "X posts"],
   ["linkedin", "1200x627", "LinkedIn posts"],
-  ["square", "1080x1080", "Instagram and generic square (no template renders it yet)"],
-  ["portrait", "1080x1350", "LinkedIn carousel page (no template renders it yet)"],
-  ["producthunt", "1270x760", "Product Hunt gallery (no template renders it yet)"],
+  ["square", "1080x1080", "Instagram and generic square (story packs)"],
+  ["portrait", "1080x1350", "LinkedIn carousel page (story packs)"],
+  ["producthunt", "1270x760", "Product Hunt gallery (story packs)"],
   ["readme-banner", "1280x400", "README header (no template renders it yet)"],
 ];
 ---
-<Docs title="Templates and formats: Shipseal" description="The five v1 templates, the platform sizes they support, and how text fitting works." heading="Templates">
+<Docs title="Templates and formats: Shipseal" description="The Shipseal templates, the platform sizes they support, and how text fitting works." heading="Templates">
   <table>
     <thead><tr><th>Template</th><th>Event</th><th>Content</th><th>Formats</th></tr></thead>
     <tbody>{tpl.map(([a,b,c,d]) => <tr><td><code>{a}</code></td><td>{b}</td><td>{c}</td><td>{d}</td></tr>)}</tbody>
