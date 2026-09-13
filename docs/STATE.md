@@ -13,7 +13,7 @@ this file describes the repository as it stands.
 |---|---|
 | Version | `0.0.8` in `packages/shipseal/package.json`, tag `v0.0.8`, npm `0.0.8` |
 | Phases | 1 to 3 done and verified. Phase 4 (launch) in progress |
-| Tests | 21 files, 224 tests, 6 of them golden images |
+| Tests | 21 files, 228 tests, 6 of them golden images |
 | Published by | `publish.yml` over OIDC, no npm token exists anywhere |
 | External adopters | **None yet.** See `adopters.md`. This is the gating number for launch |
 

@@ -65,9 +65,26 @@ asks you to type the version to confirm before creating the release.
 | CI green on this exact commit | not on some earlier one |
 | CHANGELOG has a section for this version | the version pull request was actually merged |
 | `lint`, `typecheck`, `test`, `build` pass locally | on the code that will ship |
-| Showcase images and doc versions match this release | the README must not show older cards, and the documented action reference must not name a tag nobody can resolve |
+| Doc versions match this release | the documented action reference must not name a tag nobody can resolve. Showcase images are re-rendered and reported, but do not block: see below |
 
-Use `pnpm release:check` to run all of it and change nothing.
+Use `pnpm release:check` to run all of it and stop before anything is created. It is not
+read-only: it re-renders the showcase images and rewrites the doc version strings, exactly as
+`pnpm release` does, because that diff is what you are being asked to review.
+
+### Why the showcase images do not block
+
+`scripts/refresh-showcase.mjs` checks two sets of output differently.
+
+The doc version strings are deterministic: one version in, the same bytes out. A difference
+there blocks, because a stale `akii09/shipseal@<tag>` fails a consumer's workflow on its first
+step.
+
+The rendered cards are not deterministic across commits. The seal stamp carries the commit count
+and the release date, so every commit made while cutting a release changes the cards. Blocking on
+those can never settle: committing the new cards moves the count, which re-renders the cards,
+which blocks again. So they are reported and the release continues. The cost is a README card
+whose seal can read one commit fewer than the tag it sits under, which is still real output from
+a real pack at a real commit.
 
 ### The documented action reference
 

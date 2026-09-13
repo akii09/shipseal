@@ -35,6 +35,7 @@ const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, stdio: "pipe" }).
  */
 function readmeCards() {
   const out = mkdtempSync(join(tmpdir(), "shipseal-showcase-"));
+  const lightOut = mkdtempSync(join(tmpdir(), "shipseal-light-"));
   let temporary = false;
   try {
     run("git", ["rev-parse", "--verify", `${tag}^{commit}`], root);
@@ -42,8 +43,22 @@ function readmeCards() {
     run("git", ["tag", tag], root);
     temporary = true;
   }
+  /**
+   * Every render has to happen inside this window, while the tag exists.
+   *
+   * The light card used to render after the `finally` below had already removed the temporary
+   * tag, so `release --tag v0.1.0` could not collect facts and `pnpm release` died. It only
+   * shows up on a release where the tag does not exist yet, which is every real release, so it
+   * sat unnoticed until the first one after the light card was added.
+   */
   try {
     run("node", [cli, "release", "--tag", tag, "--out", out], root);
+    // The site claims every template renders in dark and light but only ever showed dark.
+    run(
+      "node",
+      [cli, "release", "--tag", tag, "--formats", "og", "--templates", "release-hero", "--themes", "light", "--out", lightOut],
+      root,
+    );
   } finally {
     if (temporary) {
       run("git", ["tag", "-d", tag], root);
@@ -60,9 +75,6 @@ function readmeCards() {
   for (const [src, dest] of pairs) {
     copyFileSync(join(from, src), join(root, "assets/examples", dest));
   }
-  // The site claims every template renders in dark and light but only ever showed dark.
-  const lightOut = mkdtempSync(join(tmpdir(), "shipseal-light-"));
-  run("node", [cli, "release", "--tag", tag, "--formats", "og", "--templates", "release-hero", "--themes", "light", "--out", lightOut], root);
   copyFileSync(
     join(lightOut, tag, "release-hero-og.png"),
     join(root, "apps/docs/public/examples/release-hero-light.png"),
@@ -232,11 +244,41 @@ if (!checkOnly) {
   console.log(`Refreshed ${n} README cards and og.png for ${tag}.`);
 }
 
-const watched = ["assets/examples", "apps/docs/public/og.png", "apps/docs/public/examples", "apps/docs/src/pages/index.astro", ...versionedFiles];
-const dirty = run("git", ["status", "--porcelain", ...watched], root).trim();
-if (dirty.length > 0) {
-  console.log("\nShowcase files changed:");
-  console.log(dirty.split("\n").map((l) => `  ${l}`).join("\n"));
+/**
+ * Two kinds of output, so two kinds of check.
+ *
+ * The text is deterministic: one version in, the same bytes out. It is also the half that
+ * breaks people, because a stale `akii09/shipseal@<tag>` fails a consumer's workflow on its
+ * first step. So a difference here blocks the release.
+ *
+ * The rendered cards are not deterministic across commits. The seal stamp carries the commit
+ * count and the release date, both read from the repository, so every commit made while cutting
+ * a release changes the cards. Blocking on byte-equality there can never settle: committing the
+ * new cards moves the count again, which re-renders them again, which blocks again. The cards
+ * are reported and the release continues.
+ *
+ * The cost of that is a README card whose seal can read one commit fewer than the tag it sits
+ * under. It is still real output from a real pack at a real commit, and the alternative is a
+ * release that can never be cut.
+ */
+const deterministic = ["apps/docs/src/pages/index.astro", ...versionedFiles];
+const rendered = ["assets/examples", "apps/docs/public/og.png", "apps/docs/public/examples"];
+
+const statusOf = (paths) => run("git", ["status", "--porcelain", ...paths], root).trim();
+const indent = (dirty) => dirty.split("\n").map((line) => `  ${line}`).join("\n");
+
+const changedCards = statusOf(rendered);
+if (changedCards.length > 0) {
+  console.log("\nShowcase images changed. This does not block: the seal stamp moves with every commit.");
+  console.log(indent(changedCards));
+  console.log("Commit them alongside the release, or leave them.");
+}
+
+const changedText = statusOf(deterministic);
+if (changedText.length > 0) {
+  console.log("\nVersion strings changed, and these do block:");
+  console.log(indent(changedText));
+  console.log("Review the diff and commit it, or the docs will name the wrong release.");
   process.exit(checkOnly ? 1 : 2);
 }
-console.log("Showcase files are already current.");
+console.log("Version strings are current.");

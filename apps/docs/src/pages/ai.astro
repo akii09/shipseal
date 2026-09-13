@@ -32,7 +32,7 @@ Package: shipseal on npm, Node 22+, MIT. Renders with Takumi, no browser and no 
          - uses: actions/checkout@v4
            with:
              fetch-depth: 0
-         - uses: akii09/shipseal@v0.0.8
+         - uses: akii09/shipseal@v0.1.0
            env:
              GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
 
@@ -76,7 +76,7 @@ Read these before changing anything:
 
 const facts = [
   ["Package", "shipseal on npm, Node 22 or newer, MIT"],
-  ["Action", "akii09/shipseal@v0.0.8, composite, needs fetch-depth: 0"],
+  ["Action", "akii09/shipseal@v0.1.0, composite, needs fetch-depth: 0"],
   ["Commands", "init, release, milestone, bench, doctor"],
   ["Config", ".shipseal/brand.json and .shipseal/config.json"],
   ["Output", ".shipseal/output/<event-id>/ plus manifest.json"],

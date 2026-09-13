@@ -51,7 +51,8 @@ Write the code an experienced maintainer would sign off on. Concretely:
   Changesets. Releases come from `pnpm release`, which refuses on any bad state.
 - Add a changeset (`pnpm changeset`) in the same change as anything a user would notice. A
   refactor or a test-only change needs none.
-- `pnpm release:check` is always safe: it verifies and changes nothing.
+- `pnpm release:check` creates nothing, but it is not read-only: it re-renders the showcase
+  images and rewrites the doc version strings so you can review that diff before releasing.
 - The full flow is in `docs/RELEASING.md`. Read it before touching anything under
   `.github/workflows/`.
 

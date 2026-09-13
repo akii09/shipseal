@@ -4,7 +4,7 @@
 > Every number on a card comes from a real source and is recorded with provenance.
 
 Package: shipseal (npm), Node 22+, MIT.
-Action: akii09/shipseal@v0.0.8 (composite). Requires actions/checkout with fetch-depth: 0.
+Action: akii09/shipseal@v0.1.0 (composite). Requires actions/checkout with fetch-depth: 0.
 Rendering: Takumi. No headless browser and no image generation model.
 
 ## Commands
