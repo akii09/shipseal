@@ -97,7 +97,6 @@ by name.
 | **G6** | Show milestone and bench cards in the README and on the site |
 | **G10, G14** | Marketplace listing, launch assets. G14 is unblocked: `story-page` declares `producthunt` |
 | Partial G8 | Snippets come from the release section, not the specific entry the headline used. Fixing it changes the facts schema, so the manifest shape, so it needs the owner's sign-off |
-| Security | Only `publish.yml` pins actions to commit SHAs. `ci.yml`, `version.yml`, `shipseal.yml` and `action.yml` still use mutable tags |
 | Cleanup | `scripts/scaffold.sh` looks vestigial: a one-shot bootstrap that skips existing files and still pins `actions/checkout@v4` |
 | Story layout | A short cover, closing or code page leaves a lot of empty space on a 1080×1350 canvas: the title and body sit at the top and the slack collects at the bottom. Content is correct, the composition is not settled. Owner's call whether to centre the title and body as one block |
 | Story goldens | `story-page` has no golden image. Adding one needs `pnpm test:update-golden`, which needs the owner |
