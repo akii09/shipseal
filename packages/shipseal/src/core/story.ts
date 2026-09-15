@@ -4,6 +4,7 @@
 // Page order is fixed: cover, one page per change, an optional code page, an optional
 // comparison of supplied screenshots, then the upgrade page.
 
+import type { Brand } from "../brand/schema.js";
 import type { Config } from "../config/schema.js";
 import { cleanLine, deterministicCopy, firstSentence } from "../copy/deterministic.js";
 import { fact } from "../facts/fact.js";
@@ -17,7 +18,7 @@ const STORY_FORMATS = "portrait, square, og, github-social, x, linkedin, or prod
 export function storyFacts(
   facts: Facts,
   config: Config,
-  name: string,
+  brand: Pick<Brand, "name" | "tagline">,
   generatedAt: string,
 ): Facts {
   const release = facts.release;
@@ -28,7 +29,7 @@ export function storyFacts(
       "Choose a published release or pass --tag to a local repository.",
     );
   }
-  const copy = deterministicCopy(facts, config.release?.maxHighlights, name);
+  const copy = deterministicCopy(facts, config.release?.maxHighlights, brand.name);
   const configured = (value: string, ref: string): Fact<string> =>
     fact(value, { source: "user-config", ref, fetchedAt: generatedAt });
 
@@ -43,10 +44,18 @@ export function storyFacts(
     {
       kind: "cover",
       title: fact(copy.headline, headlineSource.provenance),
+      // The brand file is a declared source like any other, so prefer its tagline over the
+      // "Release notes" placeholder. Only fall back when nothing describes the project.
       body:
         release.subheadline ??
         facts.project.tagline ??
-        fact("Release notes", release.tag.provenance),
+        (brand.tagline === undefined
+          ? fact("Release notes", release.tag.provenance)
+          : fact(brand.tagline, {
+              source: "user-config",
+              ref: "brand.json#tagline",
+              fetchedAt: generatedAt,
+            })),
     },
   ];
 
@@ -111,7 +120,7 @@ export function storyFacts(
 }
 
 export async function generateStory(input: GenerateInput): Promise<GenerateResult> {
-  const facts = storyFacts(input.facts, input.config, input.brand.name, input.generatedAt);
+  const facts = storyFacts(input.facts, input.config, input.brand, input.generatedAt);
   const pages = facts.story ?? [];
   const result: GenerateResult = {
     files: [],

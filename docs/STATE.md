@@ -14,7 +14,7 @@ this file describes the repository as it stands.
 |---|---|
 | Version | `0.0.8` in `packages/shipseal/package.json`, tag `v0.0.8`, npm `0.0.8` |
 | Phases | 1 to 3 done and verified. Phase 4 (launch) in progress |
-| Tests | 22 files, 232 tests, 6 of them golden images |
+| Tests | 22 files, 239 tests, 6 of them golden images |
 | Published by | `publish.yml` over OIDC, no npm token exists anywhere |
 | External adopters | **None yet.** See `adopters.md`. This is the gating number for launch |
 
@@ -58,6 +58,11 @@ and a repository with no brand file is told so rather than shown invented colors
 - **`story-page` is the only template allowed to declare a non-v1 format**, pinned by
   `formats.test.ts`. If it gains a size, or another template declares one, that test fails and the
   wording on the homepage, the templates page and §14.2 has to change with it.
+- **Emoji never reach a card.** No registered font carries them, so a repository description
+  like got's rendered a tofu box on shipseal.dev. `stripEmoji` in `copy/deterministic.ts` runs
+  inside `cleanLine` and at the three tagline sources that bypass it (`package-json`, `github`,
+  `readme`). Takumi's emoji helper is not an option: it rewrites each emoji into an `<img>`
+  pointing at jsDelivr, and `generate()` does no network.
 - **Nothing the browser can reach may import a Node builtin.** `/try` imports this package
   directly, so one top-level `node:fs` is enough for Vite to externalize the module, throw on load
   and serve a blank page with no error. That is exactly what `render/takumi.ts` did for weeks while
@@ -96,7 +101,6 @@ by name.
 | Cleanup | `scripts/scaffold.sh` looks vestigial: a one-shot bootstrap that skips existing files and still pins `actions/checkout@v4` |
 | Story layout | A short cover, closing or code page leaves a lot of empty space on a 1080×1350 canvas: the title and body sit at the top and the slack collects at the bottom. Content is correct, the composition is not settled. Owner's call whether to centre the title and body as one block |
 | Story goldens | `story-page` has no golden image. Adding one needs `pnpm test:update-golden`, which needs the owner |
-| Story tagline | A story cover with no `project.tagline` falls back to `"Release notes"`, even when `brand.tagline` is set. `storyFacts` only receives the brand name |
 
 ## Hard rules that trip agents up
 

@@ -4,6 +4,7 @@ import {
   deterministicCopy,
   isInstallOnly,
   milestoneCopy,
+  stripEmoji,
 } from "../src/copy/deterministic.js";
 import { llmCopy } from "../src/copy/llm.js";
 import { allowedNumbers, guardCopy, unsourcedDigits } from "../src/copy/number-guard.js";
@@ -322,5 +323,32 @@ describe("call to action", () => {
   it("uses npm i for a library", () => {
     const copy = deterministicCopy(withProject({ npmPackage: at("demo") }));
     expect(copy.cta).toBe("npm i demo");
+  });
+});
+
+describe("stripEmoji", () => {
+  it("removes the emoji that rendered as a tofu box on shipseal.dev", () => {
+    // sindresorhus/got's real GitHub description, which /try rendered with a missing glyph.
+    expect(stripEmoji("\u{1F310} Human-friendly and powerful HTTP request library for Node.js")).toBe(
+      "Human-friendly and powerful HTTP request library for Node.js",
+    );
+  });
+
+  it("removes joined sequences, skin tones and dingbats without leaving gaps", () => {
+    expect(stripEmoji("\u{1F468}‍\u{1F469}‍\u{1F467} family")).toBe("family");
+    expect(stripEmoji("\u{1F44D}\u{1F3FD} nice")).toBe("nice");
+    expect(stripEmoji("✅ Done ✓ now")).toBe("Done now");
+  });
+
+  it("keeps the textual marks that belong in real product names", () => {
+    expect(stripEmoji("Acme™ © 2026 Acme®")).toBe("Acme™ © 2026 Acme®");
+  });
+
+  it("leaves ordinary text untouched", () => {
+    expect(stripEmoji("no emoji here")).toBe("no emoji here");
+  });
+
+  it("is applied by cleanLine, so every card path is covered", () => {
+    expect(cleanLine("\u{1F680} ships fast")).toBe("Ships fast");
   });
 });

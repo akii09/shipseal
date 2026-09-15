@@ -11,6 +11,7 @@ import { ShipsealError } from "../core/errors.js";
 import { fact } from "../facts/fact.js";
 import type { Fact } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
+import { stripEmoji } from "../copy/deterministic.js";
 
 const API_VERSION = "2022-11-28";
 const API_ROOT = "https://api.github.com";
@@ -72,7 +73,7 @@ export async function collectGithub(options: GithubCollectOptions): Promise<Part
   if (repo.description !== undefined && repo.description !== null && repo.description.length > 0) {
     out.project = {
       ...out.project,
-      tagline: fact(repo.description, {
+      tagline: fact(stripEmoji(repo.description), {
         source: "github-api",
         ref: `GET /repos/${slug.owner}/${slug.repo} description`,
         fetchedAt,

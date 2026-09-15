@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { fact } from "../facts/fact.js";
 import type { PartialFacts, PartialProject } from "../facts/partial.js";
+import { stripEmoji } from "../copy/deterministic.js";
 
 const pkgSchema = z.object({
   private: z.boolean().optional(),
@@ -52,7 +53,7 @@ export async function collectPackageJson(
     }),
   };
   if (pkg.data.description !== undefined && pkg.data.description.length > 0) {
-    project.tagline = fact(pkg.data.description, {
+    project.tagline = fact(stripEmoji(pkg.data.description), {
       source: "package-json",
       ref: `${packagePath}#description`,
       fetchedAt,

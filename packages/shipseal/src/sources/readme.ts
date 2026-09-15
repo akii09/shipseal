@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 import { fact } from "../facts/fact.js";
 import type { PartialFacts, PartialProject } from "../facts/partial.js";
+import { stripEmoji } from "../copy/deterministic.js";
 
 export async function collectReadme(cwd: string): Promise<PartialFacts> {
   let markdown: string;
@@ -24,7 +25,7 @@ export async function collectReadme(cwd: string): Promise<PartialFacts> {
     project.name = fact(h1, { source: "readme", ref: "README.md H1", fetchedAt });
   }
   if (tagline !== undefined) {
-    project.tagline = fact(tagline, {
+    project.tagline = fact(stripEmoji(tagline), {
       source: "readme",
       ref: "README.md first paragraph",
       fetchedAt,

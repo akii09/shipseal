@@ -13,7 +13,7 @@ const withStory = (story: NonNullable<Config["release"]>["story"]): Config => ({
 });
 
 const build = (facts: Facts = FIXTURE_FACTS, config: Config = DEFAULT_CONFIG) =>
-  storyFacts(facts, config, FIXTURE_BRAND.name, generatedAt).story ?? [];
+  storyFacts(facts, config, FIXTURE_BRAND, generatedAt).story ?? [];
 
 const kinds = (facts?: Facts, config?: Config) => build(facts, config).map((page) => page.kind);
 
@@ -53,6 +53,26 @@ describe("storyFacts page order", () => {
     if (release === undefined) throw new Error("fixture release required");
     const { codeSnippet: _codeSnippet, ...withoutSnippet } = release;
     expect(kinds({ ...FIXTURE_FACTS, release: withoutSnippet })).not.toContain("code");
+  });
+});
+
+describe("storyFacts cover body", () => {
+  it("prefers the brand tagline over the placeholder when no project tagline exists", () => {
+    const { tagline: _tagline, ...project } = FIXTURE_FACTS.project;
+    const cover = build({ ...FIXTURE_FACTS, project })[0];
+    expect(cover?.body.value).toBe(FIXTURE_BRAND.tagline);
+    expect(cover?.body.provenance).toMatchObject({
+      source: "user-config",
+      ref: "brand.json#tagline",
+    });
+  });
+
+  it("still falls back to the placeholder when nothing describes the project", () => {
+    const { tagline: _tagline, ...project } = FIXTURE_FACTS.project;
+    const brandless = { name: FIXTURE_BRAND.name };
+    const pages =
+      storyFacts({ ...FIXTURE_FACTS, project }, DEFAULT_CONFIG, brandless, generatedAt).story ?? [];
+    expect(pages[0]?.body.value).toBe("Release notes");
   });
 });
 
@@ -145,7 +165,7 @@ describe("storyFacts comparison page", () => {
 describe("story failure paths", () => {
   it("refuses a story with no release facts", () => {
     const { release: _release, ...withoutRelease } = FIXTURE_FACTS;
-    expect(() => storyFacts(withoutRelease, DEFAULT_CONFIG, "PDFx", generatedAt)).toThrowError(
+    expect(() => storyFacts(withoutRelease, DEFAULT_CONFIG, FIXTURE_BRAND, generatedAt)).toThrowError(
       /No release facts are available/,
     );
   });

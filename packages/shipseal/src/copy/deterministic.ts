@@ -149,11 +149,29 @@ export function firstSentence(text: string): string {
  */
 const HEADLINE_MAX_CHARS = 72;
 
+/**
+ * Emoji ranges, removed from anything that reaches a card.
+ *
+ * No font we register carries these glyphs, so `\u{1F310} Human-friendly ...` (got's real
+ * GitHub description) rendered a tofu box on shipseal.dev. Takumi ships an emoji helper, but it
+ * rewrites each emoji into an <img> pointing at jsDelivr, and `generate()` does no network.
+ *
+ * The ranges deliberately start at U+2600, which keeps the textual symbols people put in real
+ * product names: (c) U+00A9, (r) U+00AE and (tm) U+2122 all sit below it.
+ */
+// Alternation rather than one class: variation selectors and the zero-width joiner are
+// combining marks, which lint rejects when mixed into a class with ordinary code points.
+const EMOJI = /[\u{1F000}-\u{1FAFF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|\u200D/gu;
+
+export function stripEmoji(text: string): string {
+  return text.replaceAll(EMOJI, "").replace(/\s+/g, " ").trim();
+}
+
 export function cleanLine(text: string): string {
   // Replace an em dash with a colon and swallow the space in front of it, so "shops \u2014 mobile"
   // becomes "shops: mobile" rather than "shops : mobile". Spaced en dashes become a comma for
   // the same reason: a bare hyphen with spaces reads like a stray dash on a card.
-  const stripped = text
+  const stripped = stripEmoji(text)
     .replace(/\s*\u2014\s*/g, ": ")
     .replace(/\s+\u2013\s+/g, ", ")
     .replaceAll("\u2013", "-")
