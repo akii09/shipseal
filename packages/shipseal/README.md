@@ -49,7 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
-      - uses: akii09/shipseal@v0.1.1
+      - uses: akii09/shipseal@v0.4.0
         env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
 ```
 
