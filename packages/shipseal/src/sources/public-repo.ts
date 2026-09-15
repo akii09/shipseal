@@ -11,9 +11,12 @@ import {
 } from "../brand/schema.js";
 import { cleanLine } from "../copy/deterministic.js";
 import { ShipsealError } from "../core/errors.js";
+import { detectColorsFrom, type FieldSource } from "../brand/detect-colors.js";
 import { fact } from "../facts/fact.js";
 import type { Fact, Facts } from "../facts/schema.js";
 import { parseRepo } from "./github.js";
+import { githubFiles } from "./github-files.js";
+import { cleanReleaseLine } from "./release-line.js";
 
 /** A release body can list plenty; the cards show four, so more than this is never needed. */
 const MAX_ENTRIES_PER_CATEGORY = 8;
@@ -143,16 +146,9 @@ export async function listPublicReleases(
   return releases;
 }
 
-/** Strip markdown images, links, inline code and raw HTML from one bullet. */
+/** Same rules as the CHANGELOG path, then the shared prose normalisation. */
 function cleanBullet(line: string): string {
-  return cleanLine(
-    line
-      .replace(/^\s*[-*]\s+/, "")
-      .replaceAll(/!\[[^\]]*\]\([^)]*\)/g, "")
-      .replaceAll(/\[([^\]]+)\]\([^)]*\)/g, "$1")
-      .replaceAll(/<[^>]*>/g, "")
-      .replaceAll(/[*`]/g, ""),
-  );
+  return cleanLine(cleanReleaseLine(line));
 }
 
 export function releaseFacts(
@@ -292,9 +288,29 @@ export async function collectPublicRelease(
     true,
   );
   if (raw === undefined) {
-    notes.push(
-      "No Shipseal brand file was found at this release. These are demo colors; choose your accent below.",
+    // No committed brand file, which is every repository at first contact. Detect instead of
+    // showing Shipseal's own palette: that was the whole promise of this page (review R0).
+    const sources: FieldSource[] = [];
+    const detectNotes: string[] = [];
+    const colors = await detectColorsFrom(
+      githubFiles(slug, release.tag_name, fetchImpl),
+      slug,
+      undefined,
+      sources,
+      detectNotes,
     );
+    const found = sources.filter((source) => source.field.startsWith("colors"));
+    if (found.length > 0) {
+      brand = { ...brand, colors };
+      const where = [...new Set(found.map((source) => source.source))].slice(0, 2);
+      notes.push(
+        `Colors detected from ${where.join(" and ")}. No Shipseal brand file exists yet; shipseal init writes one.`,
+      );
+    } else {
+      notes.push(
+        "No brand colors could be detected in this repository. These are demo colors; choose your accent below.",
+      );
+    }
     return { facts, brand, notes };
   }
   const contents = contentsSchema.safeParse(raw);

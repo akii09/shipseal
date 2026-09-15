@@ -83,7 +83,7 @@ describe("color detection honesty", () => {
   it("reports built-in defaults as defaults", async () => {
     const { mkdtemp, writeFile, mkdir } = await import("node:fs/promises");
     const { tmpdir } = await import("node:os");
-    const { detectBrand } = await import("../src/brand/detect.js");
+    const { detectBrand } = await import("../src/brand/detect-node.js");
 
     const dir = await mkdtemp(join(tmpdir(), "shipseal-grey-"));
     await writeFile(join(dir, "package.json"), JSON.stringify({ name: "grey" }), "utf8");
@@ -100,7 +100,7 @@ describe("color detection honesty", () => {
   it("prefers a real logo color over the default and records its source", async () => {
     const { mkdtemp, writeFile, mkdir } = await import("node:fs/promises");
     const { tmpdir } = await import("node:os");
-    const { detectBrand } = await import("../src/brand/detect.js");
+    const { detectBrand } = await import("../src/brand/detect-node.js");
 
     const dir = await mkdtemp(join(tmpdir(), "shipseal-red-"));
     await writeFile(join(dir, "package.json"), JSON.stringify({ name: "red" }), "utf8");

@@ -426,7 +426,7 @@ describe("workspace root name", () => {
   // A private package.json is a workspace root. Its name is plumbing, not a brand:
   // Shipseal's own root is "shipseal-monorepo", which must never reach a card.
   it("ignores the name of a private package", async () => {
-    const { detectBrand } = await import("../src/brand/detect.js");
+    const { detectBrand } = await import("../src/brand/detect-node.js");
     const dir = await mkdtemp(join(tmpdir(), "shipseal-private-"));
     await writeFile(
       join(dir, "package.json"),

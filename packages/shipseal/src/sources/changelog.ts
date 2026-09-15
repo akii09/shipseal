@@ -7,6 +7,7 @@ import { fact } from "../facts/fact.js";
 import type { Fact } from "../facts/schema.js";
 import type { PartialFacts } from "../facts/partial.js";
 import { extractFirstCodeFence } from "./readme.js";
+import { cleanReleaseLine } from "./release-line.js";
 
 export async function collectChangelog(
   cwd: string,
@@ -149,25 +150,7 @@ export function findVersionSection(
 }
 
 export function cleanChangelogItem(item: string): string {
-  return item
-    .replace(/^\s*[-*]\s*/, "")
-    .replace(/\[`[a-f0-9]{7,40}`]\([^)]+\)/gi, "")
-    .replace(/^[a-f0-9]{7,40}:\s*/i, "")
-    .replace(/\(#\d+\)/g, "")
-    .replace(/\[#\d+]\([^)]+\)/g, "")
-    .replace(/Thanks\s+\[@[\w-]+]\([^)]+\)!?\s*-?\s*/gi, "")
-    .replace(/\[@[\w-]+]\([^)]+\)/g, "")
-    .replace(/\(@[\w-]+\)/g, "")
-    .replace(/\s+by\s+@[\w-]+/gi, "")
-    .replace(/@[\w-]+/g, "")
-    .replace(/^Thanks\s*!?\s*-?\s*/i, "")
-    .replace(/^\s*[-*]\s*/, "")
-    // Unwrap inline code: a card is not markdown, so `--package` must read as --package.
-    .replaceAll(/`([^`]+)`/g, "$1")
-    .replaceAll("`", "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\.$/, "");
+  return cleanReleaseLine(item);
 }
 
 function headingIncludesVersion(heading: string, version: string): boolean {

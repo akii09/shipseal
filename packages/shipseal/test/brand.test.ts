@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { extractCssRootColors } from "../src/brand/css-vars.js";
-import { detectBrand } from "../src/brand/detect.js";
+import { detectBrand } from "../src/brand/detect-node.js";
 import { extractDtcgColors } from "../src/brand/dtcg.js";
 import { findLogo } from "../src/brand/logo.js";
 import { oklchToHex, parseCssColor } from "../src/brand/color.js";
