@@ -46,6 +46,9 @@ const excluded = [
   ":(exclude)scripts/check-action-ref.mjs",
   ":(exclude)scripts/refresh-showcase.mjs",
   ":(exclude)**/CHANGELOG.md",
+  // Test fixtures build throwaway repositories that contain this pattern on purpose, including
+  // refs that are meant not to resolve. They are inputs to a test, not instructions to a user.
+  ":(exclude)packages/shipseal/test/**",
 ];
 
 /** `git grep` exits 1 when nothing matches, which is a real failure here rather than a pass. */

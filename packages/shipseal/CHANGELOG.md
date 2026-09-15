@@ -4,6 +4,16 @@
 
 ### Patch Changes
 
+- Story pages are composed rather than stacked.
+  
+  The title and body are now one block, centred in the space the header and footer leave. A short
+  cover or closing page used to put its content in the top third of a 1080x1350 canvas and leave the
+  rest empty. The body also lines up with the title now, instead of sitting slightly inside it, and a
+  code page sizes its box to the snippet rather than to the full height of the card.
+  
+  A long title truncates and reports a fit warning instead of shrinking. Each slot was sized on its
+  own, so a long title could end up smaller than the paragraph beneath it and read as the less
+  important of the two.
 - c6ed002: Emoji no longer render as an empty box on a card.
   
   No font Shipseal registers carries emoji glyphs, so a project described as
