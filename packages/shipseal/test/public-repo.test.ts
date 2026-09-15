@@ -3,8 +3,11 @@ import {
   collectPublicRelease,
   listPublicReleases,
   publicGithubJson,
+  defaultRelease,
+  projectName,
   publicRepoSlug,
   releaseFacts,
+  releaseVersion,
   type PublicRelease,
 } from "../src/sources/public-repo.js";
 
@@ -315,5 +318,50 @@ describe("collectPublicRelease", () => {
     await expect(
       collectPublicRelease("akii09/shipseal", release(), route({ "/repos/": () => json({ ...repo, private: true }) })),
     ).rejects.toMatchObject({ code: "demo.repo-shape" });
+  });
+});
+
+/** Cases from the 20 repository survey on 2026-09-15. */
+describe("naming and release selection", () => {
+  it("reads the version out of a monorepo tag", () => {
+    expect(releaseVersion("shadcn@4.21.0")).toBe("4.21.0");
+    expect(releaseVersion("astro@7.3.2")).toBe("7.3.2");
+    expect(releaseVersion("v16.0.0")).toBe("16.0.0");
+    expect(releaseVersion("3.9.6")).toBe("3.9.6");
+    expect(releaseVersion("2026.9.2")).toBe("2026.9.2");
+    // oven-sh/bun rendered "bun bun-v1.4.2".
+    expect(releaseVersion("bun-v1.4.2")).toBe("1.4.2");
+    expect(releaseVersion("pkg/2.0.0")).toBe("2.0.0");
+    expect(releaseVersion("v1.0.0-rc.1")).toBe("1.0.0-rc.1");
+  });
+
+  it("prefers the package a monorepo tag names over the directory", () => {
+    // shadcn-ui/ui rendered "ui shadcn@4.21.0".
+    expect(projectName("shadcn-ui/ui", "ui", "shadcn@4.21.0")).toBe("shadcn");
+  });
+
+  it("falls back to the owner when the repository name says nothing", () => {
+    // home-assistant/core rendered "core 2026.9.2".
+    expect(projectName("home-assistant/core", "core", "2026.9.2")).toBe("home-assistant");
+    expect(projectName("acme/cli", "cli", "v2.0.0")).toBe("acme");
+  });
+
+  it("leaves a real project name alone", () => {
+    expect(projectName("vitejs/vite", "vite", "v8.3.0")).toBe("vite");
+    expect(projectName("sindresorhus/got", "got", "v16.0.0")).toBe("got");
+  });
+
+  it("defaults to the newest stable release, not a prerelease", () => {
+    // zed-industries/zed defaulted to v1.20.1-pre.
+    const releases = [
+      release({ tag_name: "v1.20.1-pre", prerelease: true }),
+      release({ tag_name: "v1.20.0" }),
+    ];
+    expect(defaultRelease(releases)?.tag_name).toBe("v1.20.0");
+  });
+
+  it("uses a prerelease when that is all the project has published", () => {
+    const only = [release({ tag_name: "v0.1.0-rc.1", prerelease: true })];
+    expect(defaultRelease(only)?.tag_name).toBe("v0.1.0-rc.1");
   });
 });

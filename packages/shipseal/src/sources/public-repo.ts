@@ -151,6 +151,45 @@ function cleanBullet(line: string): string {
   return cleanLine(cleanReleaseLine(line));
 }
 
+/**
+ * Repository names that say nothing about the project. `home-assistant/core` and `shadcn-ui/ui`
+ * both rendered headlines like "core 2026.9.2" and "ui shadcn@4.21.0" (review R3), because the
+ * name of a monorepo directory is plumbing rather than a brand.
+ */
+const GENERIC_REPO_NAMES = new Set([
+  "core", "cli", "ui", "app", "web", "api", "docs", "sdk", "lib", "www", "site", "main", "monorepo",
+]);
+
+/** The package a monorepo tag names, as in `shadcn@4.21.0`. */
+function tagPackage(tag: string): string | undefined {
+  return /^(.+)@\d/.exec(tag)?.[1];
+}
+
+/**
+ * The version inside a tag. Projects prefix them in several ways: `shadcn@4.21.0`,
+ * `bun-v1.4.2`, `pkg/2.0.0`. A bare `v1.0.0` or a date like `2026.9.2` is left alone.
+ */
+export function releaseVersion(tag: string): string {
+  return tag.replace(/^[A-Za-z][\w.]*[-@/](?=v?\d)/, "").replace(/^v(?=\d)/, "");
+}
+
+/** What to call the project: the tag's package, else the owner when the repo name is generic. */
+export function projectName(slug: string, repoName: string, tag: string): string {
+  const fromTag = tagPackage(tag);
+  if (fromTag !== undefined && fromTag.length > 0) {
+    return fromTag;
+  }
+  return GENERIC_REPO_NAMES.has(repoName.toLowerCase()) ? (slug.split("/")[0] ?? repoName) : repoName;
+}
+
+/**
+ * The newest stable release, falling back to a prerelease only when that is all there is.
+ * zed-industries/zed defaulted to `v1.20.1-pre` (review R5). Prereleases stay in the selector.
+ */
+export function defaultRelease(releases: PublicRelease[]): PublicRelease | undefined {
+  return releases.find((release) => !release.prerelease) ?? releases[0];
+}
+
 export function releaseFacts(
   slug: string,
   name: string,
@@ -208,7 +247,7 @@ export function releaseFacts(
     metrics: { stars: fact(stars, projectSource("stargazers_count")) },
     release: {
       tag: source(release.tag_name, "tag_name"),
-      version: source(release.tag_name.replace(/^v(?=\d)/, ""), "tag_name"),
+      version: source(releaseVersion(release.tag_name), "tag_name"),
       date: source(release.published_at.slice(0, 10), "published_at"),
       features,
       fixes,
@@ -268,7 +307,7 @@ export async function collectPublicRelease(
   const fetchedAt = new Date().toISOString();
   const facts = releaseFacts(
     slug,
-    repo.name,
+    projectName(slug, repo.name, release.tag_name),
     repo.description,
     repo.stargazers_count,
     release,
@@ -278,7 +317,7 @@ export async function collectPublicRelease(
   // Where the palette came from is disclosed on the page: a demo card must never imply it
   // is using a maintainer's real brand when it is not.
   const notes: string[] = [];
-  let brand = demoBrand(repo.name, repo.html_url);
+  let brand = demoBrand(projectName(slug, repo.name, release.tag_name), repo.html_url);
   if (repo.description) {
     brand.tagline = cleanLine(repo.description);
   }

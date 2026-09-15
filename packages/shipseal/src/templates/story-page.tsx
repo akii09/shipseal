@@ -84,7 +84,9 @@ export const storyPage: TemplateDefinition = {
       // Truncating with a manifest warning is the honest outcome, not a title smaller than its
       // own paragraph.
       title: {
-        maxLines: tall ? 3 : 2,
+        // Four lines on a tall canvas. Change titles truncated on 6 of the 20 repositories
+        // surveyed on 2026-09-15, and a portrait page has the room to spare.
+        maxLines: tall ? 4 : 2,
         maxFontSize: tall ? 64 : 48,
         minFontSize: tall ? 36 : 30,
         step: 2,
