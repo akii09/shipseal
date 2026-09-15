@@ -68,6 +68,11 @@ const here = Astro.url.pathname.replace(/\/$/, "");
   </div>
 
   <style>
+    /* Cards are rendered at their real pixel size (1200x630 and up), so a width attribute alone
+       overflows the column and crops the right edge of the image. */
+    /* :global, because the images live in the pages this layout wraps, and Astro scopes
+       a component's styles to its own markup. */
+    article :global(img) { max-width: 100%; height: auto; display: block; border-radius: 12px; }
     /* minmax(0, 1fr), not 1fr: a bare track takes its minimum from the widest unbreakable
        content, so a long line in a code block widened the whole page instead of scrolling
        inside its own pre. The 900px rule below already had this right. */

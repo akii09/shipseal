@@ -12,9 +12,9 @@ this file describes the repository as it stands.
 
 | | |
 |---|---|
-| Version | `0.0.8` in `packages/shipseal/package.json`, tag `v0.0.8`, npm `0.0.8` |
+| Version | `0.4.1` pending in `packages/shipseal/package.json`. Released: tag `v0.4.0`, npm `0.4.0` |
 | Phases | 1 to 3 done and verified. Phase 4 (launch) in progress |
-| Tests | 23 files, 257 tests, 8 of them golden images |
+| Tests | 26 files, 293 tests, 8 of them golden images |
 | Published by | `publish.yml` over OIDC, no npm token exists anywhere |
 | External adopters | **None yet.** See `adopters.md`. This is the gating number for launch |
 
@@ -101,9 +101,10 @@ by name.
 
 | | |
 |---|---|
-| **G5, G11** | Get 3 external repositories running the Action. Needs real maintainers, not code. The Phase 4 gate. `/try` is now the acquisition path: a maintainer sees their own card before installing anything |
-| **G1** | Cut a minor release with a user-facing feature and regenerate the showcase from it. G2 removed the worst symptom, but every showcase card is still from a patch. The `story` and `preview` changeset is the minor feature this needs |
-| **G6** | Show milestone and bench cards in the README and on the site |
+| **G5, G11** | Get 3 external repositories running the Action. Still zero. The Phase 4 gate, and the only open item that is not code |
+| Outreach | A 10 repository shortlist is rendered and ready (`docs/REVIEW_2026-09-15.md`). Nothing has been posted yet |
+| ~~G1~~ | **Done.** 0.4.0 shipped from a minor release and the showcase is regenerated from it |
+| Partial G6 | The bench card is on the README and the CLI reference. No milestone card: the lowest threshold is 10 stars and the repo has 1, so no real one exists |
 | **G10, G14** | Marketplace listing, launch assets. G14 is unblocked: `story-page` declares `producthunt` |
 | Partial G8 | Snippets come from the release section, not the specific entry the headline used. Fixing it changes the facts schema, so the manifest shape, so it needs the owner's sign-off |
 
