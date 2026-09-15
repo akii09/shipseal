@@ -4,6 +4,8 @@ import {
   listPublicReleases,
   publicGithubJson,
   defaultRelease,
+  isPrerelease,
+  previousTagFor,
   projectName,
   publicRepoSlug,
   releaseFacts,
@@ -363,5 +365,71 @@ describe("naming and release selection", () => {
   it("uses a prerelease when that is all the project has published", () => {
     const only = [release({ tag_name: "v0.1.0-rc.1", prerelease: true })];
     expect(defaultRelease(only)?.tag_name).toBe("v0.1.0-rc.1");
+  });
+});
+
+describe("tag fallback and commit counting", () => {
+  it("recognises the prerelease spellings projects actually use", () => {
+    for (const tag of ["v1.0.0-rc.1", "v3.15.0rc2", "v3.15.0a8", "v1.20.1-pre", "v8.3.0-beta.1"]) {
+      expect({ tag, pre: isPrerelease(tag) }).toEqual({ tag, pre: true });
+    }
+    for (const tag of ["v1.2.3", "go1.25.1", "astro@7.3.2", "2026.9.2"]) {
+      expect({ tag, pre: isPrerelease(tag) }).toEqual({ tag, pre: false });
+    }
+  });
+
+  it("compares a release against the previous release of the same package", () => {
+    // vitejs/vite compared v8.3.0 against create-vite@9.2.1 and counted zero commits.
+    const current = release({ tag_name: "v8.3.0" });
+    const releases = [current, release({ tag_name: "create-vite@9.2.1" }), release({ tag_name: "v8.2.2" })];
+    expect(previousTagFor(releases, current)).toBe("v8.2.2");
+  });
+
+  it("keeps a monorepo comparison inside its own package", () => {
+    const current = release({ tag_name: "astro@7.3.2" });
+    const releases = [current, release({ tag_name: "create-astro@5.0.0" }), release({ tag_name: "astro@7.3.1" })];
+    expect(previousTagFor(releases, current)).toBe("astro@7.3.1");
+  });
+
+  it("measures a stable release against the previous stable one", () => {
+    // zed compared v1.19.2 against v1.19.1-pre.
+    const current = release({ tag_name: "v1.19.2" });
+    const releases = [current, release({ tag_name: "v1.19.1-pre", prerelease: true }), release({ tag_name: "v1.18.1" })];
+    expect(previousTagFor(releases, current)).toBe("v1.18.1");
+  });
+
+  it("falls back to tags when a repository publishes no releases", async () => {
+    const fetchImpl = route({
+      "/releases": () => json([]),
+      "/tags": () => json([{ name: "v2.0.0", commit: { sha: "a" } }, { name: "v1.9.0", commit: { sha: "b" } }]),
+      "/commits/": () => json({ commit: { committer: { date: "2026-01-02T00:00:00Z" } } }),
+    });
+    const tags = await listPublicReleases("a/b", fetchImpl);
+    expect(tags.map((t) => t.tag_name)).toEqual(["v2.0.0", "v1.9.0"]);
+    expect(tags[0]?.body).toBeNull();
+    expect(tags[0]?.published_at).toContain("2026-01-02");
+  });
+
+  it("ignores snapshot tags that are not versions", async () => {
+    // golang/go's tag page is full of weekly.2011-03-07.1, which sorted ahead of go1.25.1.
+    const fetchImpl = route({
+      "/releases": () => json([]),
+      "/tags": () => json([
+        { name: "weekly.2011-03-07.1", commit: { sha: "a" } },
+        { name: "go1.25.1", commit: { sha: "b" } },
+      ]),
+      "/commits/": () => json({ commit: { committer: { date: "2026-01-02T00:00:00Z" } } }),
+    });
+    expect((await listPublicReleases("a/b", fetchImpl)).map((t) => t.tag_name)).toEqual(["go1.25.1"]);
+  });
+
+  it("says so when a repository has neither releases nor version tags", async () => {
+    const fetchImpl = route({
+      "/releases": () => json([]),
+      "/tags": () => json([{ name: "weekly.2012-03-27", commit: { sha: "a" } }]),
+    });
+    await expect(listPublicReleases("a/b", fetchImpl)).rejects.toMatchObject({
+      code: "demo.no-releases",
+    });
   });
 });

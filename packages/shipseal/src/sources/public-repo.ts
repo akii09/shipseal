@@ -41,6 +41,10 @@ export const publicReleaseSchema = z.object({
 });
 export type PublicRelease = z.infer<typeof publicReleaseSchema>;
 
+const tagSchema = z.object({ name: z.string().min(1).max(200), commit: z.object({ sha: z.string() }) });
+const commitSchema = z.object({ commit: z.object({ committer: z.object({ date: z.iso.datetime() }) }) });
+const compareSchema = z.object({ total_commits: z.number().int().nonnegative() });
+
 const contentsSchema = z.object({
   encoding: z.literal("base64"),
   content: z.string(),
@@ -137,13 +141,103 @@ export async function listPublicReleases(
   }
   const releases = parsed.data.filter((release) => !release.draft);
   if (releases.length === 0) {
-    throw new ShipsealError(
-      "demo.no-releases",
-      "This repository has no published GitHub releases.",
-      "Try a repository with published releases, or run shipseal init locally for a sample.",
-    );
+    // Go and CPython ship tags and no GitHub Releases, so releases-only discovery locked out two
+    // of the best known repositories there are (review R2). A tag carries no notes, so the pack
+    // is thinner and the manifest says why.
+    return listPublicTags(slug, fetchImpl);
   }
   return releases;
+}
+
+/** Numeric segments, compared left to right. Enough to order tags; not a semver implementation. */
+function versionParts(value: string): number[] {
+  return (value.match(/\d+/g) ?? []).map(Number);
+}
+
+function compareVersions(a: string, b: string): number {
+  const left = versionParts(a);
+  const right = versionParts(b);
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const diff = (left[i] ?? 0) - (right[i] ?? 0);
+    if (diff !== 0) {
+      return diff;
+    }
+  }
+  return a.localeCompare(b);
+}
+
+/**
+ * A tag that names a version: `v1.2.3`, `go1.25.1`, `pkg@2.0.0`, `bun-v1.4.2`.
+ *
+ * Anchored, and the prefix excludes a dot on purpose. An unanchored pattern matched
+ * `weekly.2011-03-07.1` on the `07.1`, and sorting numerically then put a snapshot from 2011
+ * ahead of go1.25.1.
+ */
+const RELEASE_TAG = /^[A-Za-z@/_-]*v?\d+\.\d+(?:\.\d+)?(?:[-+.][\w.]+)?$/;
+
+/**
+ * Prerelease spellings in the wild: `v1.0.0-rc.1`, `v3.15.0rc2`, and CPython's `v3.15.0a8`,
+ * where a single letter carries the meaning.
+ */
+export function isPrerelease(tag: string): boolean {
+  return /(?:-|\b)(?:rc|alpha|beta|pre|dev)\.?\d*$/i.test(tag) || /\d(?:a|b|rc)\d+$/i.test(tag);
+}
+
+/**
+ * The release this one should be compared against: the previous release of the same package.
+ * vitejs/vite compared v8.3.0 against create-vite@9.2.1 and reported zero commits, because the
+ * neighbouring entry in a monorepo belongs to a different package.
+ */
+export function previousTagFor(releases: PublicRelease[], release: PublicRelease): string | undefined {
+  const prefix = /^(.+@)/.exec(release.tag_name)?.[1] ?? "";
+  const samePackage = (item: PublicRelease) =>
+    prefix === "" ? !item.tag_name.includes("@") : item.tag_name.startsWith(prefix);
+  const earlier = releases.slice(releases.indexOf(release) + 1).filter(samePackage);
+  // A stable release is measured against the previous stable one, not against its own beta.
+  return (release.prerelease ? earlier[0] : (earlier.find((item) => !item.prerelease) ?? earlier[0]))
+    ?.tag_name;
+}
+
+/** Newest tags as releases, for projects that tag without publishing a Release. */
+async function listPublicTags(slug: string, fetchImpl: typeof fetch): Promise<PublicRelease[]> {
+  const parsed = z
+    .array(tagSchema)
+    .safeParse(await publicGithubJson(`/repos/${slug}/tags?per_page=100`, fetchImpl));
+  if (!parsed.success || parsed.data.length === 0) {
+    throw new ShipsealError(
+      "demo.no-releases",
+      "This repository has no published GitHub releases and no tags.",
+      "Try a repository that publishes releases or tags, or run shipseal init locally for a sample.",
+    );
+  }
+  // GitHub does not return tags newest first. golang/go led with weekly.2012-03-27, a tag from
+  // 2012, so version-shaped tags are selected and ordered here instead.
+  // Require a real version. golang/go's first page of tags is entirely weekly.2012-03-27 style
+  // snapshots, and leading with a tag from 2012 is worse than saying nothing.
+  const ordered = parsed.data
+    .filter((tag) => RELEASE_TAG.test(tag.name))
+    .toSorted((a, b) => compareVersions(b.name, a.name));
+  const newest = ordered[0];
+  if (newest === undefined) {
+    throw new ShipsealError(
+      "demo.no-releases",
+      "This repository publishes no releases and no version tags.",
+      "Try a repository that publishes releases, or run shipseal init locally for a sample.",
+    );
+  }
+  const commit = commitSchema.safeParse(
+    await publicGithubJson(`/repos/${slug}/commits/${newest.commit.sha}`, fetchImpl, true),
+  );
+  const dated = commit.success ? commit.data.commit.committer.date : new Date().toISOString();
+  return ordered.map((tag, index) => ({
+    tag_name: tag.name,
+    name: tag.name,
+    body: null,
+    // Only the newest tag's date is fetched; the rest are ordered, not dated.
+    published_at: index === 0 ? dated : dated,
+    draft: false,
+    prerelease: isPrerelease(tag.name),
+  }));
 }
 
 /** Same rules as the CHANGELOG path, then the shared prose normalisation. */
@@ -289,10 +383,30 @@ function decodeBase64Json(content: string): unknown {
   return json;
 }
 
+/**
+ * Commits between two tags. The seal stamp lost its commit segment on every public repository,
+ * because the demo has no git history to count (review R6). One request restores it.
+ */
+async function commitsBetween(
+  slug: string,
+  previous: string,
+  tag: string,
+  fetchImpl: typeof fetch,
+): Promise<number | undefined> {
+  const raw = await publicGithubJson(
+    `/repos/${slug}/compare/${encodeURIComponent(previous)}...${encodeURIComponent(tag)}`,
+    fetchImpl,
+    true,
+  ).catch(() => undefined);
+  const parsed = compareSchema.safeParse(raw);
+  return parsed.success ? parsed.data.total_commits : undefined;
+}
+
 export async function collectPublicRelease(
   input: string,
   release: PublicRelease,
   fetchImpl: typeof fetch = fetch,
+  previousTag?: string,
 ): Promise<{ facts: Facts; brand: Brand; notes: string[] }> {
   const slug = publicRepoSlug(input);
   const parsed = repoSchema.safeParse(await publicGithubJson(`/repos/${slug}`, fetchImpl));
@@ -316,7 +430,28 @@ export async function collectPublicRelease(
 
   // Where the palette came from is disclosed on the page: a demo card must never imply it
   // is using a maintainer's real brand when it is not.
+  if (previousTag !== undefined && facts.release !== undefined) {
+    const commits = await commitsBetween(slug, previousTag, release.tag_name, fetchImpl);
+    if (commits !== undefined) {
+      facts.release.commitCount = fact(commits, {
+        source: "github-api",
+        ref: `https://api.github.com/repos/${slug}/compare/${previousTag}...${release.tag_name}#total_commits`,
+        fetchedAt,
+      });
+      facts.release.previousVersion = fact(releaseVersion(previousTag), {
+        source: "github-api",
+        ref: `https://api.github.com/repos/${slug}/tags#${previousTag}`,
+        fetchedAt,
+      });
+    }
+  }
+
   const notes: string[] = [];
+  if (release.body === null || release.body.length === 0) {
+    notes.push(
+      "This release has no notes, so the pack shows the project and the version only. A tagged release with notes produces change pages.",
+    );
+  }
   let brand = demoBrand(projectName(slug, repo.name, release.tag_name), repo.html_url);
   if (repo.description) {
     brand.tagline = cleanLine(repo.description);

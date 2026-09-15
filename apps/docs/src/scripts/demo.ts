@@ -1,5 +1,5 @@
 import { mountStudio, type StudioBackend, type StudioOutput } from "../../../../packages/shipseal/src/studio/client";
-import { collectPublicRelease, defaultRelease, listPublicReleases, type PublicRelease } from "../../../../packages/shipseal/src/sources/public-repo";
+import { collectPublicRelease, defaultRelease, listPublicReleases, previousTagFor, type PublicRelease } from "../../../../packages/shipseal/src/sources/public-repo";
 import { buildStudioPack, selectionSchema } from "../../../../packages/shipseal/src/studio/pack";
 import { createBrowserTakumiRenderer } from "../../../../packages/shipseal/src/render/takumi";
 import { DEFAULT_CONFIG } from "../../../../packages/shipseal/src/config/schema";
@@ -28,7 +28,7 @@ export function startDemo(root: HTMLElement): void {
         if (repo !== repository || releases.length === 0) { releases = await listPublicReleases(repo); repository = repo; }
         const release = releases.find((item) => item.tag_name === tag) ?? defaultRelease(releases);
         if (release === undefined) throw new Error("No release is selected.");
-        current = await collectPublicRelease(repo, release);
+        current = await collectPublicRelease(repo, release, undefined, previousTagFor(releases, release));
         const { brand, facts, notes } = current;
         return { name: brand.name, style: brand.style, theme: brand.theme, accent: brand.colors.primary ?? "#fb4c4b", headline: "", upgrade: "",
           headlines: [...(facts.release?.breaking ?? []), ...(facts.release?.features ?? [])].map((item) => cleanLine(firstSentence(item.value))), notes,
