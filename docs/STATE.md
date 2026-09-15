@@ -16,7 +16,7 @@ this file describes the repository as it stands.
 | Phases | 1 to 3 done and verified. Phase 4 (launch) in progress |
 | Tests | 26 files, 293 tests, 8 of them golden images |
 | Published by | `publish.yml` over OIDC, no npm token exists anywhere |
-| External adopters | **None yet.** See `adopters.md`. This is the gating number for launch |
+| External adopters | **None yet.** One maintainer has replied (see `docs/adopters.md`), which surfaced the alt text gap. This is the gating number for launch |
 
 ## What works end to end
 
