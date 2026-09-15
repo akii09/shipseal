@@ -18,10 +18,10 @@
     "no-eval": "error",
     "no-implied-eval": "error",
     "unicorn/prefer-node-protocol": "error",
-    // `export {}` is the ESM empty-module marker the scaffold stubs need under
-    // `verbatimModuleSyntax`. Re-enable once every stub in src/ is implemented.
-    "unicorn/require-module-specifiers": "off",
-    "unicorn/no-empty-file": "off"
+    // Re-enabled once the last generated stub in src/ was implemented and the scaffold that
+    // produced them was removed. Both guard against a module that exports nothing by accident.
+    "unicorn/require-module-specifiers": "error",
+    "unicorn/no-empty-file": "error"
   },
   "ignorePatterns": [
     // Astro components: a bare CSS import is the documented way to load global styles,

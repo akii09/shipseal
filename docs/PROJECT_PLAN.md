@@ -1292,10 +1292,9 @@ Read `docs/PROJECT_PLAN.md` Section 0 before any task. Summary of hard rules:
 3. If Phase 1 spikes (Section 24) are not recorded in Section 25, do those first.
 4. Propose the next single task, the file(s) involved, and the approach. Wait for approval.
 
-## Appendix C: Agent tooling (added by scripts/scaffold.sh)
+## Appendix C: Agent tooling
 
 - `AGENTS.md` is the canonical, extended agent rulebook and supersedes Appendix A. (`AGENT.md` is not a standard filename; any legacy copy lives in `docs/AGENT.legacy.md`.)
 - `CLAUDE.md` imports `AGENTS.md` and adds Claude Code specifics.
 - `.claude/skills/` holds task playbooks: add-template, add-source, takumi-renderer, golden-images, run-spike, log-decision.
 - `spikes/` is for throwaway §24 experiments; never shipped.
-- `scripts/scaffold.sh` regenerates this structure (skips existing files; `FORCE=1` overwrites).

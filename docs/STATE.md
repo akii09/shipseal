@@ -14,7 +14,7 @@ this file describes the repository as it stands.
 |---|---|
 | Version | `0.0.8` in `packages/shipseal/package.json`, tag `v0.0.8`, npm `0.0.8` |
 | Phases | 1 to 3 done and verified. Phase 4 (launch) in progress |
-| Tests | 22 files, 239 tests, 6 of them golden images |
+| Tests | 23 files, 255 tests, 6 of them golden images |
 | Published by | `publish.yml` over OIDC, no npm token exists anywhere |
 | External adopters | **None yet.** See `adopters.md`. This is the gating number for launch |
 
@@ -58,6 +58,11 @@ and a repository with no brand file is told so rather than shown invented colors
 - **`story-page` is the only template allowed to declare a non-v1 format**, pinned by
   `formats.test.ts`. If it gains a size, or another template declares one, that test fails and the
   wording on the homepage, the templates page and §14.2 has to change with it.
+- **`scripts/` is tested now.** `test/scripts.test.ts` runs the release scripts as real processes
+  against throwaway git repositories. It pins the two bugs that shipped invisibly: the temporary
+  release tag must exist for *every* render (a stub that fails on the first render cannot tell the
+  broken version apart, so the fake CLI records the tag at each call), and the showcase gate must
+  block on version strings while letting changed cards through, or a release can never settle.
 - **Emoji never reach a card.** No registered font carries them, so a repository description
   like got's rendered a tofu box on shipseal.dev. `stripEmoji` in `copy/deterministic.ts` runs
   inside `cleanLine` and at the three tagline sources that bypass it (`package-json`, `github`,
@@ -97,7 +102,6 @@ by name.
 | **G6** | Show milestone and bench cards in the README and on the site |
 | **G10, G14** | Marketplace listing, launch assets. G14 is unblocked: `story-page` declares `producthunt` |
 | Partial G8 | Snippets come from the release section, not the specific entry the headline used. Fixing it changes the facts schema, so the manifest shape, so it needs the owner's sign-off |
-| Cleanup | `scripts/scaffold.sh` looks vestigial: a one-shot bootstrap that skips existing files and still pins `actions/checkout@v4` |
 | Story layout | A short cover, closing or code page leaves a lot of empty space on a 1080×1350 canvas: the title and body sit at the top and the slack collects at the bottom. Content is correct, the composition is not settled. Owner's call whether to centre the title and body as one block |
 | Story goldens | `story-page` has no golden image. Adding one needs `pnpm test:update-golden`, which needs the owner |
 

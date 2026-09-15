@@ -208,7 +208,6 @@ const versionedFiles = [
   "apps/docs/src/pages/docs/quick-start.astro",
   "apps/docs/src/pages/docs/github-action.astro",
   "docs/PROJECT_PLAN.md",
-  "scripts/scaffold.sh",
 ];
 
 /** Keep the docs honest about which release they describe and which tag they tell people to use. */
