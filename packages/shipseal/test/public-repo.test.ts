@@ -335,6 +335,8 @@ describe("naming and release selection", () => {
     expect(releaseVersion("bun-v1.4.2")).toBe("1.4.2");
     expect(releaseVersion("pkg/2.0.0")).toBe("2.0.0");
     expect(releaseVersion("v1.0.0-rc.1")).toBe("1.0.0-rc.1");
+    // tanstack/query tags a release train; there is no semver to pull out of it.
+    expect(releaseVersion("release-2026-09-04-2228")).toBe("release-2026-09-04-2228");
   });
 
   it("prefers the package a monorepo tag names over the directory", () => {
@@ -431,5 +433,18 @@ describe("tag fallback and commit counting", () => {
     await expect(listPublicReleases("a/b", fetchImpl)).rejects.toMatchObject({
       code: "demo.no-releases",
     });
+  });
+});
+
+describe("scoped monorepo tags", () => {
+  it("reads the version out of a scoped package tag", () => {
+    // novuhq/novu rendered a version badge reading "v@novu/react@v3.19.2".
+    expect(releaseVersion("@novu/react@v3.19.2")).toBe("3.19.2");
+    expect(releaseVersion("@scope/pkg@1.2.3")).toBe("1.2.3");
+  });
+
+  it("names the scope, which is the brand, not the package inside it", () => {
+    expect(projectName("novuhq/novu", "novu", "@novu/react@v3.19.2")).toBe("novu");
+    expect(projectName("withastro/astro", "astro", "@astrojs/rss@4.0.1")).toBe("astrojs");
   });
 });

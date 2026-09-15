@@ -19,8 +19,19 @@ describe("cleanReleaseLine", () => {
 
   it("unescapes markdown a maintainer never meant to show", () => {
     // astral-sh/ruff rendered "\\[ruff\\] Recognize re.prefixmatch".
+    expect(cleanReleaseLine("- Recognize \\[re.prefixmatch\\] calls")).toBe(
+      "Recognize [re.prefixmatch] calls",
+    );
+  });
+
+  it("drops a leading scope label, which is routing rather than news", () => {
+    // mantinedev/mantine rendered "[/ligtbox] Add option to render custom thumbnails",
+    // including their own typo. astral-sh/ruff prefixes every entry with "[ruff]".
+    expect(cleanReleaseLine("- [/ligtbox] Add option to render custom thumbnails")).toBe(
+      "Add option to render custom thumbnails",
+    );
     expect(cleanReleaseLine("- \\[ruff\\] Recognize re.prefixmatch")).toBe(
-      "[ruff] Recognize re.prefixmatch",
+      "Recognize re.prefixmatch",
     );
   });
 
@@ -29,6 +40,10 @@ describe("cleanReleaseLine", () => {
     expect(cleanReleaseLine("- Add story packs #123")).toBe("Add story packs");
     expect(cleanReleaseLine("- [#99](https://x.dev/99) Fix the seal")).toBe("Fix the seal");
     expect(cleanReleaseLine("abc1234: Fix the seal")).toBe("Fix the seal");
+    // payloadcms/payload rendered "Improve access defaults for jobs (4379bf".
+    expect(cleanReleaseLine("- Improve access defaults for jobs (4379bf)")).toBe(
+      "Improve access defaults for jobs",
+    );
   });
 
   it("reduces links to their text and drops images and HTML", () => {

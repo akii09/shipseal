@@ -3,6 +3,7 @@
 
 import type { Facts } from "../facts/schema.js";
 import { MAX_HIGHLIGHTS, type Copy } from "./slots.js";
+import { isHeadlineWorthy } from "./headline.js";
 
 export function deterministicCopy(
   facts: Facts,
@@ -26,9 +27,10 @@ export function deterministicCopy(
   // Prefer the first entry whose opening sentence actually fits. Taking the first sentence is
   // not enough on its own: a single long sentence still overflowed, and the v0.0.5 card shipped
   // with a headline truncated mid-phrase.
+  // Fits, and reads like a change. Length alone let "Adam Chmara" and "/api" onto cards.
   const headlineSource = [...breaking, ...features]
     .map((line) => cleanLine(firstSentence(line)))
-    .find((line) => line.length <= HEADLINE_MAX_CHARS);
+    .find((line) => line.length <= HEADLINE_MAX_CHARS && isHeadlineWorthy(line));
   const title = displayName ?? name;
   const headline =
     facts.release?.headline?.value ??

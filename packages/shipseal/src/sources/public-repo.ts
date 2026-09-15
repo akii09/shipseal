@@ -254,9 +254,9 @@ const GENERIC_REPO_NAMES = new Set([
   "core", "cli", "ui", "app", "web", "api", "docs", "sdk", "lib", "www", "site", "main", "monorepo",
 ]);
 
-/** The package a monorepo tag names, as in `shadcn@4.21.0`. */
+/** The package a monorepo tag names: `shadcn@4.21.0`, `@novu/react@v3.19.2`. */
 function tagPackage(tag: string): string | undefined {
-  return /^(.+)@\d/.exec(tag)?.[1];
+  return /^(.+)@v?\d/.exec(tag)?.[1];
 }
 
 /**
@@ -264,14 +264,21 @@ function tagPackage(tag: string): string | undefined {
  * `bun-v1.4.2`, `pkg/2.0.0`. A bare `v1.0.0` or a date like `2026.9.2` is left alone.
  */
 export function releaseVersion(tag: string): string {
-  return tag.replace(/^[A-Za-z][\w.]*[-@/](?=v?\d)/, "").replace(/^v(?=\d)/, "");
+  // The prefix may be scoped (@novu/react@v3.19.2), plain (shadcn@4.21.0), dashed (bun-v1.4.2)
+  // or slashed (pkg/2.0.0). What remains has to look like a version, or nothing is stripped:
+  // tanstack/query tags releases `release-2026-09-04-2228`, and a greedy prefix reduced that
+  // to "2228".
+  const stripped = /^@?[\w.-]+?(?:\/[\w.-]+)*[-@/](v?\d+\.\d+[\w.+-]*)$/.exec(tag)?.[1];
+  return (stripped ?? tag).replace(/^v(?=\d)/, "");
 }
 
 /** What to call the project: the tag's package, else the owner when the repo name is generic. */
 export function projectName(slug: string, repoName: string, tag: string): string {
   const fromTag = tagPackage(tag);
   if (fromTag !== undefined && fromTag.length > 0) {
-    return fromTag;
+    // In a scoped tag the scope is the brand and the package is a part of it: `@novu/react`
+    // belongs to novu, and calling the project "react" would be worse than useless.
+    return fromTag.startsWith("@") ? (fromTag.slice(1).split("/")[0] ?? repoName) : fromTag;
   }
   return GENERIC_REPO_NAMES.has(repoName.toLowerCase()) ? (slug.split("/")[0] ?? repoName) : repoName;
 }

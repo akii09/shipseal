@@ -32,6 +32,10 @@ export function cleanReleaseLine(item: string): string {
       .replaceAll(/<[^>]*>/g, "")
       .replaceAll(MARKDOWN_ESCAPE, "$1")
       .replaceAll(/[*`]/g, "")
+      // After links are reduced: `([4379bf0](url))` only looks like a bare hash by this point.
+      .replaceAll(/\(\s*[a-f0-9]{6,40}\s*\)/gi, "")
+      // Leading scope labels, as in "[/lightbox] Add option to ...".
+      .replace(/^\[[^\]]{1,24}\]\s*/, "")
       .replace(/^\s*[-*]\s*/, "")
       // Whatever the removals left behind.
       .replace(/\s*\(\s*\)/g, "")
