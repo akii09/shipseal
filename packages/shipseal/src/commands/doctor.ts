@@ -8,11 +8,8 @@ import { join } from "node:path";
 import { promisify } from "node:util";
 import { brandSchema } from "../brand/schema.js";
 import { FORMATS } from "../formats.js";
-import {
-  createTakumiRenderer,
-  resolvePackageRoot,
-  testCardNode,
-} from "../render/takumi.js";
+import { createTakumiRenderer, resolvePackageRoot } from "../render/takumi-node.js";
+import { testCardNode } from "../render/takumi.js";
 
 const execFileAsync = promisify(execFile);
 const MIN_NODE_MAJOR = 22;

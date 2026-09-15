@@ -1,11 +1,11 @@
 // ONLY file allowed to import Takumi (Rule R4). Verify API first (spike S1)
 // Spec: docs/PROJECT_PLAN.md §16
 // Docs checked 2026-09-11: https://takumi.kane.tw/docs , /docs/measure-api, /docs/typography-and-fonts, /docs/helpers
+//
+// This file must stay free of `node:` imports. The browser demo (/try) imports the renderer
+// through here, and one top-level Node builtin is enough for Vite to externalize the module,
+// throw on load, and leave the page blank. Disk access lives in `takumi-node.ts`.
 
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import { Renderer, type Node } from "takumi-js/node";
 import { container, text as textNode } from "takumi-js/helpers";
 import { fromJsx as takumiFromJsx } from "takumi-js/helpers/jsx";
@@ -20,22 +20,16 @@ import type {
 } from "./adapter.js";
 
 export const GEIST_MONO_FAMILY = "Geist Mono";
-const FONT_REL = "assets/fonts/GeistMono[wght].ttf";
 
-let shared: Promise<RendererAdapter> | undefined;
+/** Path of the vendored font, relative to the package root. Resolved in `takumi-node.ts`. */
+export const FONT_REL = "assets/fonts/GeistMono[wght].ttf";
 
-export function getTakumiRenderer(): Promise<RendererAdapter> {
-  shared ??= createTakumiRenderer();
-  return shared;
-}
-
-export async function createTakumiRenderer(): Promise<RendererAdapter> {
+/** Both runtimes end here: one adapter, one registered font, whoever supplied the bytes. */
+export async function createRendererWithFont(font: Uint8Array): Promise<RendererAdapter> {
   const renderer = new Renderer();
-  const fontPath = join(resolvePackageRoot(), FONT_REL);
-  const data = await readFile(fontPath);
   await renderer.registerFont({
     name: GEIST_MONO_FAMILY,
-    data,
+    data: font,
     generic: "monospace",
   });
   return new TakumiRenderer(renderer);
@@ -46,27 +40,7 @@ export async function createBrowserTakumiRenderer(font: Uint8Array): Promise<Ren
   const { init } = await import("takumi-js/wasm/no-init");
   const { default: wasmUrl } = await import("takumi-js/wasm-url");
   await init({ module_or_path: wasmUrl });
-  const renderer = new Renderer();
-  await renderer.registerFont({ name: GEIST_MONO_FAMILY, data: font, generic: "monospace" });
-  return new TakumiRenderer(renderer);
-}
-
-export function resolvePackageRoot(from = import.meta.url): string {
-  let dir = dirname(fileURLToPath(from));
-  for (;;) {
-    if (existsSync(join(dir, "package.json")) && existsSync(join(dir, FONT_REL))) {
-      return dir;
-    }
-    const parent = dirname(dir);
-    if (parent === dir) {
-      throw new ShipsealError(
-        "render.font-missing",
-        `Could not find vendored font ${FONT_REL}.`,
-        "Reinstall shipseal so assets/fonts/GeistMono[wght].ttf is present next to package.json.",
-      );
-    }
-    dir = parent;
-  }
+  return createRendererWithFont(font);
 }
 
 export interface LineCountNode {

@@ -2,10 +2,37 @@
 import Base from "../layouts/Base.astro";
 ---
 <Base title="Try your repository | Shipseal" description="Preview release images and story carousels from a public GitHub repository. No account or API key.">
-  <main class="wrap" style="padding-top:32px;padding-bottom:48px"><div id="shipseal-studio"></div><noscript>This demo requires JavaScript. Use the local Shipseal CLI if JavaScript is unavailable.</noscript></main>
+  <main class="wrap" style="padding-top:32px;padding-bottom:48px">
+    {/*
+      The fallback below is replaced by mountStudio, which overwrites this element. It stays
+      only when the script never runs: a bundle that fails to load leaves the page silently
+      blank otherwise, which is how a broken demo looked for weeks.
+    */}
+    <div id="shipseal-studio">
+      <div id="shipseal-studio-fallback" style="border:1px dashed #343438;border-radius:14px;padding:48px 24px;text-align:center;color:#a1a1aa">
+        <p>Starting the demo.</p>
+        <p style="font-size:13px">
+          If this message stays, the demo could not run in this browser. The
+          <a href="/docs/quick-start">command line quick start</a> does the same work locally.
+        </p>
+      </div>
+    </div>
+    <noscript>This demo requires JavaScript. Use the local Shipseal CLI if JavaScript is unavailable.</noscript>
+  </main>
 </Base>
 <script>
   import { startDemo } from "../scripts/demo";
   const root = document.getElementById("shipseal-studio");
-  if (root) startDemo(root);
+  if (root) {
+    try {
+      startDemo(root);
+    } catch (error) {
+      const fallback = document.getElementById("shipseal-studio-fallback");
+      if (fallback) {
+        fallback.textContent = `The demo could not start: ${
+          error instanceof Error ? error.message : "unknown error"
+        }. Use the command line quick start instead.`;
+      }
+    }
+  }
 </script>

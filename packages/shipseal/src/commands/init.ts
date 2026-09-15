@@ -14,7 +14,7 @@ import { generate } from "../core/generate.js";
 import { deterministicCopy } from "../copy/deterministic.js";
 import { fact } from "../facts/fact.js";
 import type { Facts } from "../facts/schema.js";
-import { createTakumiRenderer } from "../render/takumi.js";
+import { createTakumiRenderer } from "../render/takumi-node.js";
 
 export interface InitOptions {
   cwd: string;

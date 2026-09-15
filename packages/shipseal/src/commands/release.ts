@@ -8,7 +8,7 @@ import { deterministicCopy } from "../copy/deterministic.js";
 import { generate } from "../core/generate.js";
 import type { ShipsealEvent } from "../core/events.js";
 import { ShipsealError } from "../core/errors.js";
-import { createTakumiRenderer } from "../render/takumi.js";
+import { createTakumiRenderer } from "../render/takumi-node.js";
 import { collectFacts } from "../sources/collect.js";
 import { gitCurrentTag } from "../sources/git.js";
 import {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generate } from "../src/core/generate.js";
 import { flattenFacts } from "../src/outputs/manifest.js";
-import { createTakumiRenderer } from "../src/render/takumi.js";
+import { createTakumiRenderer } from "../src/render/takumi-node.js";
 import { benchCopy, deterministicCopy, milestoneCopy } from "../src/copy/deterministic.js";
 import { unsourcedDigits, allowedNumbers } from "../src/copy/number-guard.js";
 import { bench } from "../src/templates/bench.js";

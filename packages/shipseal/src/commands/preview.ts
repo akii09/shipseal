@@ -9,7 +9,7 @@ import { loadBrand } from "../brand/load.js";
 import { loadConfig } from "../config/load.js";
 import { cleanLine, firstSentence } from "../copy/deterministic.js";
 import { ShipsealError, formatError } from "../core/errors.js";
-import { createTakumiRenderer, resolvePackageRoot } from "../render/takumi.js";
+import { createTakumiRenderer, resolvePackageRoot } from "../render/takumi-node.js";
 import type { StudioOutput, StudioState } from "../studio/client.js";
 import { buildStudioPack, selectedBrand, selectedConfig, selectionSchema } from "../studio/pack.js";
 import { collectFacts } from "../sources/collect.js";

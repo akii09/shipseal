@@ -8,7 +8,7 @@ import { loadConfig } from "../config/load.js";
 import type { Config } from "../config/schema.js";
 import { ShipsealError } from "../core/errors.js";
 import type { GenerateInput } from "../core/generate.js";
-import { createTakumiRenderer } from "../render/takumi.js";
+import { createTakumiRenderer } from "../render/takumi-node.js";
 import { buildStudioPack, selectionSchema } from "../studio/pack.js";
 import { collectFacts } from "../sources/collect.js";
 import { gitCurrentTag } from "../sources/git.js";

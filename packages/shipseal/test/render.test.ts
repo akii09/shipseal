@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { FORMATS } from "../src/formats.js";
-import { countLines, createTakumiRenderer, testCardNode } from "../src/render/takumi.js";
+import { createTakumiRenderer } from "../src/render/takumi-node.js";
+import { countLines, testCardNode } from "../src/render/takumi.js";
 
 describe("countLines", () => {
   it("counts distinct rounded run.y values, never runs.length", () => {

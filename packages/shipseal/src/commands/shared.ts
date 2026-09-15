@@ -16,7 +16,7 @@ import { FORMAT_IDS, type FormatId } from "../formats.js";
 import { eventId, resolveOutputDir, writePack } from "../outputs/files.js";
 import { appendJobSummary, uploadReleaseAssets } from "../outputs/github-release.js";
 import type { Manifest } from "../outputs/manifest.js";
-import { resolvePackageRoot } from "../render/takumi.js";
+import { resolvePackageRoot } from "../render/takumi-node.js";
 
 export interface SharedFlags {
   cwd: string;

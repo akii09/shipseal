@@ -13,7 +13,7 @@ import { runRelease, type ReleaseFlags } from "./commands/release.js";
 import { runStory } from "./commands/story.js";
 import { runPreview } from "./commands/preview.js";
 import { ShipsealError, formatError } from "./core/errors.js";
-import { resolvePackageRoot } from "./render/takumi.js";
+import { resolvePackageRoot } from "./render/takumi-node.js";
 
 export async function runCli(argv = process.argv): Promise<number> {
   process.exitCode = 0;

@@ -3,9 +3,10 @@
 Where Shipseal actually is. Read this before `PROJECT_PLAN.md`: the plan describes the design,
 this file describes the repository as it stands.
 
-> Last verified **2026-09-13** by running `pnpm lint && pnpm typecheck && pnpm test`, rendering a
-> real story pack in three styles and driving `preview` end to end. If that date is more than a few
-> weeks old, trust the repository and say so.
+> Last verified **2026-09-15** by running `pnpm lint && pnpm typecheck && pnpm test && pnpm build`,
+> rendering a real story pack in three styles, driving `preview` end to end, and rendering two
+> public repositories through `/try` in a real browser. If that date is more than a few weeks old,
+> trust the repository and say so.
 
 ## Facts
 
@@ -13,7 +14,7 @@ this file describes the repository as it stands.
 |---|---|
 | Version | `0.0.8` in `packages/shipseal/package.json`, tag `v0.0.8`, npm `0.0.8` |
 | Phases | 1 to 3 done and verified. Phase 4 (launch) in progress |
-| Tests | 21 files, 228 tests, 6 of them golden images |
+| Tests | 22 files, 232 tests, 6 of them golden images |
 | Published by | `publish.yml` over OIDC, no npm token exists anywhere |
 | External adopters | **None yet.** See `adopters.md`. This is the gating number for launch |
 
@@ -32,6 +33,11 @@ and **no template declares it**, enforced by a test.
 a deterministic STORE-only ZIP. `shipseal preview` serves the shared studio UI from
 `src/studio/client.ts` over a token-authenticated localhost server and saves choices back to
 `.shipseal`.
+
+**`/try` works.** The same studio runs in the browser against any public GitHub repository, with
+Takumi compiled to WASM, no account and no API key. Verified by rendering `akii09/shipseal` and
+`vitejs/vite` in a real browser: the WASM binary, the bundled font and the rendered blobs all load,
+and a repository with no brand file is told so rather than shown invented colors.
 
 ## Invariants worth knowing before you change anything
 
@@ -52,6 +58,14 @@ a deterministic STORE-only ZIP. `shipseal preview` serves the shared studio UI f
 - **`story-page` is the only template allowed to declare a non-v1 format**, pinned by
   `formats.test.ts`. If it gains a size, or another template declares one, that test fails and the
   wording on the homepage, the templates page and §14.2 has to change with it.
+- **Nothing the browser can reach may import a Node builtin.** `/try` imports this package
+  directly, so one top-level `node:fs` is enough for Vite to externalize the module, throw on load
+  and serve a blank page with no error. That is exactly what `render/takumi.ts` did for weeks while
+  every gate stayed green. `test/browser-safe.test.ts` now walks the reachable import graph and
+  fails on any `node:` import, and it also pins rule 3 (only `render/takumi.ts` imports Takumi).
+- **Disk access for the renderer lives in `src/render/takumi-node.ts`,** not in `takumi.ts`.
+  `takumi.ts` holds the adapter and the Takumi import; the Node half holds `resolvePackageRoot`
+  and `createTakumiRenderer`. Commands import the factory from `takumi-node.js`.
 - **`src/core/generate.ts` must not import a Node builtin.** The browser demo imports
   `generate()`, which is why the file digests with WebCrypto rather than `node:crypto`.
 - **`src/studio/client.ts` must have no runtime imports.** It is bundled on its own as
@@ -73,7 +87,7 @@ by name.
 
 | | |
 |---|---|
-| **G5, G11** | Get 3 external repositories running the Action. Needs real maintainers, not code. The Phase 4 gate |
+| **G5, G11** | Get 3 external repositories running the Action. Needs real maintainers, not code. The Phase 4 gate. `/try` is now the acquisition path: a maintainer sees their own card before installing anything |
 | **G1** | Cut a minor release with a user-facing feature and regenerate the showcase from it. G2 removed the worst symptom, but every showcase card is still from a patch. The `story` and `preview` changeset is the minor feature this needs |
 | **G6** | Show milestone and bench cards in the README and on the site |
 | **G10, G14** | Marketplace listing, launch assets. G14 is unblocked: `story-page` declares `producthunt` |
@@ -82,7 +96,6 @@ by name.
 | Cleanup | `scripts/scaffold.sh` looks vestigial: a one-shot bootstrap that skips existing files and still pins `actions/checkout@v4` |
 | Story layout | A short cover, closing or code page leaves a lot of empty space on a 1080×1350 canvas: the title and body sit at the top and the slack collects at the bottom. Content is correct, the composition is not settled. Owner's call whether to centre the title and body as one block |
 | Story goldens | `story-page` has no golden image. Adding one needs `pnpm test:update-golden`, which needs the owner |
-| Browser demo | `apps/docs/src/pages/try.astro` and `src/scripts/demo.ts` build and are typechecked, but the page is not linked from the site and no in-browser render has been verified. The WASM path is untested |
 | Story tagline | A story cover with no `project.tagline` falls back to `"Release notes"`, even when `brand.tagline` is set. `storyFacts` only receives the brand name |
 
 ## Hard rules that trip agents up

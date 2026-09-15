@@ -7,7 +7,7 @@ import { benchCopy } from "../copy/deterministic.js";
 import { generate } from "../core/generate.js";
 import type { ShipsealEvent } from "../core/events.js";
 import { collectFacts } from "../sources/collect.js";
-import { createTakumiRenderer } from "../render/takumi.js";
+import { createTakumiRenderer } from "../render/takumi-node.js";
 import {
   collectEnv,
   finishPack,

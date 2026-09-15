@@ -231,6 +231,9 @@ export function mountStudio(root: HTMLElement, backend: StudioBackend): void {
     save.hidden = true;
     warnings.hidden = true;
     evidence.hidden = true;
+    // Notes describe the repository being loaded. Leaving the last one up under a failure
+    // tells the visitor about a brand file belonging to a different repository.
+    find("[data-notes]", HTMLDivElement).hidden = true;
     status.textContent = "Reading release facts...";
     busy(true);
     try {

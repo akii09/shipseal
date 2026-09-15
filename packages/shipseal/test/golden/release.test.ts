@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import { benchCopy, deterministicCopy, milestoneCopy } from "../../src/copy/deterministic.js";
 import { generate } from "../../src/core/generate.js";
 import type { GenerateResult } from "../../src/core/generate.js";
-import { createTakumiRenderer } from "../../src/render/takumi.js";
+import { createTakumiRenderer } from "../../src/render/takumi-node.js";
 import {
   BENCH_FACTS,
   FIXTURE_BRAND,

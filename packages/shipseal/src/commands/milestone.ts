@@ -10,7 +10,7 @@ import type { ShipsealEvent } from "../core/events.js";
 import { ShipsealError } from "../core/errors.js";
 import { fact } from "../facts/fact.js";
 import type { Facts } from "../facts/schema.js";
-import { createTakumiRenderer } from "../render/takumi.js";
+import { createTakumiRenderer } from "../render/takumi-node.js";
 import { collectFacts } from "../sources/collect.js";
 import {
   collectEnv,
