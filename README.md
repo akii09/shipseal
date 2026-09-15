@@ -41,6 +41,17 @@ Highlights come from the changelog, one sentence each, sized to fit rather than 
 Code cards pull a snippet from your README or a file you point at, highlighted with Shiki and
 rendered without a browser.
 
+Benchmarks get their own card. This one is rendered from the sample input in the
+[CLI reference](https://shipseal.dev/docs/cli), not from a Shipseal release, because the numbers
+belong to whatever you measured:
+
+<p align="center">
+  <img src="./assets/examples/bench.png" alt="Benchmark card: one metric shown as before to after, with the percentage change computed from the two numbers" width="700">
+</p>
+
+The percentage is computed from the two numbers you supply, never written by a model, and a
+regression is rendered honestly as a regression.
+
 The same release also produced GitHub social, X, and LinkedIn sizes, plus a highlights card.
 See the [v0.1.1 release](https://github.com/akii09/shipseal/releases/tag/v0.1.1) for the whole
 pack, attached automatically by the Action.
