@@ -79,10 +79,14 @@ export const storyPage: TemplateDefinition = {
     return {
       name: { maxLines: 1, maxFontSize: 24, minFontSize: 18, step: 2, box: { width: width - 300 } },
       version: { maxLines: 1, maxFontSize: 22, minFontSize: 16, step: 2, box: { width: 220 } },
+      // The floor sits above the body's ceiling on purpose. Fitted independently, a long title
+      // shrank to 28 while the body stayed at 34, so the page read with its hierarchy inverted.
+      // Truncating with a manifest warning is the honest outcome, not a title smaller than its
+      // own paragraph.
       title: {
         maxLines: tall ? 3 : 2,
         maxFontSize: tall ? 64 : 48,
-        minFontSize: 28,
+        minFontSize: tall ? 36 : 30,
         step: 2,
         box: { width: width - 32, height: titleHeight },
       },
@@ -145,7 +149,7 @@ export const storyPage: TemplateDefinition = {
   render(raw, ctx) {
     const props = propsSchema.parse(raw);
     const colors = themeColors(ctx.brand, ctx.theme);
-    const { tall, titleHeight, bodyHeight, width } = geometry(ctx.format);
+    const { tall, bodyHeight, width } = geometry(ctx.format);
     const editorial = ctx.brand.style === "editorial";
     const terminal = ctx.brand.style === "terminal";
     const code = isCommand(props.page);
@@ -184,6 +188,7 @@ export const storyPage: TemplateDefinition = {
             justifyContent: "space-between",
             alignItems: "center",
             height: HEADER_HEIGHT,
+            flexShrink: 0,
             borderBottom: terminal ? `1px solid ${colors.muted}` : NO_BORDER,
             paddingBottom: terminal ? 12 : 0,
           }}
@@ -213,11 +218,25 @@ export const storyPage: TemplateDefinition = {
           </div>
         </div>
 
+        {/*
+          Title and body are one block, centred in whatever space the header and footer leave.
+          They used to sit in two fixed-height boxes, so a short cover or closing page put its
+          content in the top third and left the rest of a 1080x1350 canvas empty.
+        */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flexGrow: 1,
+            justifyContent: "center",
+            gap: 24,
+            minHeight: 0,
+          }}
+        >
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            height: titleHeight,
             flexShrink: 0,
             paddingLeft: editorial ? 24 : 0,
             borderLeft: editorial ? `8px solid ${colors.primary}` : NO_BORDER,
@@ -276,8 +295,8 @@ export const storyPage: TemplateDefinition = {
               // Top-aligned: centring a short paragraph in a full-height box leaves a hole
               // in the middle of the card rather than margin at the bottom.
               justifyContent: "flex-start",
-              height: bodyHeight,
-              padding: BODY_PAD,
+              maxHeight: bodyHeight,
+              padding: terminal || code ? BODY_PAD : 0,
               backgroundColor: terminal || code ? colors.card : "transparent",
               borderRadius: terminal ? 0 : ctx.brand.radius,
               borderLeft: terminal ? `3px solid ${colors.primary}` : NO_BORDER,
@@ -297,12 +316,13 @@ export const storyPage: TemplateDefinition = {
             </div>
           </div>
         ) : undefined}
+        </div>
 
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            marginTop: "auto",
+            flexShrink: 0,
             fontFamily: props.mono,
             fontWeight: 400,
             fontSize: 16,

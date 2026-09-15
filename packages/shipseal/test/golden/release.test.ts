@@ -5,7 +5,9 @@ import pixelmatch from "pixelmatch";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 import { benchCopy, deterministicCopy, milestoneCopy } from "../../src/copy/deterministic.js";
+import { DEFAULT_CONFIG } from "../../src/config/schema.js";
 import { generate } from "../../src/core/generate.js";
+import { storyFacts } from "../../src/core/story.js";
 import type { GenerateResult } from "../../src/core/generate.js";
 import { createTakumiRenderer } from "../../src/render/takumi-node.js";
 import {
@@ -123,6 +125,50 @@ describe("golden images", () => {
     });
     expect(result.files.length).toBe(1);
     await assertGolden("release-hero-og-light.png", result);
+  });
+});
+
+/**
+ * Story pages are pinned because their layout is composed rather than stacked: the title and
+ * body are centred as one block, the body lines up with the title, and monospace bodies are
+ * sized from their widest line. None of that is visible to a unit test.
+ */
+describe("golden images: story pages", () => {
+  const generatedAt = "2026-09-11T10:00:00.000Z";
+
+  async function renderStoryPage(kind: string): Promise<GenerateResult> {
+    const facts = storyFacts(FIXTURE_FACTS, DEFAULT_CONFIG, FIXTURE_BRAND, generatedAt);
+    const page = (facts.story ?? []).find((item) => item.kind === kind);
+    expect(page, `story has no ${kind} page`).toBeDefined();
+    const renderer = await createTakumiRenderer();
+    const result = await generate({
+      event: { kind: "release", tag: "v2.0.0", previousTag: "v1.9.0" },
+      facts: { ...facts, story: page === undefined ? [] : [page] },
+      brand: FIXTURE_BRAND,
+      config: {
+        ...FIXTURE_CONFIG,
+        formats: ["portrait"],
+        release: { templates: ["story-page"] },
+      },
+      copy: deterministicCopy(FIXTURE_FACTS),
+      copyMode: "deterministic",
+      renderer,
+      themes: ["dark"],
+      generatedAt,
+    });
+    return result;
+  }
+
+  it("matches the story cover, where short text is centred rather than stacked at the top", async () => {
+    const result = await renderStoryPage("cover");
+    expect(result.files.length).toBe(1);
+    await assertGolden("story-cover-portrait.png", result);
+  });
+
+  it("matches the story code page, whose monospace body is sized to its widest line", async () => {
+    const result = await renderStoryPage("code");
+    expect(result.files.length).toBe(1);
+    await assertGolden("story-code-portrait.png", result);
   });
 });
 
