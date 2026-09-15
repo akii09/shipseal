@@ -71,7 +71,10 @@ export const DEFAULT_CONFIG: Config = {
     snippet: null,
   },
   milestones: {
-    stars: [100, 250, 500, 1000, 2500, 5000, 10000],
+    // Starts at 10. A ladder beginning at 100 meant a new project saw no
+    // milestone card for months, which is exactly when it is deciding whether this is
+    // worth keeping. The first few stars are the ones worth celebrating.
+    stars: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000],
     downloads: [1000, 10000, 100000, 1000000],
     contributors: [10, 25, 50, 100],
   },

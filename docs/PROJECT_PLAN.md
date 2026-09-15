@@ -550,7 +550,7 @@ File: `.shipseal/config.json`. All fields optional.
     "subheadline": null
   },
   "milestones": {
-    "stars": [100, 250, 500, 1000, 2500, 5000, 10000],
+    "stars": [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000],
     "downloads": [1000, 10000, 100000, 1000000],
     "contributors": [10, 25, 50, 100]
   },
