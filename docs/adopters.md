@@ -21,7 +21,7 @@ are the only outside opinions the project has.
 
 | Date | Who | Where | What they said |
 |---|---|---|---|
-| 2026-09-15 | stefan6419846 | [community/maintainers #887](https://github.com/community/maintainers/discussions/887) | Has never used release images. Writes hard facts and migration steps in text, and images never helped either as producer or consumer. Also: an image needs a plaintext description anyway, for accessibility |
+| 2026-09-15 | anonymous maintainer | [community/maintainers #887](https://github.com/community/maintainers/discussions/887) | Has never used release images. Writes hard facts and migration steps in text, and images never helped either as producer or consumer. Also: an image needs a plaintext description anyway, for accessibility |
 
 ### What the first reply changed
 
