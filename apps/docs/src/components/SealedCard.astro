@@ -46,6 +46,12 @@
     <span class="p p3"><b>the link</b> from the git remote</span>
     <span class="p p4"><b>sealed.</b> every number has a source</span>
   </figcaption>
+  {/*
+    Without this line the pinned v0.0.6 reads as the current version and makes the project look
+    abandoned. Saying which release it came from is the honest fix; bumping the number would
+    invent the commit count and date beside it.
+  */}
+  <p class="from">A real card from the v0.0.6 release, annotated. Nothing here is mocked up.</p>
   {/* shipseal:pinned end */}
 </figure>
 
@@ -135,6 +141,7 @@
   }
 
   /* The caption cycles through what just landed and where it came from. */
+  .from { margin: 0.75rem 0 0; font-size: 0.78rem; color: var(--muted); text-align: center; }
   .prov { position: relative; min-height: 1.5em; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
   .p { position: absolute; inset: 0; opacity: 0; animation: caption 10s ease-in-out infinite; }
   .p b { color: var(--fg); font-weight: 600; }
