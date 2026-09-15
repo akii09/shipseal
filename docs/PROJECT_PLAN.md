@@ -990,7 +990,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0   # required: full history and tags for release facts
-      - uses: akii09/shipseal@v0.1.0
+      - uses: akii09/shipseal@v0.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
