@@ -21,7 +21,7 @@
     "showcase:check": "node scripts/refresh-showcase.mjs --check"
   },
   "devDependencies": {
-    "@changesets/cli": "^3.0.2",
-    "oxlint": "^1.82.0"
+    "@changesets/cli": "^3.0.3",
+    "oxlint": "^1.83.0"
   }
 }
