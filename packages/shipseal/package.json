@@ -49,7 +49,7 @@
   "dependencies": {
     "cac": "7.0.0",
     "shiki": "4.4.3",
-    "takumi-js": "2.13.7",
+    "takumi-js": "2.14.0",
     "zod": "4.6.2"
   }
 }
