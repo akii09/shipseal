@@ -39,12 +39,12 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^22.20.2",
-    "pixelmatch": "7.1.0",
+    "@types/node": "^26.6.2",
+    "pixelmatch": "7.2.0",
     "pngjs": "7.0.0",
     "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.0"
+    "vitest": "^5.0.1"
   },
   "dependencies": {
     "cac": "7.0.0",
