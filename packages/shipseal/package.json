@@ -48,7 +48,7 @@
   },
   "dependencies": {
     "cac": "7.0.0",
-    "shiki": "4.4.3",
+    "shiki": "4.5.0",
     "takumi-js": "2.13.7",
     "zod": "4.6.2"
   }
